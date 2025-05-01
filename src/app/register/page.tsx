@@ -42,7 +42,7 @@ export default function Page() {
         />{" "}
         {/* Placeholder logo */}
         <h2 className="text-2xl font-bold text-gray-800 mb-6">
-          Sign Up to Zatix
+          Register to Zatix
         </h2>{" "}
         {/* Added some basic text styling */}
         <form className="flex flex-col items-center w-full max-w-sm">
