@@ -15,22 +15,6 @@ export default function Page() {
         Background image is added using inline style and Tailwind classes for positioning/sizing.
         The imported image is used directly in the style object.
       */}
-      <div
-        className="flex flex-col items-center justify-center flex-grow w-full h-full p-4 bg-cover bg-center bg-no-repeat"
-        style={{ backgroundImage: `url('${backgroundImage.src}')` }} // Use the imported image variable
-      >
-        {/* Add an overlay div for better text readability on top of the image */}
-        <div className=" bg-opacity-50 p-6 rounded-lg text-center">
-          <h2 className="text-3xl font-bold text-white mb-4">Welcome Back</h2>
-          <p className="text-gray-200 text-lg">
-            To keep connected with us, please login or sign up.
-          </p>
-        </div>
-      </div>
-      {/*
-        The second inner div contains the Sign Up form.
-        It uses flex-grow and fills its parent's dimensions.
-      */}
       <div className="flex flex-col items-center justify-center flex-grow w-full h-full bg-[#F8F8FA] p-8">
         {" "}
         {/* Increased padding */}
@@ -65,7 +49,7 @@ export default function Page() {
               aria-label="Email" // Added for accessibility
             />
           </div>
-          <div className="w-full">
+          <div className="w-full mb-6">
             {" "}
             {/* Password input group */}
             <label
@@ -82,23 +66,7 @@ export default function Page() {
               aria-label="Password" // Added for accessibility
             />
           </div>
-          <div className="mb-6 w-full">
-            {" "}
-           
-            <label
-              className="block text-gray-700 text-sm font-bold mb-2"
-              htmlFor="password"
-            >
-              Re-enter Password
-            </label>
-            <input
-              className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 mb-3 leading-tight focus:outline-none focus:shadow-outline"
-              id="password"
-              type="password"
-              placeholder="********"
-              aria-label="Password" // Added for accessibility
-            />
-          </div>
+
           <button
             className="bg-[#002547] hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline w-full"
             type="button" // Changed to type="button" for now, change to "submit" if implementing form submission
@@ -107,6 +75,23 @@ export default function Page() {
           </button>
         </form>
       </div>
+      <div
+        className="flex flex-col items-center justify-center flex-grow w-full h-full p-4 bg-cover bg-center bg-no-repeat"
+        style={{ backgroundImage: `url('${backgroundImage.src}')` }} // Use the imported image variable
+      >
+        {/* Add an overlay div for better text readability on top of the image */}
+        <div className=" bg-opacity-50 p-6 rounded-lg text-center">
+          <h2 className="text-3xl font-bold text-white mb-4">Welcome Back</h2>
+          <p className="text-gray-200 text-lg">
+            To keep connected with us, please login or sign up.
+          </p>
+        </div>
+      </div>
+      {/*
+        The second inner div contains the Sign Up form.
+        It uses flex-grow and fills its parent's dimensions.
+      */}
+      
     </div>
   );
 }
