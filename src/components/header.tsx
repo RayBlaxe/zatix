@@ -42,7 +42,7 @@ export function Header() {
 
         <Button variant="ghost" size="icon" className="md:hidden">
           <Menu className="h-5 w-5" />
-          <span className="sr-only">Toggle menu</span>
+          <span className="sr-only">Ubah menu</span>
         </Button>
       </div>
     </header>
