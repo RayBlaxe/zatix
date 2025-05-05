@@ -23,7 +23,7 @@ export default function Page() {
         <div className=" bg-opacity-50 p-6 rounded-lg text-center">
           <h2 className="text-3xl font-bold text-white mb-4">Welcome Back</h2>
           <p className="text-gray-200 text-lg">
-            To keep connected with us, please login or sign up.
+            To keep connected with us, please login to your account or sign up.
           </p>
         </div>
       </div>
