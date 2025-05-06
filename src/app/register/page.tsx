@@ -23,7 +23,8 @@ export default function Page() {
         <div className=" bg-opacity-50 p-6 rounded-lg text-center">
           <h2 className="text-3xl font-bold text-white mb-4">Welcome Back</h2>
           <p className="text-gray-200 text-lg">
-            To keep connected with us, please login to your account or sign up.
+            To keep connected with us, please login to your account or sign up.!
+            and keep it up
           </p>
         </div>
       </div>
@@ -89,7 +90,7 @@ export default function Page() {
               className="block text-gray-700 text-sm font-bold mb-2"
               htmlFor="password"
             >
-              Re-enter Password
+              Re-type Password
             </label>
             <input
               className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 mb-3 leading-tight focus:outline-none focus:shadow-outline"
