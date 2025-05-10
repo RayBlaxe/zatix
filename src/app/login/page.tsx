@@ -21,14 +21,14 @@ export default function Page() {
         {/* Logo added above the heading */}
         <img
           src={logoImage.src}
-          alt="Company Logo"
+          alt="Company Logo 1"
           className="mb-6 w-24 h-24 object-contain"
         />{" "}
         {/* Placeholder logo */}
         <h2 className="text-2xl font-bold text-gray-800 mb-6">
           Sign In to Zatix
         </h2>{" "}
-        {/* Added some basic text styling */}
+        {/* Added some basic text ngok styling */}
         <form className="flex flex-col items-center w-full max-w-sm">
           {" "}
           {/* Form container */}
@@ -46,7 +46,7 @@ export default function Page() {
               id="email"
               type="email"
               placeholder="Email"
-              aria-label="Email" // Added for accessibility
+              aria-label="Email" // Added for accessibilitys
             />
           </div>
           <div className="w-full mb-6">
