@@ -1,8 +1,12 @@
+import { APIResponse } from "@/types/api"
+import { LoginResponse } from "@/types/auth/login"
+import { RegisterResponse } from "@/types/auth/register"
+
 // Base API URL - use environment variable or fallback for development
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://192.168.1.69:8000/api/"
 
 // Helper function for making API requests
-async function apiRequest<T>(endpoint: string, method = "GET", data?: any, token?: string): Promise<T> {
+async function apiRequest<T>(endpoint: string, method = "GET", data?: any, token?: string): Promise<APIResponse<T>> {
   const url = `${API_BASE_URL}${endpoint}`
 
 
@@ -38,14 +42,14 @@ async function apiRequest<T>(endpoint: string, method = "GET", data?: any, token
         throw new Error(responseData.message || "An error occurred")
       }
 
-      return responseData
+      return responseData as APIResponse<T>
     } else {
       // For non-JSON responses
       if (!response.ok) {
         throw new Error("An error occurred")
       }
 
-      return {} as T
+      return {} as unknown as APIResponse<T>
     }
   } catch (error) {
     console.error("API request error:", error)
@@ -125,11 +129,11 @@ function handleMockResponse<T>(endpoint: string, method: string, data?: any): T 
 // Auth API functions
 export const authApi = {
   login: (email: string, password: string) => {
-    return apiRequest<{ token: string; user: any }>("/login", "POST", { email, password })
+    return apiRequest<LoginResponse>("/login", "POST", { email, password })
   },
 
   register: (name: string, email: string, password: string, password_confirmation: string) => {
-    return apiRequest<{ message: string }>("/register", "POST", { name, email, password, password_confirmation})
+    return apiRequest<RegisterResponse>("/register", "POST", { name, email, password, password_confirmation})
   },
 
   verifyOtp: (email: string, otp_code: string) => {

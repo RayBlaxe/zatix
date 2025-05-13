@@ -76,25 +76,37 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       const response = await authApi.login(email, password);
 
-      // Save token
-      setToken(response.token);
+      // Check if login failed based on API response
+      if (response.success === false) {
+        // The API explicitly indicates failure with a message
+        throw new Error(response.message ?? "Login failed");
+      }
 
-      // Create user object from response
+      const { data } = response
+
+      // Save token (adjust your setToken function if needed)
+      setToken(data.access_token);
+
+      // Create user object from data
       const newUser = {
-        id: response.user.id || Math.random().toString(36).substring(2, 9),
-        name: response.user.name,
-        email: response.user.email,
-        role: (response.user.role as UserRole) || "customer",
-        eoDetails: response.user.eoDetails,
+        id: data.user.id.toString(), // convert to string if needed
+        name: data.user.name,
+        email: data.user.email,
+        // Your API does not return role or eoDetails here, so set defaults or fetch later
+        role: "customer" as UserRole,
+        eoDetails: undefined,
       };
 
       setUser(newUser);
       localStorage.setItem("user", JSON.stringify(newUser));
+    } catch (error) {
+      // Re-throw error so caller (login page) can handle it and show messages
+      throw error;
     } finally {
       setIsLoading(false);
     }
   };
-
+  
   const register = async (
     name: string,
     email: string,
@@ -109,23 +121,34 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         password,
         password_confirmation
       );
-      console.log("Register response:", response);
 
-      if (response?.success === false) {
-        let errorMessage = "Registration failed. Please try again.";
-        try {
-          const errorData = await response.json();
-          if (errorData?.message) errorMessage = errorData.message;
-        } catch {
-          // ignore JSON parse errors
-        }
-        throw new Error(errorMessage);
+      // Check if registration failed based on API response
+      if (response.success === false) {
+        // The API explicitly indicates failure with a message
+        throw new Error(response.message ?? "Registration failed");
       }
 
-      // If no errors, proceed
-      setPendingVerificationEmail(response.data.email);
+      const { data } = response;
+
+      // Save token (adjust your setToken function if needed)
+      setToken(data.access_token);
+
+      // Create user object from data
+      const newUser = {
+        id: data.user.id.toString(), // convert to string if needed
+        name: data.user.name,
+        email: data.user.email,
+        role: "customer" as UserRole, // Default role
+        eoDetails: undefined, // Default EO details
+      };
+
+      setUser(newUser);
+      localStorage.setItem("user", JSON.stringify(newUser));
+
+      // Set pending verification email
+      setPendingVerificationEmail(data.user.email);
     } catch (error) {
-      // Re-throw error so RegisterPage can catch it
+      // Re-throw error so caller (RegisterPage) can handle it and show messages
       throw error;
     } finally {
       setIsLoading(false);
@@ -140,7 +163,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       // Save token
       setToken(response.token);
-
+      
       // Create user object from response
       const newUser = {
         id: user.id || Math.random().toString(36).substring(2, 9),
