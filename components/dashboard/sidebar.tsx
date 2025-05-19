@@ -11,8 +11,9 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 
 export function DashboardSidebar() {
   const pathname = usePathname()
-  const { user, logout } = useAuth()
+  const { user, logout,  } = useAuth()
   const router = useRouter()
+  
 
   const handleLogout = () => {
     logout()

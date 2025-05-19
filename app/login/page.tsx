@@ -33,6 +33,7 @@ export default function LoginPage() {
     } catch (err) {
       if (err instanceof Error) {
         setError(err.message)
+        
       } else {
         setError("Invalid email or password. Please try again.")
       }
