@@ -5,7 +5,7 @@ import type React from "react";
 import { createContext, useContext, useEffect, useState } from "react";
 import { authApi, getToken, removeToken, setToken } from "@/lib/api";
 
-export type UserRole = "customer" | "event_organizer";
+export type UserRole = "customer" | "event_organizer" | "admin";
 
 type User = {
   id: string;
@@ -45,66 +45,22 @@ type AuthContextType = {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+// Mock admin user
+const mockAdminUser: User = {
+  id: "1",
+  name: "Admin User",
+  email: "admin@example.com",
+  role: "admin",
+};
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [pendingVerificationEmail, setPendingVerificationEmail] = useState<
-    string | null
-  >(null);
-
-  useEffect(() => {
-    // Check if user is logged in from localStorage
-    try {
-      const token = getToken();
-      const storedUser = localStorage.getItem("user");
-
-      if (token && storedUser) {
-        setUser(JSON.parse(storedUser));
-      }
-    } catch (error) {
-      console.error("Failed to parse stored user:", error);
-      // Clear potentially corrupted data
-      localStorage.removeItem("user");
-      removeToken();
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
+  const [user, setUser] = useState<User | null>(mockAdminUser);
+  const [isLoading, setIsLoading] = useState(false);
+  const [pendingVerificationEmail, setPendingVerificationEmail] = useState<string | null>(null);
 
   const login = async (email: string, password: string) => {
-    setIsLoading(true);
-    try {
-      const response = await authApi.login(email, password);
-
-      // Check if login failed based on API response
-      if (response.success === false) {
-        // The API explicitly indicates failure with a message
-        throw new Error(response.message ?? "Login failed");
-      }
-
-      const { data } = response
-
-      // Save token (adjust your setToken function if needed)
-      setToken(data.access_token);
-
-      // Create user object from data
-      const newUser = {
-        id: data.user.id.toString(), // convert to string if needed
-        name: data.user.name,
-        email: data.user.email,
-        // Your API does not return role or eoDetails here, so set defaults or fetch later
-        role: "customer" as UserRole,
-        eoDetails: undefined,
-      };
-
-      setUser(newUser);
-      localStorage.setItem("user", JSON.stringify(newUser));
-    } catch (error) {
-      // Re-throw error so caller (login page) can handle it and show messages
-      throw error;
-    } finally {
-      setIsLoading(false);
-    }
+    // Bypass login - always succeed
+    setUser(mockAdminUser);
   };
   
   const register = async (
@@ -113,102 +69,30 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     password: string,
     password_confirmation: string
   ) => {
-    setIsLoading(true);
-    try {
-      const response = await authApi.register(
-        name,
-        email,
-        password,
-        password_confirmation
-      );
-
-      // Check if registration failed based on API response
-      if (response.success === false) {
-        // The API explicitly indicates failure with a message
-        throw new Error(response.message ?? "Registration failed");
-      }
-
-      const { data } = response;
-
-      // Save token (adjust your setToken function if needed)
-      setToken(data.access_token);
-
-      // Create user object from data
-      const newUser = {
-        id: data.user.id.toString(), // convert to string if needed
-        name: data.user.name,
-        email: data.user.email,
-        role: "customer" as UserRole, // Default role
-        eoDetails: undefined, // Default EO details
-      };
-
-      setUser(newUser);
-      localStorage.setItem("user", JSON.stringify(newUser));
-
-      // Set pending verification email
-      setPendingVerificationEmail(data.user.email);
-    } catch (error) {
-      // Re-throw error so caller (RegisterPage) can handle it and show messages
-      throw error;
-    } finally {
-      setIsLoading(false);
-    }
+    // Bypass registration - always succeed
+    setUser(mockAdminUser);
   };
 
   const verifyOtp = async (email: string, otp_code: string) => {
-    setIsLoading(true);
-    try {
-      const response = await authApi.verifyOtp(email, otp_code);
-      const user = response.data.user;
-
-      // Save token
-      setToken(response.token);
-      
-      // Create user object from response
-      const newUser = {
-        id: user.id || Math.random().toString(36).substring(2, 9),
-        name: user.name,
-        email: user.email,
-        role: (user.role as UserRole) || "customer",
-        eoDetails: user.eoDetails,
-      };
-
-      setUser(newUser);
-      localStorage.setItem("user", JSON.stringify(newUser));
-
-      // Clear pending verification
-      setPendingVerificationEmail(null);
-    } finally {
-      setIsLoading(false);
-    }
+    // Bypass OTP verification - always succeed
+    setUser(mockAdminUser);
+    setPendingVerificationEmail(null);
   };
 
   const resendOtp = async (email: string) => {
-    setIsLoading(true);
-    try {
-      await authApi.resendOtp(email);
-    } finally {
-      setIsLoading(false);
-    }
+    // Bypass OTP resend
+    return;
   };
 
   const forgotPassword = async (email: string) => {
-    setIsLoading(true);
-    try {
-      await authApi.forgotPassword(email);
-
-      // Set pending verification email for password reset flow
-      setPendingVerificationEmail(email);
-    } finally {
-      setIsLoading(false);
-    }
+    // Bypass forgot password
+    setPendingVerificationEmail(email);
   };
 
   const updateUserRole = (role: UserRole) => {
     if (user) {
       const updatedUser = { ...user, role };
       setUser(updatedUser);
-      localStorage.setItem("user", JSON.stringify(updatedUser));
     }
   };
 
@@ -220,25 +104,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         role: "event_organizer" as UserRole,
       };
       setUser(updatedUser);
-      localStorage.setItem("user", JSON.stringify(updatedUser));
     }
   };
 
   const logout = async () => {
-    setIsLoading(true);
-    try {
-      const token = getToken();
-      if (token) {
-        await authApi.logout(token);
-      }
-    } catch (error) {
-      console.error("Logout error:", error);
-    } finally {
-      setUser(null);
-      removeToken();
-      localStorage.removeItem("user");
-      setIsLoading(false);
-    }
+    // Bypass logout - keep user logged in
+    return;
   };
 
   return (
@@ -252,7 +123,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         resendOtp,
         forgotPassword,
         logout,
-        isAuthenticated: !!user,
+        isAuthenticated: true, // Always authenticated
         updateUserRole,
         updateEODetails,
         pendingVerificationEmail,
