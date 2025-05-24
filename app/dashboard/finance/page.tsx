@@ -9,7 +9,7 @@ export default function FinancePage() {
       <div className="rounded-lg border bg-card p-8 shadow-sm">
         <div className="flex flex-col items-center justify-center text-center">
           <p className="text-lg font-medium mb-2">This page is under construction</p>
-          <p className="text-muted-foreground">The finance management features will be available soon.</p>
+          <p className="text-muted-foreground">The finance management features will be SOon after.</p>
         </div>
       </div>
     </div>
