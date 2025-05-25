@@ -4,6 +4,7 @@ import type React from "react";
 
 import { createContext, useContext, useEffect, useState } from "react";
 import { authApi, getToken, removeToken, setToken } from "@/lib/api";
+import { RegisterResponse } from "@/types/auth/register";
 
 export type UserRole = "customer" | "event_organizer";
 
@@ -30,7 +31,8 @@ type AuthContextType = {
     name: string,
     email: string,
     password: string,
-    password_confirmation: string
+    password_confirmation: string,
+    is_tnc_accepted: boolean
   ) => Promise<void>;
   verifyOtp: (email: string, otp_code: string) => Promise<void>;
   resendOtp: (email: string) => Promise<void>;
@@ -75,24 +77,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setIsLoading(true);
     try {
       const response = await authApi.login(email, password);
+      // Debug: log the response
+      console.log("Login API response:", response);
 
-      // Check if login failed based on API response
-      if (response.success === false) {
-        // The API explicitly indicates failure with a message
-        throw new Error(response.message ?? "Login failed");
+      if (!response || response.success === false) {
+        throw new Error(response?.message ?? "Login failed");
       }
 
-      const { data } = response
+      const { data } = response;
 
-      // Save token (adjust your setToken function if needed)
+      if (!data || !data.access_token || !data.user) {
+        // Always show backend message if available
+        throw new Error(response?.message ?? "Invalid response from server. Please try again.");
+      }
+
       setToken(data.access_token);
 
-      // Create user object from data
       const newUser = {
-        id: data.user.id.toString(), // convert to string if needed
+        id: data.user.id.toString(),
         name: data.user.name,
         email: data.user.email,
-        // Your API does not return role or eoDetails here, so set defaults or fetch later
         role: "customer" as UserRole,
         eoDetails: undefined,
       };
@@ -100,7 +104,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setUser(newUser);
       localStorage.setItem("user", JSON.stringify(newUser));
     } catch (error) {
-      // Re-throw error so caller (login page) can handle it and show messages
       throw error;
     } finally {
       setIsLoading(false);
@@ -111,59 +114,46 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     name: string,
     email: string,
     password: string,
-    password_confirmation: string
+    password_confirmation: string,
+    is_tnc_accepted: boolean
   ) => {
     setIsLoading(true);
     try {
-      const response = await authApi.register(
+      const response: RegisterResponse = await authApi.register(
         name,
         email,
         password,
-        password_confirmation
+        password_confirmation,
+        is_tnc_accepted
       );
 
-      // Check if registration failed based on API response
       if (response.success === false) {
-        // The API explicitly indicates failure with a message
         throw new Error(response.message ?? "Registration failed");
       }
 
-      const { data } = response;
+      // Store the email for OTP verification
+      setPendingVerificationEmail(response.data.email);
+      // Optionally, handle OTP code if you want to show it (for dev)
+      // const otpCode = response.data.otp_code;
 
-      // Save token (adjust your setToken function if needed)
-      setToken(data.access_token);
-
-      // Create user object from data
-      const newUser = {
-        id: data.user.id.toString(), // convert to string if needed
-        name: data.user.name,
-        email: data.user.email,
-        role: "customer" as UserRole, // Default role
-        eoDetails: undefined, // Default EO details
-      };
-
-      setUser(newUser);
-      localStorage.setItem("user", JSON.stringify(newUser));
-
-      // Set pending verification email
-      setPendingVerificationEmail(data.user.email);
     } catch (error) {
-      // Re-throw error so caller (RegisterPage) can handle it and show messages
       throw error;
     } finally {
       setIsLoading(false);
     }
+    // display console log for the sent value
+   
   };
 
   const verifyOtp = async (email: string, otp_code: string) => {
     setIsLoading(true);
     try {
+      // The response structure is { success, message, data: { token, user } }
       const response = await authApi.verifyOtp(email, otp_code);
-      const user = response.data.user;
+      const { token, user } = response.data;
 
       // Save token
-      setToken(response.token);
-      
+      setToken(token);
       // Create user object from response
       const newUser = {
         id: user.id || Math.random().toString(36).substring(2, 9),

@@ -6,7 +6,7 @@ import { RegisterResponse } from "@/types/auth/register"
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://192.168.1.69:8000/api/"
 
 // Helper function for making API requests
-async function apiRequest<T>(endpoint: string, method = "GET", data?: any, token?: string): Promise<APIResponse<T>> {
+async function apiRequest<T>(endpoint: string, method = "GET", data?: any, token?: string): Promise<any> {
   const url = `${API_BASE_URL}${endpoint}`
 
 
@@ -38,8 +38,8 @@ async function apiRequest<T>(endpoint: string, method = "GET", data?: any, token
       const responseData = await response.json()
 
       if (!response.ok) {
-        // If the server returned an error with a message
-        throw new Error(responseData.message || "An error occurred")
+        // Return the error response as-is, so the frontend can handle it
+        return responseData as APIResponse<T>
       }
 
       return responseData as APIResponse<T>
@@ -132,8 +132,23 @@ export const authApi = {
     return apiRequest<LoginResponse>("/login", "POST", { email, password })
   },
 
-  register: (name: string, email: string, password: string, password_confirmation: string) => {
-    return apiRequest<RegisterResponse>("/register", "POST", { name, email, password, password_confirmation})
+  register: (
+    name: string,
+    email: string,
+    password: string,
+    password_confirmation: string,
+    is_tnc_accepted: boolean
+  ) => {
+    return apiRequest<{
+      email: string;
+      otp_code: string;
+    }>("/register", "POST", {
+      name,
+      email,
+      password,
+      password_confirmation,
+      is_tnc_accepted
+    })
   },
 
   verifyOtp: (email: string, otp_code: string) => {
