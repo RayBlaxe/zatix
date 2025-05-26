@@ -27,11 +27,22 @@ export default function EORegistrationPage() {
     email: user?.email || "",
     phone: "",
     address: "",
+    legalType: "individual", // 'individual' or 'badan_hukum'
+    ktpFile: null,
+    npwpFile: null,
+    nibFile: null,
+    nomorKtp: "",
+    namaKtp: "",
+    alamatKtp: "",
   })
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target
-    setFormData((prev) => ({ ...prev, [name]: value }))
+    const { name, value, type } = e.target
+    if (type === "file") {
+      setFormData((prev) => ({ ...prev, [name]: (e.target as HTMLInputElement).files?.[0] || null }))
+    } else {
+      setFormData((prev) => ({ ...prev, [name]: value }))
+    }
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -176,6 +187,62 @@ export default function EORegistrationPage() {
                       required
                     />
                   </div>
+
+                  {/* Legal Section */}
+                  <div className="space-y-2">
+                    <Label>Legal Type *</Label>
+                    <div className="flex gap-4">
+                      <label className="flex items-center gap-2">
+                        <input
+                          type="radio"
+                          name="legalType"
+                          value="individual"
+                          checked={formData.legalType === "individual"}
+                          onChange={handleChange}
+                        />
+                        Individual
+                      </label>
+                      <label className="flex items-center gap-2">
+                        <input
+                          type="radio"
+                          name="legalType"
+                          value="badan_hukum"
+                          checked={formData.legalType === "badan_hukum"}
+                          onChange={handleChange}
+                        />
+                        Badan Hukum
+                      </label>
+                    </div>
+                  </div>
+
+                  {/* Legal Details */}
+                  {formData.legalType === "individual" ? (
+                    <div className="space-y-2 border rounded-md p-4">
+                      <Label>KTP File *</Label>
+                      <Input type="file" name="ktpFile" accept="image/*,.pdf" onChange={handleChange} required />
+                      <Label>NPWP File *</Label>
+                      <Input type="file" name="npwpFile" accept="image/*,.pdf" onChange={handleChange} required />
+                      <Label htmlFor="nomorKtp">Nomor KTP *</Label>
+                      <Input id="nomorKtp" name="nomorKtp" value={formData.nomorKtp} onChange={handleChange} required />
+                      <Label htmlFor="namaKtp">Nama KTP *</Label>
+                      <Input id="namaKtp" name="namaKtp" value={formData.namaKtp} onChange={handleChange} required />
+                      <Label htmlFor="alamatKtp">Alamat KTP *</Label>
+                      <Textarea id="alamatKtp" name="alamatKtp" value={formData.alamatKtp} onChange={handleChange} required />
+                    </div>
+                  ) : (
+                    <div className="space-y-2 border rounded-md p-4">
+                      <Label>NPWP File *</Label>
+                      <Input type="file" name="npwpFile" accept="image/*,.pdf" onChange={handleChange} required />
+                      <Label>NIB File *</Label>
+                      <Input type="file" name="nibFile" accept="image/*,.pdf" onChange={handleChange} required />
+                      <Label htmlFor="nomorKtp">Nomor KTP *</Label>
+                      <Input id="nomorKtp" name="nomorKtp" value={formData.nomorKtp} onChange={handleChange} required />
+                      <Label htmlFor="namaKtp">Nama KTP *</Label>
+                      <Input id="namaKtp" name="namaKtp" value={formData.namaKtp} onChange={handleChange} required />
+                      <Label htmlFor="alamatKtp">Alamat KTP *</Label>
+                      <Textarea id="alamatKtp" name="alamatKtp" value={formData.alamatKtp} onChange={handleChange} required />
+                    </div>
+                  )}
                 </CardContent>
                 <CardFooter>
                   <div className="flex w-full justify-between">

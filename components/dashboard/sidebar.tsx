@@ -45,12 +45,6 @@ export function DashboardSidebar() {
       href: "/dashboard/roles",
       active: pathname === "/dashboard/roles",
     },
-    {
-      label: "Ask for a Demo",
-      icon: HelpCircle,
-      href: "/dashboard/demo",
-      active: pathname === "/dashboard/demo",
-    },
   ]
 
   return (
