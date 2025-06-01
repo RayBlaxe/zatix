@@ -4,16 +4,31 @@ import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
-import { BarChart3, CalendarDays, HelpCircle, LayoutDashboard, LogOut, Settings, Users } from "lucide-react"
+import {
+  BarChart3,
+  CalendarDays,
+  HelpCircle,
+  LayoutDashboard,
+  LogOut,
+  Settings,
+  Users,
+  ChevronDown,
+  ChevronRight,
+  FileText,
+  Home,
+  DollarSign,
+} from "lucide-react"
 import { useAuth } from "@/hooks/use-auth"
 import { useRouter } from "next/navigation"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import { useState } from "react"
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
 
 export function DashboardSidebar() {
   const pathname = usePathname()
-  const { user, logout,  } = useAuth()
+  const { user, logout } = useAuth()
   const router = useRouter()
-  
+  const [contentManagementOpen, setContentManagementOpen] = useState(pathname.startsWith("/dashboard/content"))
 
   const handleLogout = () => {
     logout()
@@ -47,12 +62,33 @@ export function DashboardSidebar() {
     },
   ]
 
+  const contentManagementRoutes = [
+    {
+      label: "Home",
+      icon: Home,
+      href: "/dashboard/content/home",
+      active: pathname === "/dashboard/content/home",
+    },
+    {
+      label: "Pricing",
+      icon: DollarSign,
+      href: "/dashboard/content/pricing",
+      active: pathname === "/dashboard/content/pricing",
+    },
+    {
+      label: "Articles",
+      icon: FileText,
+      href: "/dashboard/content/articles",
+      active: pathname === "/dashboard/content/articles" || pathname.startsWith("/dashboard/content/articles/"),
+    },
+  ]
+
   return (
     <div className="flex h-full flex-col border-r bg-background">
       <div className="flex h-14 items-center border-b px-4">
         <Link href="/" className="flex items-center gap-2">
           <CalendarDays className="size-5" />
-          <span className="font-bold">ZaTix</span>
+          <span className="font-bold">EventHub</span>
         </Link>
       </div>
       <div className="flex-1 overflow-auto py-2">
@@ -70,6 +106,40 @@ export function DashboardSidebar() {
               {route.label}
             </Link>
           ))}
+
+          <Collapsible open={contentManagementOpen} onOpenChange={setContentManagementOpen}>
+            <CollapsibleTrigger asChild>
+              <button
+                className={cn(
+                  "flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm font-medium hover:bg-accent hover:text-accent-foreground",
+                  pathname.startsWith("/dashboard/content") ? "bg-accent text-accent-foreground" : "transparent",
+                )}
+              >
+                <FileText className="size-4" />
+                Content Management
+                {contentManagementOpen ? (
+                  <ChevronDown className="ml-auto size-4" />
+                ) : (
+                  <ChevronRight className="ml-auto size-4" />
+                )}
+              </button>
+            </CollapsibleTrigger>
+            <CollapsibleContent className="space-y-1">
+              {contentManagementRoutes.map((route) => (
+                <Link
+                  key={route.href}
+                  href={route.href}
+                  className={cn(
+                    "flex items-center gap-3 rounded-md px-3 py-2 ml-4 text-sm font-medium hover:bg-accent hover:text-accent-foreground",
+                    route.active ? "bg-accent text-accent-foreground" : "transparent",
+                  )}
+                >
+                  <route.icon className="size-3" />
+                  {route.label}
+                </Link>
+              ))}
+            </CollapsibleContent>
+          </Collapsible>
         </nav>
       </div>
       <div className="mt-auto border-t p-4">
