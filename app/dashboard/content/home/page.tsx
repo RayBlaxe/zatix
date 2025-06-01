@@ -15,6 +15,7 @@ export default function HomeContentPage() {
       </div>
 
       <Tabs defaultValue="carousel" className="space-y-4">
+        {/* carousel, featured events, event categories */}
         <TabsList>
           <TabsTrigger value="carousel">Carousel</TabsTrigger>
           <TabsTrigger value="featured">Featured Events</TabsTrigger>
