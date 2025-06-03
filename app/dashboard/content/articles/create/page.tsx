@@ -88,7 +88,7 @@ export default function CreateArticlePage() {
           <Card>
             <CardHeader>
               <CardTitle>Article Content</CardTitle>
-              <CardDescription>Write your article content here</CardDescription>
+              <CardDescription>Write your articles content here</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               {error && (
