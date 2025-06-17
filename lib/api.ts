@@ -3,7 +3,7 @@ import { LoginResponse } from "@/types/auth/login"
 import { RegisterResponse } from "@/types/auth/register"
 
 // Base API URL - use environment variable or fallback for development
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://192.168.1.69:8000/api/"
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "https://zatix.zamanweb.com/api/"
 
 // Helper function for making API requests
 async function apiRequest<T>(endpoint: string, method = "GET", data?: any, token?: string): Promise<any> {
@@ -71,12 +71,16 @@ function handleMockResponse<T>(endpoint: string, method: string, data?: any): T 
   // Login mock response
   if (endpoint === "/login" && method === "POST") {
     return {
-      token: "mock_token_12345",
-      user: {
-        id: "user_123",
-        name: data?.email?.split("@")[0] || "Demo User",
-        email: data?.email || "user@example.com",
-        role: "customer",
+      success: true,
+      message: "Login successful",
+      data: {
+        access_token: "mock_token_12345",
+        user: {
+          id: "user_123",
+          name: data?.email?.split("@")[0] || "Demo User",
+          email: data?.email || "user@example.com",
+          role: "customer",
+        },
       },
     } as unknown as T
   }
@@ -84,19 +88,28 @@ function handleMockResponse<T>(endpoint: string, method: string, data?: any): T 
   // Register mock response
   if (endpoint === "/register" && method === "POST") {
     return {
+      success: true,
       message: "Registration successful. Please verify your email.",
+      data: {
+        email: data?.email || "user@example.com",
+        otp_code: "123456",
+      },
     } as unknown as T
   }
 
   // Verify OTP mock response
   if (endpoint === "/verify-otp" && method === "POST") {
     return {
-      token: "mock_token_12345",
-      user: {
-        id: "user_123",
-        name: data?.email?.split("@")[0] || "Demo User",
-        email: data?.email || "user@example.com",
-        role: "customer",
+      success: true,
+      message: "OTP verified successfully",
+      data: {
+        token: "mock_token_12345",
+        user: {
+          id: "user_123",
+          name: data?.email?.split("@")[0] || "Demo User",
+          email: data?.email || "user@example.com",
+          role: "customer",
+        },
       },
     } as unknown as T
   }
@@ -104,6 +117,7 @@ function handleMockResponse<T>(endpoint: string, method: string, data?: any): T 
   // Resend OTP mock response
   if (endpoint === "/resend-otp" && method === "POST") {
     return {
+      success: true,
       message: "OTP resent successfully.",
     } as unknown as T
   }
@@ -111,6 +125,7 @@ function handleMockResponse<T>(endpoint: string, method: string, data?: any): T 
   // Forgot password mock response
   if (endpoint === "/forgot-password" && method === "POST") {
     return {
+      success: true,
       message: "Password reset instructions sent to your email.",
     } as unknown as T
   }
@@ -118,6 +133,7 @@ function handleMockResponse<T>(endpoint: string, method: string, data?: any): T 
   // Logout mock response
   if (endpoint === "/logout" && method === "POST") {
     return {
+      success: true,
       message: "Logged out successfully.",
     } as unknown as T
   }
