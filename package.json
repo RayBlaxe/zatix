@@ -1,10 +1,10 @@
 {
-  "name": "my-v0-project",
+  "name": "Zatix-development",
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
-    "build": "next build",
+    "dev": "next dev --turbopack",
+    "build": "next build --turbopack",
     "start": "next start",
     "lint": "next lint"
   },
