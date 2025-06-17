@@ -55,7 +55,7 @@ async function apiRequest<T>(endpoint: string, method = "GET", data?: any, token
     console.error("API request error:", error)
     // For demo/development purposes, simulate successful responses
     // This helps when the actual API is not available
-    if (process.env.NODE_ENV !== "production") {
+    if (process.env.NODE_ENV !== "production" && process.env.NEXT_PUBLIC_USE_MOCKS !== "false") {
       return handleMockResponse<T>(endpoint, method, data)
     }
     throw error
@@ -70,19 +70,39 @@ function handleMockResponse<T>(endpoint: string, method: string, data?: any): T 
 
   // Login mock response
   if (endpoint === "/login" && method === "POST") {
-    return {
-      success: true,
-      message: "Login successful",
-      data: {
-        access_token: "mock_token_12345",
-        user: {
-          id: "user_123",
-          name: data?.email?.split("@")[0] || "Demo User",
-          email: data?.email || "user@example.com",
-          role: "customer",
+    // Define valid test credentials for development
+    const validCredentials = [
+      { email: "admin@zatix.com", password: "admin123", role: "admin" },
+      { email: "organizer@zatix.com", password: "organizer123", role: "organizer" },
+      { email: "user@zatix.com", password: "user123", role: "customer" },
+      { email: "test@test.com", password: "test123", role: "customer" }
+    ]
+    
+    const credential = validCredentials.find(
+      cred => cred.email === data?.email && cred.password === data?.password
+    )
+    
+    if (credential) {
+      return {
+        success: true,
+        message: "Login successful",
+        data: {
+          access_token: "mock_token_12345",
+          user: {
+            id: "user_123",
+            name: credential.email.split("@")[0],
+            email: credential.email,
+            role: credential.role,
+          },
         },
-      },
-    } as unknown as T
+      } as unknown as T
+    } else {
+      return {
+        success: false,
+        message: "Invalid email or password",
+        data: null,
+      } as unknown as T
+    }
   }
 
   // Register mock response
