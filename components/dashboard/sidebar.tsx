@@ -24,7 +24,11 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { useState } from "react"
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
 
-export function DashboardSidebar() {
+interface DashboardSidebarProps {
+  onNavigate?: () => void
+}
+
+export function DashboardSidebar({ onNavigate }: DashboardSidebarProps = {}) {
   const pathname = usePathname()
   const { user, logout } = useAuth()
   const router = useRouter()
