@@ -160,7 +160,7 @@ function handleMockResponse<T>(endpoint: string, method: string, data?: any): T 
   }
 
   // Terms and conditions mock response
-  if (endpoint === "/termsncondtition" && method === "GET") {
+  if (endpoint === "/tnc" && method === "GET") {
     return {
       success: true,
       message: "Terms and conditions retrieved successfully",
