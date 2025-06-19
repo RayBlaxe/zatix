@@ -101,6 +101,7 @@ export function DashboardSidebar({ onNavigate }: DashboardSidebarProps = {}) {
             <Link
               key={route.href}
               href={route.href}
+              onClick={onNavigate}
               className={cn(
                 "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium hover:bg-accent hover:text-accent-foreground",
                 route.active ? "bg-accent text-accent-foreground" : "transparent",
@@ -133,6 +134,7 @@ export function DashboardSidebar({ onNavigate }: DashboardSidebarProps = {}) {
                 <Link
                   key={route.href}
                   href={route.href}
+                  onClick={onNavigate}
                   className={cn(
                     "flex items-center gap-3 rounded-md px-3 py-2 ml-4 text-sm font-medium hover:bg-accent hover:text-accent-foreground",
                     route.active ? "bg-accent text-accent-foreground" : "transparent",
@@ -158,7 +160,7 @@ export function DashboardSidebar({ onNavigate }: DashboardSidebarProps = {}) {
         </div>
         <div className="grid grid-cols-2 gap-2">
           <Button variant="outline" size="sm" asChild>
-            <Link href="/settings">
+            <Link href="/settings" onClick={onNavigate}>
               <Settings className="me-2 size-4" />
               Settings
             </Link>

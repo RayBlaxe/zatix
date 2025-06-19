@@ -104,7 +104,7 @@ Note: Multiple package managers are supported (npm, pnpm, bun) - use the appropr
 
 ## API Integration
 
-- **Base URL**: `http://192.168.1.69:8000/api/` (configurable via `NEXT_PUBLIC_API_URL`)
+- **Base URL**: `http://api.zatix.id/api` (configurable via `NEXT_PUBLIC_API_URL`)
 - **Authentication**: Bearer token stored in localStorage
 - **Mock responses**: Automatic fallback in development when API unavailable
 - **Error handling**: Typed API responses with proper error states
