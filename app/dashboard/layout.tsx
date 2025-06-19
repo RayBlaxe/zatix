@@ -6,7 +6,7 @@ import { ProtectedRoute } from "@/components/protected-route"
 import { DashboardSidebar } from "@/components/dashboard/sidebar"
 import { Button } from "@/components/ui/button"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
-import { Menu, CalendarDays } from "lucide-react"
+import { Menu, Ticket } from "lucide-react"
 import Link from "next/link"
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
@@ -36,8 +36,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             </Sheet>
             
             <Link href="/" className="flex items-center gap-2">
-              <CalendarDays className="size-5" />
-              <span className="font-bold">EventHub</span>
+              <Ticket className="size-5" />
+              <span className="font-bold">ZaTix</span>
             </Link>
           </div>
           

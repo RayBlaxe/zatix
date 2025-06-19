@@ -7,7 +7,6 @@ import { Button } from "@/components/ui/button"
 import {
   BarChart3,
   CalendarDays,
-  HelpCircle,
   LayoutDashboard,
   LogOut,
   Settings,
@@ -17,6 +16,7 @@ import {
   FileText,
   Home,
   DollarSign,
+  Ticket,
 } from "lucide-react"
 import { useAuth } from "@/hooks/use-auth"
 import { useRouter } from "next/navigation"
@@ -91,8 +91,8 @@ export function DashboardSidebar({ onNavigate }: DashboardSidebarProps = {}) {
     <div className="flex h-full flex-col border-r bg-background">
       <div className="flex h-14 items-center border-b px-4">
         <Link href="/" className="flex items-center gap-2">
-          <CalendarDays className="size-5" />
-          <span className="font-bold">EventHub</span>
+          <Ticket className="size-5" />
+          <span className="font-bold">ZaTix</span>
         </Link>
       </div>
       <div className="flex-1 overflow-auto py-2">
