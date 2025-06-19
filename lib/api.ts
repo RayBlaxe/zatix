@@ -280,6 +280,6 @@ export function removeToken(): void {
 // Terms and Conditions API functions
 export const termsApi = {
   getTermsAndConditions: () => {
-    return apiRequest<TermsAndConditions>("/termsncondtition", "GET")
+    return apiRequest<TermsAndConditions>("/tnc", "GET")
   }
 }
