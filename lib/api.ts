@@ -1,6 +1,7 @@
 import { APIResponse } from "@/types/api"
 import { LoginResponse } from "@/types/auth/login"
 import { RegisterResponse } from "@/types/auth/register"
+import { TermsAndConditions } from "@/types/terms"
 
 // Base API URL - use environment variable or fallback for development
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "https://zatix.zamanweb.com/api/"
@@ -158,6 +159,56 @@ function handleMockResponse<T>(endpoint: string, method: string, data?: any): T 
     } as unknown as T
   }
 
+  // Terms and conditions mock response
+  if (endpoint === "/termsncondtition" && method === "GET") {
+    return {
+      success: true,
+      message: "Terms and conditions retrieved successfully",
+      data: {
+        id: "tnc_1",
+        title: "Event Organizer Terms and Conditions",
+        content: `<h3>1. Introduction</h3>
+<p>Welcome to ZaTix. These Terms and Conditions govern your use of our platform and services as an Event Organizer. By accessing or using our services, you agree to be bound by these Terms.</p>
+
+<h3>2. Event Creation Process</h3>
+<p>Our platform requires event organizers to go through a verification process before gaining full access to create events. This process includes:</p>
+<ul>
+<li>Submitting basic information about your organization and event</li>
+<li>Scheduling a pitching session with our team</li>
+<li>Demonstrating your event concept during the pitching session</li>
+<li>Receiving a demo account to test our platform</li>
+<li>Upon satisfaction and approval, receiving full access to our platform</li>
+</ul>
+
+<h3>3. Account Usage</h3>
+<p>You are responsible for maintaining the confidentiality of your account information and for all activities that occur under your account. You agree to notify us immediately of any unauthorized use of your account.</p>
+
+<h3>4. Content Guidelines</h3>
+<p>All events created on our platform must comply with our content guidelines. Events that promote illegal activities, hate speech, or violate any applicable laws are strictly prohibited.</p>
+
+<h3>5. Fees and Payments</h3>
+<p>Depending on your subscription plan, fees may apply for using our platform. All fees are non-refundable unless otherwise specified in our refund policy.</p>
+
+<h3>6. Free Account Limitations</h3>
+<p>Free accounts are limited to creating 1 event with a maximum of 10 participants. To create more events or increase participant limits, you will need to upgrade to a paid plan.</p>
+
+<h3>7. Termination</h3>
+<p>We reserve the right to terminate or suspend your account at any time for violations of these Terms or for any other reason at our sole discretion.</p>
+
+<h3>8. Limitation of Liability</h3>
+<p>To the maximum extent permitted by law, we shall not be liable for any indirect, incidental, special, consequential, or punitive damages, or any loss of profits or revenues.</p>
+
+<h3>9. Changes to Terms</h3>
+<p>We may modify these Terms at any time. Your continued use of our platform after such changes constitutes your acceptance of the new Terms.</p>
+
+<h3>10. Contact Information</h3>
+<p>If you have any questions about these Terms, please contact us at support@zatix.com.</p>`,
+        created_at: "2024-01-01T00:00:00Z",
+        updated_at: "2024-01-01T00:00:00Z"
+      }
+    } as unknown as T
+  }
+
   // Default mock response
   return {} as T
 }
@@ -223,5 +274,12 @@ export function setToken(token: string): void {
 export function removeToken(): void {
   if (typeof window !== "undefined") {
     localStorage.removeItem("token")
+  }
+}
+
+// Terms and Conditions API functions
+export const termsApi = {
+  getTermsAndConditions: () => {
+    return apiRequest<TermsAndConditions>("/termsncondtition", "GET")
   }
 }
