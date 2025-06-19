@@ -9,7 +9,7 @@ import { ScrollArea } from "@/components/ui/scroll-area"
 import { Header } from "@/components/header"
 import { useAuth } from "@/hooks/use-auth"
 import { termsApi } from "@/lib/api"
-import { TermsAndConditions } from "@/types/terms"
+import type { TermsAndConditions } from "@/types/terms"
 
 export default function TermsAndConditions() {
   const router = useRouter()
