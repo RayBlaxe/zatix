@@ -40,7 +40,7 @@ export function Header() {
           <div className="flex items-center gap-2">
             {isAuthenticated ? (
               <>
-                <Link href="/terms-and-conditions">
+                <Link href="/terms-and-conditions?for=event">
                   <Button>
                     <Plus className="me-2 size-4" />
                     Create Event

@@ -1,7 +1,7 @@
 import { APIResponse } from "@/types/api"
 import { LoginResponse } from "@/types/auth/login"
 import { RegisterResponse } from "@/types/auth/register"
-import { TermsAndConditions } from "@/types/terms"
+import { TermsAndConditions, TNCListResponse, TNCEventResponse, TNCAcceptResponse } from "@/types/terms"
 
 // Base API URL - use environment variable or fallback for development
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "https://zatix.zamanweb.com/api/"
@@ -159,53 +159,113 @@ function handleMockResponse<T>(endpoint: string, method: string, data?: any): T 
     } as unknown as T
   }
 
-  // Terms and conditions mock response
+  // Super Admin TNC list mock response
   if (endpoint === "/tnc" && method === "GET") {
+    return [
+      {
+        id: 1,
+        content: `
+                    <p><strong>1. Introduction</strong><br>
+                    Welcome to EventHub. These Terms and Conditions govern your use of our platform and services as an Event Organizer. By accessing or using our services, you agree to be bound by these Terms.</p>
+
+                    <p><strong>2. Event Creation Process</strong><br>
+                    Our platform requires event organizers to go through a verification process before gaining full access to create events. This process includes:</p>
+
+                    <ul>
+                        <li>Submitting basic information about your organization and event</li>
+                        <li>Scheduling a pitching session with our team</li>
+                        <li>Demonstrating your event concept during the pitching session</li>
+                        <li>Receiving a demo account to test our platform</li>
+                    </ul>
+                `,
+        type: "event",
+        created_at: null,
+        updated_at: null
+      },
+      {
+        id: 2,
+        content: `
+                    <p><strong>1. Introduction</strong><br>
+                    Welcome to ZaTix. These Terms and Conditions govern your use of our platform and services as an Event Organizer. By accessing or using our services, you agree to be bound by these Terms.</p>
+
+                    <p><strong>2. Event Creation Process</strong><br>
+                    Our platform requires event organizers to go through a verification process before gaining full access to create events. This process includes:</p>
+                    <ul>
+                        <li>Submitting basic information about your organization and event</li>
+                        <li>Scheduling a pitching session with our team</li>
+                        <li>Demonstrating your event concept during the pitching session</li>
+                        <li>Receiving a demo account to test our platform</li>
+                        <li>Upon satisfaction and approval, receiving full access to our platform</li>
+                    </ul>
+
+                    <p><strong>3. Account Usage</strong><br>
+                    You are responsible for maintaining the confidentiality of your account information and for all activities that occur under your account. You agree to notify us immediately of any unauthorized use of your account.</p>
+
+                    <p><strong>4. Content Guidelines</strong><br>
+                    All events created on our platform must comply with our content guidelines. Events that promote illegal activities, hate speech, or violate any applicable laws are strictly prohibited.</p>
+
+                    <p><strong>5. Fees and Payments</strong><br>
+                    Depending on your subscription plan, fees may apply for using our platform. All fees are non-refundable unless otherwise specified in our refund policy.</p>
+
+                    <p><strong>6. Free Account Limitations</strong><br>
+                    Free accounts are limited to creating 1 event with a maximum of 10 participants. To create more events or increase participant limits, you will need to upgrade to a paid plan.</p>
+
+                    <p><strong>7. Termination</strong><br>
+                    We reserve the right to terminate or suspend your account at any time for violations of these Terms or for any other reason at our sole discretion.</p>
+
+                    <p><strong>8. Limitation of Liability</strong><br>
+                    To the maximum extent permitted by law, we shall not be liable for any indirect, incidental, special, consequential, or punitive damages, or any loss of profits or revenues.</p>
+
+                    <p><strong>9. Changes to Terms</strong><br>
+                    We may modify these Terms at any time. Your continued use of our platform after such changes constitutes your acceptance of the new Terms.</p>
+
+                    <p><strong>10. Contact Information</strong><br>
+                    If you have any questions about these Terms, please contact us at <a href="mailto:support@zatix.com">support@zatix.com</a>.</p>
+                    `,
+        type: "general",
+        created_at: null,
+        updated_at: null
+      }
+    ] as unknown as T
+  }
+
+  // EO Owner TNC events mock response
+  if (endpoint === "/tnc-events" && method === "GET") {
     return {
       success: true,
-      message: "Terms and conditions retrieved successfully",
+      message: "Terms and conditions data retrieved successfully",
       data: {
-        id: "tnc_1",
-        title: "Event Organizer Terms and Conditions",
-        content: `<h3>1. Introduction</h3>
-<p>Welcome to ZaTix. These Terms and Conditions govern your use of our platform and services as an Event Organizer. By accessing or using our services, you agree to be bound by these Terms.</p>
+        "0": {
+          id: 1,
+          content: `
+                    <p><strong>1. Introduction</strong><br>
+                    Welcome to EventHub. These Terms and Conditions govern your use of our platform and services as an Event Organizer. By accessing or using our services, you agree to be bound by these Terms.</p>
 
-<h3>2. Event Creation Process</h3>
-<p>Our platform requires event organizers to go through a verification process before gaining full access to create events. This process includes:</p>
-<ul>
-<li>Submitting basic information about your organization and event</li>
-<li>Scheduling a pitching session with our team</li>
-<li>Demonstrating your event concept during the pitching session</li>
-<li>Receiving a demo account to test our platform</li>
-<li>Upon satisfaction and approval, receiving full access to our platform</li>
-</ul>
+                    <p><strong>2. Event Creation Process</strong><br>
+                    Our platform requires event organizers to go through a verification process before gaining full access to create events. This process includes:</p>
 
-<h3>3. Account Usage</h3>
-<p>You are responsible for maintaining the confidentiality of your account information and for all activities that occur under your account. You agree to notify us immediately of any unauthorized use of your account.</p>
-
-<h3>4. Content Guidelines</h3>
-<p>All events created on our platform must comply with our content guidelines. Events that promote illegal activities, hate speech, or violate any applicable laws are strictly prohibited.</p>
-
-<h3>5. Fees and Payments</h3>
-<p>Depending on your subscription plan, fees may apply for using our platform. All fees are non-refundable unless otherwise specified in our refund policy.</p>
-
-<h3>6. Free Account Limitations</h3>
-<p>Free accounts are limited to creating 1 event with a maximum of 10 participants. To create more events or increase participant limits, you will need to upgrade to a paid plan.</p>
-
-<h3>7. Termination</h3>
-<p>We reserve the right to terminate or suspend your account at any time for violations of these Terms or for any other reason at our sole discretion.</p>
-
-<h3>8. Limitation of Liability</h3>
-<p>To the maximum extent permitted by law, we shall not be liable for any indirect, incidental, special, consequential, or punitive damages, or any loss of profits or revenues.</p>
-
-<h3>9. Changes to Terms</h3>
-<p>We may modify these Terms at any time. Your continued use of our platform after such changes constitutes your acceptance of the new Terms.</p>
-
-<h3>10. Contact Information</h3>
-<p>If you have any questions about these Terms, please contact us at support@zatix.com.</p>`,
-        created_at: "2024-01-01T00:00:00Z",
-        updated_at: "2024-01-01T00:00:00Z"
+                    <ul>
+                        <li>Submitting basic information about your organization and event</li>
+                        <li>Scheduling a pitching session with our team</li>
+                        <li>Demonstrating your event concept during the pitching session</li>
+                        <li>Receiving a demo account to test our platform</li>
+                    </ul>
+                `,
+          type: "event",
+          created_at: null,
+          updated_at: null
+        },
+        already_accepted: false
       }
+    } as unknown as T
+  }
+
+  // TNC acceptance mock response
+  if (endpoint === "/tnc-events/accept" && method === "POST") {
+    return {
+      success: true,
+      message: "TNC event successfully approved",
+      data: []
     } as unknown as T
   }
 
@@ -281,5 +341,23 @@ export function removeToken(): void {
 export const termsApi = {
   getTermsAndConditions: () => {
     return apiRequest<TermsAndConditions>("/tnc", "GET")
+  }
+}
+
+// TNC API functions for Super Admin and EO Owner
+export const tncApi = {
+  // Super Admin - Get all TNC items
+  getTNCList: (token: string) => {
+    return apiRequest<TNCListResponse>("/tnc", "GET", null, token)
+  },
+
+  // EO Owner - Get TNC for events with acceptance status
+  getTNCEvents: (token: string) => {
+    return apiRequest<TNCEventResponse>("/tnc-events", "GET", null, token)
+  },
+
+  // EO Owner - Accept TNC for events
+  acceptTNCEvents: (token: string) => {
+    return apiRequest<TNCAcceptResponse>("/tnc-events/accept", "POST", {}, token)
   }
 }

@@ -36,6 +36,7 @@ Note: Multiple package managers are supported (npm, pnpm, bun) - use the appropr
 - **Dashboard** with collapsible sidebar navigation for event organizers
 - **Content management** system for home, pricing, and articles
 - **Event creation wizard** for guided event setup
+- **Terms & Conditions system** with acceptance workflow for event creation
 
 ### File Structure
 ```
@@ -49,6 +50,7 @@ Note: Multiple package managers are supported (npm, pnpm, bun) - use the appropr
 │   ├── events/                # Event management with creation
 │   ├── finance/               # Financial management
 │   ├── roles/                 # Role and permissions management
+│   ├── tnc/                   # Terms & Conditions management (Super Admin)
 │   ├── layout.tsx             # Dashboard layout with sidebar
 │   └── page.tsx               # Dashboard home
 ├── eo-registration/           # Event organizer registration
@@ -63,7 +65,8 @@ Note: Multiple package managers are supported (npm, pnpm, bun) - use the appropr
 
 /components/
 ├── dashboard/
-│   └── sidebar.tsx            # Collapsible dashboard sidebar
+│   ├── sidebar.tsx            # Collapsible dashboard sidebar
+│   └── tnc-management.tsx     # TNC management component for Super Admin
 ├── content/                   # Content management components
 │   ├── carousel-manager.tsx
 │   ├── event-categories-manager.tsx
@@ -72,6 +75,7 @@ Note: Multiple package managers are supported (npm, pnpm, bun) - use the appropr
 ├── header.tsx                 # Main header component
 ├── protected-route.tsx        # Route protection wrapper
 ├── theme-provider.tsx         # Theme context provider
+├── tnc-acceptance-modal.tsx   # TNC acceptance modal for EO owners
 └── user-account-nav.tsx       # User account navigation
 
 /hooks/
@@ -87,7 +91,7 @@ Note: Multiple package managers are supported (npm, pnpm, bun) - use the appropr
 ├── api/                       # API type definitions
 ├── auth/                      # Authentication types
 ├── api.ts                     # General API types
-└── terms.ts                   # Terms and conditions types
+└── terms.ts                   # Terms and conditions types (TNC system)
 
 /styles/
 └── globals.css                # Global styles with CSS variables
@@ -130,11 +134,44 @@ The app uses a complete authentication system:
 ## Dashboard Features
 
 - **Responsive sidebar**: Collapsible navigation with content management
-- **Event management**: Full CRUD operations for events
+- **Event management**: Full CRUD operations for events with TNC acceptance workflow
 - **Content management**: Home page, pricing, and articles management
 - **Finance tracking**: Revenue and transaction management
 - **Role management**: User permissions and access control
+- **Terms & Conditions management**: Super Admin TNC creation and management
 - **Demo functionality**: Preview and testing capabilities
+
+## Terms & Conditions System
+
+The platform implements a comprehensive TNC system with role-based access:
+
+### Super Admin Features
+- **TNC Management Dashboard** (`/dashboard/tnc`): View, create, edit, and delete TNC items
+- **TNC Types**: Support for "event" and "general" TNC categories
+- **API Endpoints**: 
+  - `GET /tnc` - Retrieve all TNC items with authentication
+
+### Event Organizer Features
+- **Pre-Event Creation TNC**: Modal popup requiring acceptance before event creation
+- **TNC Acceptance Workflow**: 
+  1. EO Owner clicks "Create Event"
+  2. System checks if TNC has been accepted
+  3. If not accepted, shows TNC modal with full content
+  4. EO Owner must check acceptance checkbox
+  5. System records acceptance via API
+  6. Event creation form becomes available
+- **API Endpoints**:
+  - `GET /tnc-events` - Get event-specific TNC with acceptance status
+  - `POST /tnc-events/accept` - Record TNC acceptance
+
+### Implementation Details
+- **TNC Types**: `TNCItem`, `TNCListResponse`, `TNCEventResponse`, `TNCAcceptResponse`
+- **API Integration**: Full mock responses for development environment
+- **Components**:
+  - `TNCAcceptanceModal`: Modal for EO owner TNC acceptance
+  - `TNCManagement`: Super Admin dashboard component
+- **Authentication**: Bearer token authentication for all TNC endpoints
+- **State Management**: React hooks for TNC acceptance status tracking
 
 ## Development Notes
 

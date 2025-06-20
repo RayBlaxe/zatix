@@ -17,6 +17,7 @@ import {
   Home,
   DollarSign,
   Ticket,
+  Shield,
 } from "lucide-react"
 import { useAuth } from "@/hooks/use-auth"
 import { useRouter } from "next/navigation"
@@ -63,6 +64,12 @@ export function DashboardSidebar({ onNavigate }: DashboardSidebarProps = {}) {
       icon: Users,
       href: "/dashboard/roles",
       active: pathname === "/dashboard/roles",
+    },
+    {
+      label: "Terms & Conditions",
+      icon: Shield,
+      href: "/dashboard/tnc",
+      active: pathname === "/dashboard/tnc",
     },
   ]
 
