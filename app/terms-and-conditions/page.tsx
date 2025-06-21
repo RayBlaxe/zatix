@@ -54,7 +54,7 @@ export default function TermsAndConditions() {
           }
         }
       } catch (err) {
-        setError("Failed to load terms and conditions")
+        setError("Failed to showed up the terms and conditions")
         console.error("Error fetching terms:", err)
       } finally {
         setLoading(false)
