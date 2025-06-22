@@ -11,7 +11,7 @@ export default function EventsPage() {
           <h1 className="text-3xl font-bold tracking-tight">Events</h1>
           <p className="text-muted-foreground">Manage your events and create new ones.</p>
         </div>
-        <Link href="/dashboard/events/create">
+        <Link href="/terms-and-conditions?for=event">
           <Button>
             <Plus className="me-2 size-4" />
             Create Event
@@ -34,7 +34,7 @@ export default function EventsPage() {
             </div>
           </CardContent>
           <CardFooter>
-            <Link href="/dashboard/events/create" className="w-full">
+            <Link href="/terms-and-conditions?for=event" className="w-full">
               <Button className="w-full">
                 <Plus className="me-2 size-4" />
                 Create Event

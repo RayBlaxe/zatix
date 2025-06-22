@@ -1,29 +1,125 @@
 "use client"
 
-import { useState } from "react"
-import { useRouter } from "next/navigation"
+import { useState, useEffect } from "react"
+import { useRouter, useSearchParams } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Checkbox } from "@/components/ui/checkbox"
 import { ScrollArea } from "@/components/ui/scroll-area"
+import { Alert, AlertDescription } from "@/components/ui/alert"
+import { Loader2, ArrowLeft, CheckCircle } from "lucide-react"
 import { Header } from "@/components/header"
 import { useAuth } from "@/hooks/use-auth"
+import { termsApi, tncApi, getToken } from "@/lib/api"
+import type { TermsAndConditions, TNCEventResponse } from "@/types/terms"
 
 export default function TermsAndConditions() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const { user } = useAuth()
   const [accepted, setAccepted] = useState(false)
+  const [termsData, setTermsData] = useState<TermsAndConditions | null>(null)
+  const [tncEventData, setTncEventData] = useState<TNCEventResponse | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [accepting, setAccepting] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  
+  // Check if this is for event creation
+  const isForEvent = searchParams.get("for") === "event"
 
-  const handleAccept = () => {
-    if (accepted) {
+  useEffect(() => {
+    const fetchTerms = async () => {
+      try {
+        setLoading(true)
+        
+        if (isForEvent) {
+          // For event creation, use TNC events API
+          const token = getToken()
+          if (!token) {
+            setError("Authentication required. Please login first.")
+            router.push("/login")
+            return
+          }
+          
+          const response = await tncApi.getTNCEvents(token)
+          setTncEventData(response)
+          setAccepted(response.data.already_accepted)
+        } else {
+          // For EO registration, use general terms API
+          const response = await termsApi.getTermsAndConditions()
+          if (response.success) {
+            setTermsData(response.data)
+          } else {
+            setError(response.message || "Failed to load terms and conditions")
+          }
+        }
+      } catch (err) {
+        setError("Failed to showed up the terms and conditions")
+        console.error("Error fetching terms:", err)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchTerms()
+  }, [isForEvent, router])
+
+  const handleAccept = async () => {
+    if (!accepted) return
+    
+    if (isForEvent) {
+      // Handle event TNC acceptance
+      setAccepting(true)
+      setError(null)
+      
+      try {
+        const token = getToken()
+        if (!token) {
+          throw new Error("Authentication required")
+        }
+        
+        await tncApi.acceptTNCEvents(token)
+        
+        // Redirect to event creation after successful acceptance
+        router.push("/dashboard/events/create")
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Failed to accept terms and conditions")
+      } finally {
+        setAccepting(false)
+      }
+    } else {
+      // Handle EO registration TNC acceptance
       router.push("/eo-registration")
     }
   }
 
-  // Redirect if user is already an event organizer
-  if (user?.role === "event_organizer") {
+  // Redirect if user is already an event organizer and not for event creation
+  if (user?.role === "event_organizer" && !isForEvent) {
     router.push("/dashboard")
     return null
+  }
+
+  const getTermsContent = () => {
+    if (isForEvent && tncEventData?.data) {
+      const firstTNC = Object.values(tncEventData.data).find(item => item.id !== undefined)
+      return firstTNC?.content || ""
+    }
+    return termsData?.content || ""
+  }
+
+  const getTermsTitle = () => {
+    if (isForEvent) {
+      return "Event Organizer Terms and Conditions"
+    }
+    return termsData?.title || "Event Organizer Terms and Conditions"
+  }
+
+  const handleBackToDashboard = () => {
+    if (isForEvent) {
+      router.push("/dashboard")
+    } else {
+      router.push("/")
+    }
   }
 
   return (
@@ -32,99 +128,123 @@ export default function TermsAndConditions() {
       <main className="flex-1">
         <div className="container py-6">
           <div className="mx-auto max-w-3xl">
+            {isForEvent && (
+              <Button 
+                variant="ghost" 
+                onClick={handleBackToDashboard}
+                className="mb-4"
+              >
+                <ArrowLeft className="mr-2 h-4 w-4" />
+                Back to Dashboard
+              </Button>
+            )}
+            
             <Card>
               <CardHeader>
-                <CardTitle className="text-2xl">Event Organizer Terms and Conditions</CardTitle>
-                <CardDescription>Please read and accept our terms and conditions before proceeding.</CardDescription>
+                <CardTitle className="text-2xl flex items-center gap-2">
+                  {loading ? "Loading..." : getTermsTitle()}
+                  {isForEvent && tncEventData?.data.already_accepted && (
+                    <CheckCircle className="h-5 w-5 text-green-600" />
+                  )}
+                </CardTitle>
+                <CardDescription>
+                  {isForEvent 
+                    ? "Please read and accept the terms and conditions before creating an event."
+                    : "Please read and accept our terms and conditions before proceeding."
+                  }
+                </CardDescription>
               </CardHeader>
               <CardContent>
-                <ScrollArea className="h-[400px] rounded-md border p-4">
-                  <div className="space-y-4">
-                    <h3 className="text-lg font-medium">1. Introduction</h3>
-                    <p>
-                      Welcome to ZaTix. These Terms and Conditions govern your use of our platform and services as an
-                      Event Organizer. By accessing or using our services, you agree to be bound by these Terms.
-                    </p>
+                {error && (
+                  <Alert variant="destructive" className="mb-4">
+                    <AlertDescription>{error}</AlertDescription>
+                  </Alert>
+                )}
 
-                    <h3 className="text-lg font-medium">2. Event Creation Process</h3>
-                    <p>
-                      Our platform requires event organizers to go through a verification process before gaining full
-                      access to create events. This process includes:
-                    </p>
-                    <ul className="list-disc pl-6 space-y-2">
-                      <li>Submitting basic information about your organization and event</li>
-                      <li>Scheduling a pitching session with our team</li>
-                      <li>Demonstrating your event concept during the pitching session</li>
-                      <li>Receiving a demo account to test our platform</li>
-                      <li>Upon satisfaction and approval, receiving full access to our platform</li>
-                    </ul>
+                {isForEvent && tncEventData?.data.already_accepted && (
+                  <Alert className="mb-4">
+                    <CheckCircle className="h-4 w-4" />
+                    <AlertDescription>
+                      You have already accepted these terms and conditions. You can proceed to create events.
+                    </AlertDescription>
+                  </Alert>
+                )}
 
-                    <h3 className="text-lg font-medium">3. Account Usage</h3>
-                    <p>
-                      You are responsible for maintaining the confidentiality of your account information and for all
-                      activities that occur under your account. You agree to notify us immediately of any unauthorized
-                      use of your account.
-                    </p>
-
-                    <h3 className="text-lg font-medium">4. Content Guidelines</h3>
-                    <p>
-                      All events created on our platform must comply with our content guidelines. Events that promote
-                      illegal activities, hate speech, or violate any applicable laws are strictly prohibited.
-                    </p>
-
-                    <h3 className="text-lg font-medium">5. Fees and Payments</h3>
-                    <p>
-                      Depending on your subscription plan, fees may apply for using our platform. All fees are
-                      non-refundable unless otherwise specified in our refund policy.
-                    </p>
-
-                    <h3 className="text-lg font-medium">6. Free Account Limitations</h3>
-                    <p>
-                      Free accounts are limited to creating 1 event with a maximum of 10 participants. To create more
-                      events or increase participant limits, you will need to upgrade to a paid plan.
-                    </p>
-
-                    <h3 className="text-lg font-medium">7. Termination</h3>
-                    <p>
-                      We reserve the right to terminate or suspend your account at any time for violations of these
-                      Terms or for any other reason at our sole discretion.
-                    </p>
-
-                    <h3 className="text-lg font-medium">8. Limitation of Liability</h3>
-                    <p>
-                      To the maximum extent permitted by law, we shall not be liable for any indirect, incidental,
-                      special, consequential, or punitive damages, or any loss of profits or revenues.
-                    </p>
-
-                    <h3 className="text-lg font-medium">9. Changes to Terms</h3>
-                    <p>
-                      We may modify these Terms at any time. Your continued use of our platform after such changes
-                      constitutes your acceptance of the new Terms.
-                    </p>
-
-                    <h3 className="text-lg font-medium">10. Contact Information</h3>
-                    <p>If you have any questions about these Terms, please contact us at support@zatix.com.</p>
+                {loading ? (
+                  <div className="flex items-center justify-center h-[400px]">
+                    <div className="text-center">
+                      <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4" />
+                      <p>Loading terms and conditions...</p>
+                    </div>
                   </div>
-                </ScrollArea>
+                ) : error ? (
+                  <div className="flex items-center justify-center h-[400px]">
+                    <div className="text-center text-red-600">
+                      <p className="mb-2">Error loading terms and conditions</p>
+                      <p className="text-sm">{error}</p>
+                      <Button 
+                        variant="outline" 
+                        onClick={() => window.location.reload()} 
+                        className="mt-4"
+                      >
+                        Retry
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <ScrollArea className="h-[400px] rounded-md border p-4">
+                    <div 
+                      className="space-y-4 prose prose-sm max-w-none"
+                      dangerouslySetInnerHTML={{ __html: getTermsContent() }}
+                    />
+                  </ScrollArea>
+                )}
 
                 <div className="mt-4 flex items-center space-x-2">
-                  <Checkbox id="terms" checked={accepted} onCheckedChange={(checked) => setAccepted(!!checked)} />
+                  <Checkbox 
+                    id="terms" 
+                    checked={accepted} 
+                    onCheckedChange={(checked) => setAccepted(!!checked)}
+                    disabled={isForEvent && tncEventData?.data.already_accepted}
+                  />
                   <label
                     htmlFor="terms"
                     className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
                   >
-                    I have read and agree to the terms and conditions
+                    {isForEvent 
+                      ? "I have read and accept the terms and conditions for event organizers"
+                      : "I have read and agree to the terms and conditions"
+                    }
                   </label>
                 </div>
               </CardContent>
               <CardFooter>
                 <div className="flex w-full justify-between">
-                  <Button variant="outline" onClick={() => router.push("/")}>
+                  <Button variant="outline" onClick={handleBackToDashboard}>
                     Cancel
                   </Button>
-                  <Button onClick={handleAccept} disabled={!accepted}>
-                    Accept and Continue
-                  </Button>
+                  
+                  {isForEvent && tncEventData?.data.already_accepted ? (
+                    <Button onClick={() => router.push("/dashboard/events/create")}>
+                      Continue to Create Event
+                    </Button>
+                  ) : (
+                    <Button 
+                      onClick={handleAccept} 
+                      disabled={!accepted || loading || accepting}
+                    >
+                      {accepting ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Accepting...
+                        </>
+                      ) : isForEvent ? (
+                        "Accept & Continue to Create Event"
+                      ) : (
+                        "Accept and Continue"
+                      )}
+                    </Button>
+                  )}
                 </div>
               </CardFooter>
             </Card>

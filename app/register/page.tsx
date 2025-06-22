@@ -50,7 +50,14 @@ export default function RegisterPage() {
     setIsLoading(true)
 
     try {
-      await register(formData.name, formData.email, formData.password, formData.password_confirmation)
+      await register(
+        formData.name,
+        formData.email,
+        formData.password,
+        formData.password_confirmation,
+        acceptTerms // is_tnc_accepted as boolean
+        
+      )
       router.push("/verify-otp")
     } catch (err) {
       if (err instanceof Error) {

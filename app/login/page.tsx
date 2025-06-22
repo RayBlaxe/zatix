@@ -31,9 +31,10 @@ export default function LoginPage() {
       await login(email, password)
       router.push("/dashboard")
     } catch (err) {
-      if (err instanceof Error) {
+      if (err instanceof Error && err.message) {
         setError(err.message)
-        
+      } else if (typeof err === "string") {
+        setError(err)
       } else {
         setError("Invalid email or password. Please try again.")
       }
@@ -64,7 +65,7 @@ export default function LoginPage() {
                   <Input
                     id="email"
                     type="email"
-                    placeholder="name@example.com"
+                    placeholder="name@zatix.com"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     required

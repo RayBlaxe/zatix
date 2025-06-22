@@ -4,6 +4,7 @@ import type React from "react";
 
 import { createContext, useContext, useEffect, useState } from "react";
 import { authApi, getToken, removeToken, setToken } from "@/lib/api";
+import { RegisterResponse } from "@/types/auth/register";
 
 export type UserRole = "customer" | "event_organizer" | "admin";
 
@@ -30,7 +31,8 @@ type AuthContextType = {
     name: string,
     email: string,
     password: string,
-    password_confirmation: string
+    password_confirmation: string,
+    is_tnc_accepted: boolean
   ) => Promise<void>;
   verifyOtp: (email: string, otp_code: string) => Promise<void>;
   resendOtp: (email: string) => Promise<void>;
@@ -59,24 +61,107 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [pendingVerificationEmail, setPendingVerificationEmail] = useState<string | null>(null);
 
   const login = async (email: string, password: string) => {
-    // Bypass login - always succeed
-    setUser(mockAdminUser);
+
+    setIsLoading(true);
+    try {
+      const response = await authApi.login(email, password);
+      // Debug: log the response
+      console.log("Login API response:", response);
+
+      if (!response || response.success === false) {
+        throw new Error(response?.message ?? "Login failed");
+      }
+
+      const { data } = response;
+
+      if (!data || !data.access_token || !data.user) {
+        // Always show backend message if available
+        throw new Error(response?.message ?? "Invalid response from server. Please try again.");
+      }
+
+      setToken(data.access_token);
+
+      const newUser = {
+        id: data.user.id.toString(),
+        name: data.user.name,
+        email: data.user.email,
+        role: "customer" as UserRole,
+        eoDetails: undefined,
+      };
+
+      setUser(newUser);
+      localStorage.setItem("user", JSON.stringify(newUser));
+    } catch (error) {
+      throw error;
+    } finally {
+      setIsLoading(false);
+    }
+
   };
   
   const register = async (
     name: string,
     email: string,
     password: string,
-    password_confirmation: string
+    password_confirmation: string,
+    is_tnc_accepted: boolean
   ) => {
-    // Bypass registration - always succeed
-    setUser(mockAdminUser);
+
+    setIsLoading(true);
+    try {
+      const response: RegisterResponse = await authApi.register(
+        name,
+        email,
+        password,
+        password_confirmation,
+        is_tnc_accepted
+      );
+
+      if (response.success === false) {
+        throw new Error(response.message ?? "Registration failed");
+      }
+
+      // Store the email for OTP verification
+      setPendingVerificationEmail(response.data.email);
+      // Optionally, handle OTP code if you want to show it (for dev)
+      // const otpCode = response.data.otp_code;
+
+    } catch (error) {
+      throw error;
+    } finally {
+      setIsLoading(false);
+    }
+    // display console log for the sent value
+   
   };
 
   const verifyOtp = async (email: string, otp_code: string) => {
-    // Bypass OTP verification - always succeed
-    setUser(mockAdminUser);
-    setPendingVerificationEmail(null);
+    setIsLoading(true);
+    try {
+      // The response structure is { success, message, data: { token, user } }
+      const response = await authApi.verifyOtp(email, otp_code);
+      const { token, user } = response.data;
+
+      // Save token
+      setToken(token);
+      // Create user object from response
+      const newUser = {
+        id: user.id || Math.random().toString(36).substring(2, 9),
+        name: user.name,
+        email: user.email,
+        role: (user.role as UserRole) || "customer",
+        eoDetails: user.eoDetails,
+      };
+
+      setUser(newUser);
+      localStorage.setItem("user", JSON.stringify(newUser));
+
+      // Clear pending verification
+      setPendingVerificationEmail(null);
+    } finally {
+      setIsLoading(false);
+    }
+
   };
 
   const resendOtp = async (email: string) => {
