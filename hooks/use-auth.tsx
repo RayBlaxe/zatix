@@ -6,7 +6,7 @@ import { createContext, useContext, useEffect, useState } from "react";
 import { authApi, getToken, removeToken, setToken } from "@/lib/api";
 import { RegisterResponse } from "@/types/auth/register";
 
-export type UserRole = "customer" | "event_organizer";
+export type UserRole = "customer" | "event_organizer" | "admin";
 
 type User = {
   id: string;
@@ -47,33 +47,21 @@ type AuthContextType = {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+// Mock admin user
+const mockAdminUser: User = {
+  id: "1",
+  name: "Admin User",
+  email: "admin@example.com",
+  role: "admin",
+};
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [pendingVerificationEmail, setPendingVerificationEmail] = useState<
-    string | null
-  >(null);
-
-  useEffect(() => {
-    // Check if user is logged in from localStorage
-    try {
-      const token = getToken();
-      const storedUser = localStorage.getItem("user");
-
-      if (token && storedUser) {
-        setUser(JSON.parse(storedUser));
-      }
-    } catch (error) {
-      console.error("Failed to parse stored user:", error);
-      // Clear potentially corrupted data
-      localStorage.removeItem("user");
-      removeToken();
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
+  const [user, setUser] = useState<User | null>(mockAdminUser);
+  const [isLoading, setIsLoading] = useState(false);
+  const [pendingVerificationEmail, setPendingVerificationEmail] = useState<string | null>(null);
 
   const login = async (email: string, password: string) => {
+
     setIsLoading(true);
     try {
       const response = await authApi.login(email, password);
@@ -108,6 +96,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } finally {
       setIsLoading(false);
     }
+
   };
   
   const register = async (
@@ -117,6 +106,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     password_confirmation: string,
     is_tnc_accepted: boolean
   ) => {
+
     setIsLoading(true);
     try {
       const response: RegisterResponse = await authApi.register(
@@ -171,34 +161,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } finally {
       setIsLoading(false);
     }
+
   };
 
   const resendOtp = async (email: string) => {
-    setIsLoading(true);
-    try {
-      await authApi.resendOtp(email);
-    } finally {
-      setIsLoading(false);
-    }
+    // Bypass OTP resend
+    return;
   };
 
   const forgotPassword = async (email: string) => {
-    setIsLoading(true);
-    try {
-      await authApi.forgotPassword(email);
-
-      // Set pending verification email for password reset flow
-      setPendingVerificationEmail(email);
-    } finally {
-      setIsLoading(false);
-    }
+    // Bypass forgot password
+    setPendingVerificationEmail(email);
   };
 
   const updateUserRole = (role: UserRole) => {
     if (user) {
       const updatedUser = { ...user, role };
       setUser(updatedUser);
-      localStorage.setItem("user", JSON.stringify(updatedUser));
     }
   };
 
@@ -210,25 +189,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         role: "event_organizer" as UserRole,
       };
       setUser(updatedUser);
-      localStorage.setItem("user", JSON.stringify(updatedUser));
     }
   };
 
   const logout = async () => {
-    setIsLoading(true);
-    try {
-      const token = getToken();
-      if (token) {
-        await authApi.logout(token);
-      }
-    } catch (error) {
-      console.error("Logout error:", error);
-    } finally {
-      setUser(null);
-      removeToken();
-      localStorage.removeItem("user");
-      setIsLoading(false);
-    }
+    // Bypass logout - keep user logged in
+    return;
   };
 
   return (
@@ -242,7 +208,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         resendOtp,
         forgotPassword,
         logout,
-        isAuthenticated: !!user,
+        isAuthenticated: true, // Always authenticated
         updateUserRole,
         updateEODetails,
         pendingVerificationEmail,
