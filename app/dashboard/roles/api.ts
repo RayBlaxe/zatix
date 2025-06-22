@@ -20,7 +20,7 @@ export const rolesApi = {
     return response.data
   },
 
-  // Delete a role
+// Delete a role
   deleteRole: async (id: string): Promise<void> => {
     await api.delete(`/roles/${id}`)
   },

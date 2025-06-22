@@ -47,18 +47,47 @@ type AuthContextType = {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// Mock admin user
-const mockAdminUser: User = {
+// Mock EO user for testing roles functionality
+const mockEOUser: User = {
   id: "1",
-  name: "Admin User",
-  email: "admin@example.com",
-  role: "admin",
+  name: "Event Organizer",
+  email: "eo@zatix.com",
+  role: "event_organizer",
+  eoDetails: {
+    name: "ZaTix Events",
+    description: "Premium event management company",
+    email: "contact@zatix.com",
+    phone: "+1234567890",
+    address: "123 Event Street, City"
+  }
 };
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<User | null>(mockAdminUser);
-  const [isLoading, setIsLoading] = useState(false);
+  const [user, setUser] = useState<User | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
   const [pendingVerificationEmail, setPendingVerificationEmail] = useState<string | null>(null);
+
+  // Initialize user from localStorage on app start
+  useEffect(() => {
+    const initializeAuth = () => {
+      const token = getToken();
+      const savedUser = localStorage.getItem("user");
+      
+      if (token && savedUser) {
+        try {
+          const parsedUser = JSON.parse(savedUser);
+          setUser(parsedUser);
+        } catch (error) {
+          console.error("Failed to parse saved user:", error);
+          removeToken();
+          localStorage.removeItem("user");
+        }
+      }
+      setIsLoading(false);
+    };
+
+    initializeAuth();
+  }, []);
 
   const login = async (email: string, password: string) => {
 
@@ -85,7 +114,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         id: data.user.id.toString(),
         name: data.user.name,
         email: data.user.email,
-        role: "customer" as UserRole,
+        role: (data.user.role as UserRole) || "customer",
         eoDetails: undefined,
       };
 
@@ -193,8 +222,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const logout = async () => {
-    // Bypass logout - keep user logged in
-    return;
+    setIsLoading(true);
+    try {
+      const token = getToken();
+      if (token) {
+        await authApi.logout(token);
+      }
+    } catch (error) {
+      console.error("Logout error:", error);
+    } finally {
+      // Clear user state and tokens regardless of API call success
+      setUser(null);
+      removeToken();
+      localStorage.removeItem("user");
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -208,7 +250,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         resendOtp,
         forgotPassword,
         logout,
-        isAuthenticated: true, // Always authenticated
+        isAuthenticated: !!user && !!getToken(),
         updateUserRole,
         updateEODetails,
         pendingVerificationEmail,

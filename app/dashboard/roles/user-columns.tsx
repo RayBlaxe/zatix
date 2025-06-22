@@ -53,8 +53,9 @@ export const columns: ColumnDef<UserRole>[] = [
   },
   {
     id: "actions",
-    cell: ({ row }) => {
+    cell: ({ row, table }) => {
       const user = row.original
+      const { onManageRoles } = table.options.meta as any
 
       return (
         <DropdownMenu>
@@ -65,7 +66,7 @@ export const columns: ColumnDef<UserRole>[] = [
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
-            <DropdownMenuItem>
+            <DropdownMenuItem onClick={() => onManageRoles?.(user)}>
               <UserPlus className="mr-2 h-4 w-4" />
               Manage Roles
             </DropdownMenuItem>

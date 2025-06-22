@@ -30,9 +30,11 @@ export function TNCManagement() {
       }
       
       const response = await tncApi.getTNCList(token)
-      setTncItems(response)
+      setTncItems(Array.isArray(response) ? response : [])
     } catch (err) {
+      console.error("Failed to load TNC items:", err)
       setError(err instanceof Error ? err.message : "Failed to load TNC items")
+      setTncItems([]) // Set empty array to prevent crashes
     } finally {
       setLoading(false)
     }

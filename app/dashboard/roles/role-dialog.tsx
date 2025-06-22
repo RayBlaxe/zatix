@@ -30,6 +30,9 @@ interface RoleDialogProps {
 export function RoleDialog({ open, onOpenChange, role, permissions, onSubmit }: RoleDialogProps) {
   const [name, setName] = useState(role?.name || "")
   const [selectedPermissions, setSelectedPermissions] = useState<string[]>(role?.permissions || [])
+  
+  // Defensive check for permissions
+  const safePermissions = permissions || []
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -70,7 +73,7 @@ export function RoleDialog({ open, onOpenChange, role, permissions, onSubmit }: 
               <Label>Permissions</Label>
               <ScrollArea className="h-[200px] rounded-md border p-4">
                 <div className="grid gap-2">
-                  {permissions.map((permission) => (
+                  {safePermissions.map((permission) => (
                     <div key={permission} className="flex items-center space-x-2">
                       <Checkbox
                         id={permission}

@@ -32,12 +32,18 @@ interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[]
   data: TData[]
   toolbar?: React.ReactNode
+  onEdit?: (row: TData) => void
+  onDelete?: (id: string) => void
+  onManageRoles?: (row: TData) => void
 }
 
 export function DataTable<TData, TValue>({
   columns,
   data,
   toolbar,
+  onEdit,
+  onDelete,
+  onManageRoles,
 }: DataTableProps<TData, TValue>) {
   const [rowSelection, setRowSelection] = React.useState({})
   const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({})
@@ -64,6 +70,11 @@ export function DataTable<TData, TValue>({
     getSortedRowModel: getSortedRowModel(),
     getFacetedRowModel: getFacetedRowModel(),
     getFacetedUniqueValues: getFacetedUniqueValues(),
+    meta: {
+      onEdit,
+      onDelete,
+      onManageRoles,
+    },
   })
 
   return (

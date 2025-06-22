@@ -12,7 +12,7 @@ import { RoleDialog } from "./role-dialog"
 import { UserRoleDialog } from "./user-role-dialog"
 import { useToast } from "@/components/ui/use-toast"
 import { Role, UserRole } from "./types"
-import { rolesApi } from "./api"
+import { rolesApi } from "@/lib/api"
 
 export default function RolesPage() {
   const [activeTab, setActiveTab] = useState("roles")
@@ -34,19 +34,24 @@ export default function RolesPage() {
     try {
       setIsLoading(true)
       const [rolesData, usersData, permissionsData] = await Promise.all([
-        rolesApi.getRoles(),
-        rolesApi.getUsers(),
-        rolesApi.getPermissions(),
+        rolesApi.getRoles().catch(() => []),
+        rolesApi.getUsers().catch(() => []),
+        rolesApi.getPermissions().catch(() => []),
       ])
-      setRoles(rolesData)
-      setUsers(usersData)
-      setPermissions(permissionsData)
+      setRoles(Array.isArray(rolesData) ? rolesData : [])
+      setUsers(Array.isArray(usersData) ? usersData : [])
+      setPermissions(Array.isArray(permissionsData) ? permissionsData : [])
     } catch (error) {
+      console.error("Failed to load roles data:", error)
       toast({
         title: "Error",
         description: "Failed to load data. Please try again.",
         variant: "destructive",
       })
+      // Set default empty arrays to prevent crashes
+      setRoles([])
+      setUsers([])
+      setPermissions([])
     } finally {
       setIsLoading(false)
     }

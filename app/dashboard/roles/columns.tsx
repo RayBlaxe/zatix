@@ -53,8 +53,9 @@ export const columns: ColumnDef<Role>[] = [
   },
   {
     id: "actions",
-    cell: ({ row }) => {
+    cell: ({ row, table }) => {
       const role = row.original
+      const { onEdit, onDelete } = table.options.meta as any
 
       return (
         <DropdownMenu>
@@ -65,11 +66,14 @@ export const columns: ColumnDef<Role>[] = [
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
-            <DropdownMenuItem>
+            <DropdownMenuItem onClick={() => onEdit?.(role)}>
               <Pencil className="mr-2 h-4 w-4" />
               Edit Role
             </DropdownMenuItem>
-            <DropdownMenuItem className="text-destructive">
+            <DropdownMenuItem 
+              className="text-destructive"
+              onClick={() => onDelete?.(role.id)}
+            >
               <Trash className="mr-2 h-4 w-4" />
               Delete Role
             </DropdownMenuItem>

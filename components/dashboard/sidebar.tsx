@@ -40,7 +40,7 @@ export function DashboardSidebar({ onNavigate }: DashboardSidebarProps = {}) {
     router.push("/")
   }
 
-  const routes = [
+  const baseRoutes = [
     {
       label: "Dashboard",
       icon: LayoutDashboard,
@@ -59,18 +59,30 @@ export function DashboardSidebar({ onNavigate }: DashboardSidebarProps = {}) {
       href: "/dashboard/finance",
       active: pathname === "/dashboard/finance",
     },
+  ]
+
+  const eoRoutes = [
     {
       label: "Roles & Permissions",
       icon: Users,
       href: "/dashboard/roles",
       active: pathname === "/dashboard/roles",
     },
+  ]
+
+  const adminRoutes = [
     {
       label: "Terms & Conditions",
       icon: Shield,
       href: "/dashboard/tnc",
       active: pathname === "/dashboard/tnc",
     },
+  ]
+
+  const routes = [
+    ...baseRoutes,
+    ...eoRoutes,
+    ...adminRoutes,
   ]
 
   const contentManagementRoutes = [

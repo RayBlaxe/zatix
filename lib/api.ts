@@ -2,9 +2,10 @@ import { APIResponse } from "@/types/api"
 import { LoginResponse } from "@/types/auth/login"
 import { RegisterResponse } from "@/types/auth/register"
 import { TermsAndConditions, TNCListResponse, TNCEventResponse, TNCAcceptResponse } from "@/types/terms"
+import { Role, UserRole } from "@/app/dashboard/roles/types"
 
 // Base API URL - use environment variable or fallback for development
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "https://zatix.zamanweb.com/api/"
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "https://api.zatix.id/api"
 
 // Helper function for making API requests
 async function apiRequest<T>(endpoint: string, method = "GET", data?: any, token?: string): Promise<any> {
@@ -54,9 +55,8 @@ async function apiRequest<T>(endpoint: string, method = "GET", data?: any, token
     }
   } catch (error) {
     console.error("API request error:", error)
-    // For demo/development purposes, simulate successful responses
-    // This helps when the actual API is not available
-    if (process.env.NODE_ENV !== "production" && process.env.NEXT_PUBLIC_USE_MOCKS !== "false") {
+    // Use mock responses only when explicitly enabled
+    if (process.env.NEXT_PUBLIC_USE_MOCKS === "true") {
       return handleMockResponse<T>(endpoint, method, data)
     }
     throw error
@@ -269,6 +269,112 @@ function handleMockResponse<T>(endpoint: string, method: string, data?: any): T 
     } as unknown as T
   }
 
+  // Roles API mock responses
+  if (endpoint === "/roles" && method === "GET") {
+    return [
+      {
+        id: "1",
+        name: "Event Manager",
+        permissions: ["create_events", "edit_events", "view_analytics", "manage_tickets"],
+        usersCount: 5,
+        createdAt: "2024-01-15T10:30:00Z"
+      },
+      {
+        id: "2", 
+        name: "Marketing Coordinator",
+        permissions: ["view_events", "manage_content", "view_analytics"],
+        usersCount: 3,
+        createdAt: "2024-01-20T14:20:00Z"
+      },
+      {
+        id: "3",
+        name: "Finance Manager", 
+        permissions: ["view_finance", "export_reports", "manage_payments"],
+        usersCount: 2,
+        createdAt: "2024-01-25T09:15:00Z"
+      }
+    ] as unknown as T
+  }
+
+  if (endpoint === "/roles" && method === "POST") {
+    return {
+      id: `role_${Date.now()}`,
+      name: data?.name || "New Role",
+      permissions: data?.permissions || [],
+      usersCount: 0,
+      createdAt: new Date().toISOString()
+    } as unknown as T
+  }
+
+  if (endpoint.startsWith("/roles/") && method === "PUT") {
+    const roleId = endpoint.split("/")[2]
+    return {
+      id: roleId,
+      name: data?.name || "Updated Role",
+      permissions: data?.permissions || [],
+      usersCount: 1,
+      createdAt: "2024-01-15T10:30:00Z"
+    } as unknown as T
+  }
+
+  if (endpoint.startsWith("/roles/") && method === "DELETE") {
+    return { success: true } as unknown as T
+  }
+
+  if (endpoint === "/users/roles" && method === "GET") {
+    return [
+      {
+        id: "user1",
+        name: "John Doe",
+        email: "john@zatix.com",
+        roles: ["Event Manager", "Marketing Coordinator"],
+        assignedAt: "2024-01-15T10:30:00Z"
+      },
+      {
+        id: "user2",
+        name: "Jane Smith", 
+        email: "jane@zatix.com",
+        roles: ["Finance Manager"],
+        assignedAt: "2024-01-20T14:20:00Z"
+      },
+      {
+        id: "user3",
+        name: "Mike Johnson",
+        email: "mike@zatix.com", 
+        roles: ["Marketing Coordinator"],
+        assignedAt: "2024-01-25T09:15:00Z"
+      }
+    ] as unknown as T
+  }
+
+  if (endpoint.includes("/users/") && endpoint.includes("/roles") && method === "POST") {
+    const userId = endpoint.split("/")[2]
+    return {
+      id: userId,
+      name: "User Name",
+      email: "user@zatix.com",
+      roles: data?.roleIds || [],
+      assignedAt: new Date().toISOString()
+    } as unknown as T
+  }
+
+  if (endpoint === "/permissions" && method === "GET") {
+    return [
+      "create_events",
+      "edit_events", 
+      "delete_events",
+      "view_events",
+      "manage_tickets",
+      "view_analytics",
+      "export_reports",
+      "manage_content",
+      "view_finance",
+      "manage_payments",
+      "manage_users",
+      "view_users"
+    ] as unknown as T
+  }
+
   // Default mock response
   return {} as T
 }
@@ -359,5 +465,50 @@ export const tncApi = {
   // EO Owner - Accept TNC for events
   acceptTNCEvents: (token: string) => {
     return apiRequest<TNCAcceptResponse>("/tnc-events/accept", "POST", {}, token)
+  }
+}
+
+// Roles API functions for EO Owner
+export const rolesApi = {
+  // Get all roles
+  getRoles: (): Promise<Role[]> => {
+    const token = getToken()
+    return apiRequest<Role[]>("/roles", "GET", null, token)
+  },
+
+  // Create a new role
+  createRole: (data: { name: string; permissions: string[] }): Promise<Role> => {
+    const token = getToken()
+    return apiRequest<Role>("/roles", "POST", data, token)
+  },
+
+  // Update a role
+  updateRole: (id: string, data: { name: string; permissions: string[] }): Promise<Role> => {
+    const token = getToken()
+    return apiRequest<Role>(`/roles/${id}`, "PUT", data, token)
+  },
+
+  // Delete a role
+  deleteRole: (id: string): Promise<void> => {
+    const token = getToken()
+    return apiRequest<void>(`/roles/${id}`, "DELETE", null, token)
+  },
+
+  // Get all users with their roles
+  getUsers: (): Promise<UserRole[]> => {
+    const token = getToken()
+    return apiRequest<UserRole[]>("/users/roles", "GET", null, token)
+  },
+
+  // Assign roles to a user
+  assignRoles: (userId: string, roleIds: string[]): Promise<UserRole> => {
+    const token = getToken()
+    return apiRequest<UserRole>(`/users/${userId}/roles`, "POST", { roleIds }, token)
+  },
+
+  // Get all available permissions
+  getPermissions: (): Promise<string[]> => {
+    const token = getToken()
+    return apiRequest<string[]>("/permissions", "GET", null, token)
   }
 }
