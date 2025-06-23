@@ -31,7 +31,7 @@ interface DashboardSidebarProps {
 
 export function DashboardSidebar({ onNavigate }: DashboardSidebarProps = {}) {
   const pathname = usePathname()
-  const { user, logout } = useAuth()
+  const { user, logout, hasRole } = useAuth()
   const router = useRouter()
   const [contentManagementOpen, setContentManagementOpen] = useState(pathname.startsWith("/dashboard/content"))
 
@@ -79,10 +79,11 @@ export function DashboardSidebar({ onNavigate }: DashboardSidebarProps = {}) {
     },
   ]
 
+  // Filter routes based on user role
   const routes = [
     ...baseRoutes,
-    ...eoRoutes,
-    ...adminRoutes,
+    ...(hasRole("eo-owner") ? eoRoutes : []),
+    ...(hasRole("superadmin") ? adminRoutes : []),
   ]
 
   const contentManagementRoutes = [
@@ -131,40 +132,43 @@ export function DashboardSidebar({ onNavigate }: DashboardSidebarProps = {}) {
             </Link>
           ))}
 
-          <Collapsible open={contentManagementOpen} onOpenChange={setContentManagementOpen}>
-            <CollapsibleTrigger asChild>
-              <button
-                className={cn(
-                  "flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm font-medium hover:bg-accent hover:text-accent-foreground",
-                  pathname.startsWith("/dashboard/content") ? "bg-accent text-accent-foreground" : "transparent",
-                )}
-              >
-                <FileText className="size-4" />
-                Content Management
-                {contentManagementOpen ? (
-                  <ChevronDown className="ml-auto size-4" />
-                ) : (
-                  <ChevronRight className="ml-auto size-4" />
-                )}
-              </button>
-            </CollapsibleTrigger>
-            <CollapsibleContent className="space-y-1">
-              {contentManagementRoutes.map((route) => (
-                <Link
-                  key={route.href}
-                  href={route.href}
-                  onClick={onNavigate}
+          {/* Content Management - Only for eo-owner and superadmin */}
+          {(hasRole("eo-owner") || hasRole("superadmin")) && (
+            <Collapsible open={contentManagementOpen} onOpenChange={setContentManagementOpen}>
+              <CollapsibleTrigger asChild>
+                <button
                   className={cn(
-                    "flex items-center gap-3 rounded-md px-3 py-2 ml-4 text-sm font-medium hover:bg-accent hover:text-accent-foreground",
-                    route.active ? "bg-accent text-accent-foreground" : "transparent",
+                    "flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm font-medium hover:bg-accent hover:text-accent-foreground",
+                    pathname.startsWith("/dashboard/content") ? "bg-accent text-accent-foreground" : "transparent",
                   )}
                 >
-                  <route.icon className="size-3" />
-                  {route.label}
-                </Link>
-              ))}
-            </CollapsibleContent>
-          </Collapsible>
+                  <FileText className="size-4" />
+                  Content Management
+                  {contentManagementOpen ? (
+                    <ChevronDown className="ml-auto size-4" />
+                  ) : (
+                    <ChevronRight className="ml-auto size-4" />
+                  )}
+                </button>
+              </CollapsibleTrigger>
+              <CollapsibleContent className="space-y-1">
+                {contentManagementRoutes.map((route) => (
+                  <Link
+                    key={route.href}
+                    href={route.href}
+                    onClick={onNavigate}
+                    className={cn(
+                      "flex items-center gap-3 rounded-md px-3 py-2 ml-4 text-sm font-medium hover:bg-accent hover:text-accent-foreground",
+                      route.active ? "bg-accent text-accent-foreground" : "transparent",
+                    )}
+                  >
+                    <route.icon className="size-3" />
+                    {route.label}
+                  </Link>
+                ))}
+              </CollapsibleContent>
+            </Collapsible>
+          )}
         </nav>
       </div>
       <div className="mt-auto border-t p-4">
@@ -175,6 +179,11 @@ export function DashboardSidebar({ onNavigate }: DashboardSidebarProps = {}) {
           <div className="space-y-1">
             <p className="text-sm font-medium leading-none">{user?.name}</p>
             <p className="text-xs text-muted-foreground">{user?.email}</p>
+            <p className="text-xs text-muted-foreground">
+              {user?.currentRole === "eo-owner" ? "Event Organizer" : 
+               user?.currentRole === "superadmin" ? "Super Admin" : 
+               "Customer"}
+            </p>
           </div>
         </div>
         <div className="grid grid-cols-2 gap-2">

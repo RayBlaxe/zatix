@@ -5,65 +5,12 @@ import type React from "react";
 import { createContext, useContext, useEffect, useState } from "react";
 import { authApi, getToken, removeToken, setToken } from "@/lib/api";
 import { RegisterResponse } from "@/types/auth/register";
-
-export type UserRole = "customer" | "event_organizer" | "admin";
-
-type User = {
-  id: string;
-  name: string;
-  email: string;
-  role: UserRole;
-  eoDetails?: {
-    name: string;
-    logo?: string;
-    description: string;
-    email: string;
-    phone: string;
-    address: string;
-  };
-};
-
-type AuthContextType = {
-  user: User | null;
-  isLoading: boolean;
-  login: (email: string, password: string) => Promise<void>;
-  register: (
-    name: string,
-    email: string,
-    password: string,
-    password_confirmation: string,
-    is_tnc_accepted: boolean
-  ) => Promise<void>;
-  verifyOtp: (email: string, otp_code: string) => Promise<void>;
-  resendOtp: (email: string) => Promise<void>;
-  forgotPassword: (email: string) => Promise<void>;
-  logout: () => Promise<void>;
-  isAuthenticated: boolean;
-  updateUserRole: (role: UserRole) => void;
-  updateEODetails: (eoDetails: User["eoDetails"]) => void;
-  pendingVerificationEmail: string | null;
-  setPendingVerificationEmail: (email: string | null) => void;
-};
+import { AuthUser, UserRole, AuthContextType } from "@/types/auth";
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// Mock EO user for testing roles functionality
-const mockEOUser: User = {
-  id: "1",
-  name: "Event Organizer",
-  email: "eo@zatix.com",
-  role: "event_organizer",
-  eoDetails: {
-    name: "ZaTix Events",
-    description: "Premium event management company",
-    email: "contact@zatix.com",
-    phone: "+1234567890",
-    address: "123 Event Street, City"
-  }
-};
-
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<AuthUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [pendingVerificationEmail, setPendingVerificationEmail] = useState<string | null>(null);
 
@@ -90,11 +37,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const login = async (email: string, password: string) => {
-
     setIsLoading(true);
     try {
       const response = await authApi.login(email, password);
-      // Debug: log the response
       console.log("Login API response:", response);
 
       if (!response || response.success === false) {
@@ -104,17 +49,28 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const { data } = response;
 
       if (!data || !data.access_token || !data.user) {
-        // Always show backend message if available
         throw new Error(response?.message ?? "Invalid response from server. Please try again.");
       }
 
       setToken(data.access_token);
 
-      const newUser = {
+      // Map roles from string array to UserRole array
+      const userRoles = (data.user.roles as string[]).filter(role => 
+        ["customer", "eo-owner", "superadmin"].includes(role)
+      ) as UserRole[];
+
+      // Default to customer if user has customer role, otherwise pick first available role
+      const defaultRole: UserRole = userRoles.includes("customer") ? "customer" : userRoles[0];
+
+      const newUser: AuthUser = {
         id: data.user.id.toString(),
         name: data.user.name,
         email: data.user.email,
-        role: (data.user.role as UserRole) || "customer",
+        roles: userRoles,
+        currentRole: defaultRole,
+        email_verified_at: data.user.email_verified_at,
+        created_at: data.user.created_at,
+        updated_at: data.user.updated_at,
         eoDetails: undefined,
       };
 
@@ -125,7 +81,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } finally {
       setIsLoading(false);
     }
-
   };
   
   const register = async (
@@ -167,30 +122,38 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const verifyOtp = async (email: string, otp_code: string) => {
     setIsLoading(true);
     try {
-      // The response structure is { success, message, data: { token, user } }
       const response = await authApi.verifyOtp(email, otp_code);
       const { token, user } = response.data;
 
-      // Save token
       setToken(token);
-      // Create user object from response
-      const newUser = {
-        id: user.id || Math.random().toString(36).substring(2, 9),
+
+      // Map roles from string array to UserRole array
+      const userRoles = (user.roles as string[]).filter(role => 
+        ["customer", "eo-owner", "superadmin"].includes(role)
+      ) as UserRole[];
+
+      // Default to customer role
+      const defaultRole: UserRole = "customer";
+
+      const newUser: AuthUser = {
+        id: user.id?.toString() || Math.random().toString(36).substring(2, 9),
         name: user.name,
         email: user.email,
-        role: (user.role as UserRole) || "customer",
+        roles: userRoles.length > 0 ? userRoles : ["customer"],
+        currentRole: defaultRole,
+        email_verified_at: user.email_verified_at,
+        created_at: user.created_at,
+        updated_at: user.updated_at,
         eoDetails: user.eoDetails,
       };
 
       setUser(newUser);
       localStorage.setItem("user", JSON.stringify(newUser));
 
-      // Clear pending verification
       setPendingVerificationEmail(null);
     } finally {
       setIsLoading(false);
     }
-
   };
 
   const resendOtp = async (email: string) => {
@@ -203,22 +166,31 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setPendingVerificationEmail(email);
   };
 
-  const updateUserRole = (role: UserRole) => {
-    if (user) {
-      const updatedUser = { ...user, role };
+  const switchRole = (role: UserRole) => {
+    if (user && user.roles.includes(role)) {
+      const updatedUser = { ...user, currentRole: role };
       setUser(updatedUser);
+      localStorage.setItem("user", JSON.stringify(updatedUser));
     }
   };
 
-  const updateEODetails = (eoDetails: User["eoDetails"]) => {
+  const updateEODetails = (eoDetails: AuthUser["eoDetails"]) => {
     if (user) {
       const updatedUser = {
         ...user,
         eoDetails,
-        role: "event_organizer" as UserRole,
       };
       setUser(updatedUser);
+      localStorage.setItem("user", JSON.stringify(updatedUser));
     }
+  };
+
+  const hasRole = (role: UserRole): boolean => {
+    return user?.roles.includes(role) ?? false;
+  };
+
+  const canAccessDashboard = (): boolean => {
+    return hasRole("eo-owner") || hasRole("superadmin");
   };
 
   const logout = async () => {
@@ -251,10 +223,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         forgotPassword,
         logout,
         isAuthenticated: !!user && !!getToken(),
-        updateUserRole,
+        switchRole,
         updateEODetails,
         pendingVerificationEmail,
         setPendingVerificationEmail,
+        hasRole,
+        canAccessDashboard,
       }}
     >
       {children}

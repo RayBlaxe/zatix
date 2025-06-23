@@ -11,14 +11,15 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { Button } from "@/components/ui/button"
-import { LogOut, PlusCircle, Settings, User } from "lucide-react"
+import { LogOut, PlusCircle, Settings, User, Crown, Store, UserCheck } from "lucide-react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { useState } from "react"
 import { Loader2 } from "lucide-react"
+import { UserRole } from "@/types/auth"
 
 export function UserAccountNav() {
-  const { user, logout } = useAuth()
+  const { user, logout, switchRole, hasRole, canAccessDashboard } = useAuth()
   const router = useRouter()
   const [isLoggingOut, setIsLoggingOut] = useState(false)
 
@@ -31,6 +32,42 @@ export function UserAccountNav() {
       console.error("Logout failed:", error)
     } finally {
       setIsLoggingOut(false)
+    }
+  }
+
+  const handleRoleSwitch = (newRole: UserRole) => {
+    switchRole(newRole)
+    // Redirect based on role
+    if (newRole === "customer") {
+      router.push("/")
+    } else if (newRole === "eo-owner" || newRole === "superadmin") {
+      router.push("/dashboard")
+    }
+  }
+
+  const getRoleIcon = (role: UserRole) => {
+    switch (role) {
+      case "customer":
+        return <UserCheck className="me-2 size-4" />
+      case "eo-owner":
+        return <Store className="me-2 size-4" />
+      case "superadmin":
+        return <Crown className="me-2 size-4" />
+      default:
+        return <User className="me-2 size-4" />
+    }
+  }
+
+  const getRoleLabel = (role: UserRole) => {
+    switch (role) {
+      case "customer":
+        return "Customer"
+      case "eo-owner":
+        return "Event Organizer"
+      case "superadmin":
+        return "Super Admin"
+      default:
+        return role
     }
   }
 
@@ -50,12 +87,39 @@ export function UserAccountNav() {
           <div className="flex flex-col space-y-1">
             <p className="text-sm font-medium leading-none">{user.name}</p>
             <p className="text-xs leading-none text-muted-foreground">{user.email}</p>
-            <p className="text-xs leading-none text-muted-foreground mt-1 capitalize">
-              Role: {user.role.replace("_", " ")}
-            </p>
+            <div className="flex items-center mt-1">
+              {getRoleIcon(user.currentRole)}
+              <p className="text-xs leading-none text-muted-foreground">
+                {getRoleLabel(user.currentRole)}
+              </p>
+            </div>
           </div>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
+        
+        {/* Role Switching Section */}
+        {user.roles.length > 1 && (
+          <>
+            <DropdownMenuLabel className="text-xs font-semibold text-muted-foreground px-2">
+              Switch Role
+            </DropdownMenuLabel>
+            {user.roles.map((role) => (
+              <DropdownMenuItem
+                key={role}
+                onClick={() => handleRoleSwitch(role)}
+                className={user.currentRole === role ? "bg-accent" : ""}
+              >
+                {getRoleIcon(role)}
+                <span>{getRoleLabel(role)}</span>
+                {user.currentRole === role && (
+                  <span className="ml-auto text-xs text-muted-foreground">Current</span>
+                )}
+              </DropdownMenuItem>
+            ))}
+            <DropdownMenuSeparator />
+          </>
+        )}
+        
         <DropdownMenuItem asChild>
           <Link href="/profile">
             <User className="me-2 size-4" />
@@ -68,18 +132,20 @@ export function UserAccountNav() {
             <span>Settings</span>
           </Link>
         </DropdownMenuItem>
-        {user.role === "customer" && (
+        
+        {/* Role-based menu items */}
+        {user.currentRole === "customer" && (
           <DropdownMenuItem asChild>
-            <Link href="/terms-and-conditions">
+            <Link href="/events">
               <PlusCircle className="me-2 size-4" />
-              <span>Create Event</span>
+              <span>Browse Events</span>
             </Link>
           </DropdownMenuItem>
         )}
-        {user.role === "event_organizer" && (
+        {canAccessDashboard() && (
           <DropdownMenuItem asChild>
             <Link href="/dashboard">
-              <PlusCircle className="me-2 size-4" />
+              <Store className="me-2 size-4" />
               <span>Dashboard</span>
             </Link>
           </DropdownMenuItem>

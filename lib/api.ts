@@ -73,10 +73,10 @@ function handleMockResponse<T>(endpoint: string, method: string, data?: any): T 
   if (endpoint === "/login" && method === "POST") {
     // Define valid test credentials for development
     const validCredentials = [
-      { email: "admin@zatix.com", password: "admin123", role: "admin" },
-      { email: "organizer@zatix.com", password: "organizer123", role: "organizer" },
-      { email: "user@zatix.com", password: "user123", role: "customer" },
-      { email: "test@test.com", password: "test123", role: "customer" }
+      { email: "superadmin@zatix.com", password: "admin123", roles: ["superadmin", "eo-owner", "customer"] },
+      { email: "eoowner@zatix.com", password: "eoowner123", roles: ["eo-owner", "customer"] },
+      { email: "customer@zatix.com", password: "customer123", roles: ["customer"] },
+      { email: "test@test.com", password: "test123", roles: ["customer"] }
     ]
     
     const credential = validCredentials.find(
@@ -86,14 +86,18 @@ function handleMockResponse<T>(endpoint: string, method: string, data?: any): T 
     if (credential) {
       return {
         success: true,
-        message: "Login successful",
+        message: "Login successfully",
         data: {
-          access_token: "mock_token_12345",
+          access_token: `1|${Math.random().toString(36).substring(2, 15)}${Math.random().toString(36).substring(2, 15)}`,
+          token_type: "Bearer",
           user: {
-            id: "user_123",
-            name: credential.email.split("@")[0],
+            id: Math.floor(Math.random() * 1000) + 1,
+            name: credential.email.split("@")[0].replace(/([a-z])([A-Z])/g, '$1 $2').replace(/^\w/, c => c.toUpperCase()),
             email: credential.email,
-            role: credential.role,
+            email_verified_at: "2024-12-31T17:00:00.000000Z",
+            roles: credential.roles,
+            created_at: "2025-06-23T02:11:31.000000Z",
+            updated_at: "2025-06-23T02:11:31.000000Z"
           },
         },
       } as unknown as T
@@ -124,12 +128,15 @@ function handleMockResponse<T>(endpoint: string, method: string, data?: any): T 
       success: true,
       message: "OTP verified successfully",
       data: {
-        token: "mock_token_12345",
+        token: `1|${Math.random().toString(36).substring(2, 15)}${Math.random().toString(36).substring(2, 15)}`,
         user: {
-          id: "user_123",
+          id: Math.floor(Math.random() * 1000) + 1,
           name: data?.email?.split("@")[0] || "Demo User",
           email: data?.email || "user@example.com",
-          role: "customer",
+          email_verified_at: "2024-12-31T17:00:00.000000Z",
+          roles: ["customer"],
+          created_at: "2025-06-23T02:11:31.000000Z",
+          updated_at: "2025-06-23T02:11:31.000000Z"
         },
       },
     } as unknown as T
