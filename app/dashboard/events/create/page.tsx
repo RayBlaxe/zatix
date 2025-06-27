@@ -119,7 +119,7 @@ export default function CreateEventPage() {
                     variant="outline"
                     className={cn("w-full justify-start text-left font-normal", !date && "text-muted-foreground")}
                   >
-                    <CalendarIcon className="me-2 size-4" />
+                    <CalendarIcon className="mr-2 size-4" />
                     {date ? format(date, "PPP") : <span>Select a date</span>}
                   </Button>
                 </PopoverTrigger>
@@ -206,7 +206,7 @@ export default function CreateEventPage() {
               <Button type="submit" disabled={isLoading}>
                 {isLoading ? (
                   <>
-                    <Loader2 className="me-2 size-4 animate-spin" /> Creating Event
+                    <Loader2 className="mr-2 size-4 animate-spin" /> Creating Event
                   </>
                 ) : (
                   "Create Event"

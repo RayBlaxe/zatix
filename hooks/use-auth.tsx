@@ -60,13 +60,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       ) as UserRole[];
 
       // Default to customer if user has customer role, otherwise pick first available role
-      const defaultRole: UserRole = userRoles.includes("customer") ? "customer" : userRoles[0];
+      const defaultRole: UserRole = userRoles.includes("customer") 
+        ? "customer" 
+        : userRoles.length > 0 
+          ? userRoles[0] 
+          : "customer";
 
       const newUser: AuthUser = {
         id: data.user.id.toString(),
         name: data.user.name,
         email: data.user.email,
-        roles: userRoles,
+        roles: userRoles.length > 0 ? userRoles : ["customer"],
         currentRole: defaultRole,
         email_verified_at: data.user.email_verified_at,
         created_at: data.user.created_at,

@@ -185,7 +185,7 @@ export default function PricingContentPage() {
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogTrigger asChild>
             <Button onClick={handleCreate}>
-              <Plus className="me-2 size-4" />
+              <Plus className="mr-2 size-4" />
               Add Plan
             </Button>
           </DialogTrigger>
@@ -353,11 +353,11 @@ export default function PricingContentPage() {
                     </div>
                     <div className="flex items-center gap-2">
                       <Button variant="outline" size="sm" onClick={() => handleEdit(plan)} className="flex-1">
-                        <Edit className="size-4 me-1" />
+                        <Edit className="size-4 mr-1" />
                         Edit
                       </Button>
                       <Button variant="outline" size="sm" onClick={() => handleDelete(plan.id)} className="flex-1">
-                        <Trash2 className="size-4 me-1" />
+                        <Trash2 className="size-4 mr-1" />
                         Delete
                       </Button>
                     </div>

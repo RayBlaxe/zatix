@@ -48,13 +48,13 @@ export function UserAccountNav() {
   const getRoleIcon = (role: UserRole) => {
     switch (role) {
       case "customer":
-        return <UserCheck className="me-2 size-4" />
+        return <UserCheck className="mr-2 size-4" />
       case "eo-owner":
-        return <Store className="me-2 size-4" />
+        return <Store className="mr-2 size-4" />
       case "superadmin":
-        return <Crown className="me-2 size-4" />
+        return <Crown className="mr-2 size-4" />
       default:
-        return <User className="me-2 size-4" />
+        return <User className="mr-2 size-4" />
     }
   }
 
@@ -71,7 +71,7 @@ export function UserAccountNav() {
     }
   }
 
-  if (!user) return null
+  if (!user || !user.name || !user.email || !user.roles || !user.currentRole) return null
 
   return (
     <DropdownMenu>
@@ -98,7 +98,7 @@ export function UserAccountNav() {
         <DropdownMenuSeparator />
         
         {/* Role Switching Section */}
-        {user.roles.length > 1 && (
+        {user.roles && user.roles.length > 1 && (
           <>
             <DropdownMenuLabel className="text-xs font-semibold text-muted-foreground px-2">
               Switch Role
@@ -122,13 +122,13 @@ export function UserAccountNav() {
         
         <DropdownMenuItem asChild>
           <Link href="/profile">
-            <User className="me-2 size-4" />
+            <User className="mr-2 size-4" />
             <span>Profile</span>
           </Link>
         </DropdownMenuItem>
         <DropdownMenuItem asChild>
           <Link href="/settings">
-            <Settings className="me-2 size-4" />
+            <Settings className="mr-2 size-4" />
             <span>Settings</span>
           </Link>
         </DropdownMenuItem>
@@ -137,7 +137,7 @@ export function UserAccountNav() {
         {user.currentRole === "customer" && (
           <DropdownMenuItem asChild>
             <Link href="/events">
-              <PlusCircle className="me-2 size-4" />
+              <PlusCircle className="mr-2 size-4" />
               <span>Browse Events</span>
             </Link>
           </DropdownMenuItem>
@@ -145,7 +145,7 @@ export function UserAccountNav() {
         {canAccessDashboard() && (
           <DropdownMenuItem asChild>
             <Link href="/dashboard">
-              <Store className="me-2 size-4" />
+              <Store className="mr-2 size-4" />
               <span>Dashboard</span>
             </Link>
           </DropdownMenuItem>
@@ -154,12 +154,12 @@ export function UserAccountNav() {
         <DropdownMenuItem onClick={handleLogout} disabled={isLoggingOut}>
           {isLoggingOut ? (
             <>
-              <Loader2 className="me-2 size-4 animate-spin" />
+              <Loader2 className="mr-2 size-4 animate-spin" />
               <span>Logging out...</span>
             </>
           ) : (
             <>
-              <LogOut className="me-2 size-4" />
+              <LogOut className="mr-2 size-4" />
               <span>Log out</span>
             </>
           )}

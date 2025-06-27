@@ -252,7 +252,7 @@ export default function EORegistrationPage() {
                     <Button type="submit" disabled={isLoading}>
                       {isLoading ? (
                         <>
-                          <Loader2 className="me-2 size-4 animate-spin" /> Please wait
+                          <Loader2 className="mr-2 size-4 animate-spin" /> Please wait
                         </>
                       ) : (
                         "Complete Registration"

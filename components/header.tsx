@@ -42,7 +42,7 @@ export function Header() {
               <>
                 <Link href="/terms-and-conditions?for=event">
                   <Button>
-                    <Plus className="me-2 size-4" />
+                    <Plus className="mr-2 size-4" />
                     Create Event
                   </Button>
                 </Link>

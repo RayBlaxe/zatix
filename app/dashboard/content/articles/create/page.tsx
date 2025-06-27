@@ -73,11 +73,11 @@ export default function CreateArticlePage() {
             Cancel
           </Button>
           <Button variant="outline" onClick={() => handleSave("draft")} disabled={isLoading}>
-            {isLoading ? <Loader2 className="me-2 size-4 animate-spin" /> : <Save className="me-2 size-4" />}
+            {isLoading ? <Loader2 className="mr-2 size-4 animate-spin" /> : <Save className="mr-2 size-4" />}
             Save Draft
           </Button>
           <Button onClick={() => handleSave("published")} disabled={isLoading}>
-            {isLoading ? <Loader2 className="me-2 size-4 animate-spin" /> : <Eye className="me-2 size-4" />}
+            {isLoading ? <Loader2 className="mr-2 size-4 animate-spin" /> : <Eye className="mr-2 size-4" />}
             Publish
           </Button>
         </div>

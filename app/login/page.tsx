@@ -36,7 +36,7 @@ export default function LoginPage() {
       } else if (typeof err === "string") {
         setError(err)
       } else {
-        setError("Invalid email or password. Please try again.")
+        setError("Invalid email or password. Please try entering again.")
       }
     } finally {
       setIsLoading(false)
@@ -91,7 +91,7 @@ export default function LoginPage() {
                 <Button type="submit" className="w-full" disabled={isLoading}>
                   {isLoading ? (
                     <>
-                      <Loader2 className="me-2 size-4 animate-spin" /> Please wait
+                      <Loader2 className="mr-2 size-4 animate-spin" /> Please wait
                     </>
                   ) : (
                     "Sign In"

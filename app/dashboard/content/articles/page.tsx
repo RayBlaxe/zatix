@@ -136,7 +136,7 @@ export default function ArticlesPage() {
         </div>
         <Link href="/dashboard/content/articles/create">
           <Button>
-            <Plus className="me-2 size-4" />
+            <Plus className="mr-2 size-4" />
             Create Article
           </Button>
         </Link>

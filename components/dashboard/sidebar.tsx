@@ -189,12 +189,12 @@ export function DashboardSidebar({ onNavigate }: DashboardSidebarProps = {}) {
         <div className="grid grid-cols-2 gap-2">
           <Button variant="outline" size="sm" asChild>
             <Link href="/settings" onClick={onNavigate}>
-              <Settings className="me-2 size-4" />
+              <Settings className="mr-2 size-4" />
               Settings
             </Link>
           </Button>
           <Button variant="outline" size="sm" onClick={handleLogout}>
-            <LogOut className="me-2 size-4" />
+            <LogOut className="mr-2 size-4" />
             Logout
           </Button>
         </div>

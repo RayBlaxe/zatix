@@ -117,7 +117,7 @@ export function CarouselManager() {
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <DialogTrigger asChild>
               <Button onClick={handleCreate}>
-                <Plus className="me-2 size-4" />
+                <Plus className="mr-2 size-4" />
                 Add Slide
               </Button>
             </DialogTrigger>

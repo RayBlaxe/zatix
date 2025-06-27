@@ -13,7 +13,7 @@ export default function EventsPage() {
         </div>
         <Link href="/terms-and-conditions?for=event">
           <Button>
-            <Plus className="me-2 size-4" />
+            <Plus className="mr-2 size-4" />
             Create Event
           </Button>
         </Link>
@@ -36,7 +36,7 @@ export default function EventsPage() {
           <CardFooter>
             <Link href="/terms-and-conditions?for=event" className="w-full">
               <Button className="w-full">
-                <Plus className="me-2 size-4" />
+                <Plus className="mr-2 size-4" />
                 Create Event
               </Button>
             </Link>
