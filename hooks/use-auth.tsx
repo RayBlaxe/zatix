@@ -23,6 +23,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (token && savedUser) {
         try {
           const parsedUser = JSON.parse(savedUser);
+          // Ensure roles array exists with fallback
+          if (!parsedUser.roles || !Array.isArray(parsedUser.roles)) {
+            parsedUser.roles = ["customer"];
+          }
+          if (!parsedUser.currentRole) {
+            parsedUser.currentRole = "customer";
+          }
           setUser(parsedUser);
         } catch (error) {
           console.error("Failed to parse saved user:", error);
@@ -190,10 +197,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const hasRole = (role: UserRole): boolean => {
-    return user?.roles.includes(role) ?? false;
+    return user?.roles?.includes(role) ?? false;
   };
 
   const canAccessDashboard = (): boolean => {
+    if (!user || !user.roles) return false;
     return hasRole("eo-owner") || hasRole("superadmin");
   };
 
