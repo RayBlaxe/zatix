@@ -63,7 +63,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       // Map roles from string array to UserRole array
       const userRoles = (data.user.roles as string[]).filter(role => 
-        ["customer", "eo-owner", "superadmin"].includes(role)
+        ["customer", "eo-owner", "super-admin"].includes(role)
       ) as UserRole[];
 
       // Default to customer if user has customer role, otherwise pick first available role
@@ -140,7 +140,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       // Map roles from string array to UserRole array
       const userRoles = (user.roles as string[]).filter(role => 
-        ["customer", "eo-owner", "superadmin"].includes(role)
+        ["customer", "eo-owner", "super-admin"].includes(role)
       ) as UserRole[];
 
       // Default to customer role
@@ -202,7 +202,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const canAccessDashboard = (): boolean => {
     if (!user || !user.roles) return false;
-    return hasRole("eo-owner") || hasRole("superadmin");
+    return hasRole("eo-owner") || hasRole("super-admin");
   };
 
   const logout = async () => {

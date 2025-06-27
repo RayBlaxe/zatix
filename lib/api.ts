@@ -73,7 +73,7 @@ function handleMockResponse<T>(endpoint: string, method: string, data?: any): T 
   if (endpoint === "/login" && method === "POST") {
     // Define valid test credentials for development
     const validCredentials = [
-      { email: "superadmin@zatix.com", password: "admin123", roles: ["superadmin", "eo-owner", "customer"] },
+      { email: "superadmin@zatix.com", password: "admin123", roles: ["super-admin", "eo-owner", "customer"] },
       { email: "eoowner@zatix.com", password: "eoowner123", roles: ["eo-owner", "customer"] },
       { email: "customer@zatix.com", password: "customer123", roles: ["customer"] },
       { email: "test@test.com", password: "test123", roles: ["customer"] }
@@ -480,42 +480,42 @@ export const rolesApi = {
   // Get all roles
   getRoles: (): Promise<Role[]> => {
     const token = getToken()
-    return apiRequest<Role[]>("/roles", "GET", null, token)
+    return apiRequest<Role[]>("/roles", "GET", null, token || undefined)
   },
 
   // Create a new role
   createRole: (data: { name: string; permissions: string[] }): Promise<Role> => {
     const token = getToken()
-    return apiRequest<Role>("/roles", "POST", data, token)
+    return apiRequest<Role>("/roles", "POST", data, token || undefined)
   },
 
   // Update a role
   updateRole: (id: string, data: { name: string; permissions: string[] }): Promise<Role> => {
     const token = getToken()
-    return apiRequest<Role>(`/roles/${id}`, "PUT", data, token)
+    return apiRequest<Role>(`/roles/${id}`, "PUT", data, token || undefined)
   },
 
   // Delete a role
   deleteRole: (id: string): Promise<void> => {
     const token = getToken()
-    return apiRequest<void>(`/roles/${id}`, "DELETE", null, token)
+    return apiRequest<void>(`/roles/${id}`, "DELETE", null, token || undefined)
   },
 
   // Get all users with their roles
   getUsers: (): Promise<UserRole[]> => {
     const token = getToken()
-    return apiRequest<UserRole[]>("/users/roles", "GET", null, token)
+    return apiRequest<UserRole[]>("/users/roles", "GET", null, token || undefined)
   },
 
   // Assign roles to a user
   assignRoles: (userId: string, roleIds: string[]): Promise<UserRole> => {
     const token = getToken()
-    return apiRequest<UserRole>(`/users/${userId}/roles`, "POST", { roleIds }, token)
+    return apiRequest<UserRole>(`/users/${userId}/roles`, "POST", { roleIds }, token || undefined)
   },
 
   // Get all available permissions
   getPermissions: (): Promise<string[]> => {
     const token = getToken()
-    return apiRequest<string[]>("/permissions", "GET", null, token)
+    return apiRequest<string[]>("/permissions", "GET", null, token || undefined)
   }
 }

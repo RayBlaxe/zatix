@@ -2,12 +2,13 @@
 
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
-import { CalendarDays, Menu, Plus, Ticket} from "lucide-react"
+import { CalendarDays, Menu, Plus, Ticket, ShoppingCart, Info} from "lucide-react"
 import { useAuth } from "@/hooks/use-auth"
 import { UserAccountNav } from "@/components/user-account-nav"
 
 export function Header() {
-  const { isAuthenticated } = useAuth()
+  const { isAuthenticated, user } = useAuth()
+  const currentRole = user?.currentRole
 
   return (
     <header className="sticky top-0 z-10 border-b bg-background">
@@ -24,28 +25,62 @@ export function Header() {
             <Link href="/" className="text-sm font-medium">
               Home
             </Link>
-            {isAuthenticated && (
+            
+            {/* Event Organizer Navigation */}
+            {isAuthenticated && (currentRole === "eo-owner" || currentRole === "super-admin") && (
               <Link href="/dashboard" className="text-sm font-medium">
                 Dashboard
               </Link>
             )}
-            <Link href="#" className="text-sm font-medium">
-              Explore
-            </Link>
-            <Link href="#" className="text-sm font-medium">
-              About
-            </Link>
+            
+            {/* Customer Navigation */}
+            {isAuthenticated && currentRole === "customer" && (
+              <>
+                <Link href="/events" className="text-sm font-medium">
+                  Explore Events
+                </Link>
+                <Link href="/about" className="text-sm font-medium">
+                  About ZaTix
+                </Link>
+              </>
+            )}
+            
+            {/* Non-authenticated Navigation */}
+            {!isAuthenticated && (
+              <>
+                <Link href="/events" className="text-sm font-medium">
+                  Explore
+                </Link>
+                <Link href="/about" className="text-sm font-medium">
+                  About
+                </Link>
+              </>
+            )}
           </nav>
 
           <div className="flex items-center gap-2">
             {isAuthenticated ? (
               <>
-                <Link href="/terms-and-conditions?for=event">
-                  <Button>
-                    <Plus className="mr-2 size-4" />
-                    Create Event
-                  </Button>
-                </Link>
+                {/* Event Organizer Actions */}
+                {(currentRole === "eo-owner" || currentRole === "super-admin") && (
+                  <Link href="/terms-and-conditions?for=event">
+                    <Button>
+                      <Plus className="mr-2 size-4" />
+                      Create Event
+                    </Button>
+                  </Link>
+                )}
+                
+                {/* Customer Actions */}
+                {currentRole === "customer" && (
+                  <Link href="/my-tickets">
+                    <Button variant="outline">
+                      <ShoppingCart className="mr-2 size-4" />
+                      My Tickets
+                    </Button>
+                  </Link>
+                )}
+                
                 <UserAccountNav />
               </>
             ) : (

@@ -74,8 +74,8 @@ export function TNCAcceptanceModal({ open, onOpenChange, onAccept }: TNCAcceptan
   const getTNCContent = () => {
     if (!tncData?.data) return ""
     
-    const firstTNC = Object.values(tncData.data).find(item => item.id !== undefined)
-    return firstTNC?.content || ""
+    const firstTNC = Object.values(tncData.data).find(item => typeof item === 'object' && item && 'id' in item)
+    return (firstTNC && typeof firstTNC === 'object' && 'content' in firstTNC) ? firstTNC.content : ""
   }
 
   return (

@@ -245,10 +245,10 @@ export const financeApi = {
 
       // Add recent sales section
       doc.setFontSize(16)
-      doc.text("Recent Sales", 14, doc.lastAutoTable.finalY + 20)
+      doc.text("Recent Sales", 14, (doc as any).lastAutoTable.finalY + 20)
       doc.setFontSize(12)
       autoTable(doc, {
-        startY: doc.lastAutoTable.finalY + 25,
+        startY: (doc as any).lastAutoTable.finalY + 25,
         head: [["Customer", "Amount", "Status", "Date"]],
         body: mockData.recentSales.map(sale => [
           sale.customer,
@@ -260,10 +260,10 @@ export const financeApi = {
 
       // Add revenue section
       doc.setFontSize(16)
-      doc.text("Revenue by Category", 14, doc.lastAutoTable.finalY + 20)
+      doc.text("Revenue by Category", 14, (doc as any).lastAutoTable.finalY + 20)
       doc.setFontSize(12)
       autoTable(doc, {
-        startY: doc.lastAutoTable.finalY + 25,
+        startY: (doc as any).lastAutoTable.finalY + 25,
         head: [["Category", "Revenue"]],
         body: mockData.revenue.byCategory.map(cat => [
           cat.category,

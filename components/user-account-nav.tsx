@@ -11,7 +11,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { Button } from "@/components/ui/button"
-import { LogOut, PlusCircle, Settings, User, Crown, Store, UserCheck } from "lucide-react"
+import { LogOut, PlusCircle, Settings, User, Crown, Store, UserCheck, Ticket } from "lucide-react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { useState } from "react"
@@ -40,7 +40,7 @@ export function UserAccountNav() {
     // Redirect based on role
     if (newRole === "customer") {
       router.push("/")
-    } else if (newRole === "eo-owner" || newRole === "superadmin") {
+    } else if (newRole === "eo-owner" || newRole === "super-admin") {
       router.push("/dashboard")
     }
   }
@@ -51,7 +51,7 @@ export function UserAccountNav() {
         return <UserCheck className="mr-2 size-4" />
       case "eo-owner":
         return <Store className="mr-2 size-4" />
-      case "superadmin":
+      case "super-admin":
         return <Crown className="mr-2 size-4" />
       default:
         return <User className="mr-2 size-4" />
@@ -64,7 +64,7 @@ export function UserAccountNav() {
         return "Customer"
       case "eo-owner":
         return "Event Organizer"
-      case "superadmin":
+      case "super-admin":
         return "Super Admin"
       default:
         return role
@@ -135,14 +135,22 @@ export function UserAccountNav() {
         
         {/* Role-based menu items */}
         {user.currentRole === "customer" && (
-          <DropdownMenuItem asChild>
-            <Link href="/events">
-              <PlusCircle className="mr-2 size-4" />
-              <span>Browse Events</span>
-            </Link>
-          </DropdownMenuItem>
+          <>
+            <DropdownMenuItem asChild>
+              <Link href="/events">
+                <PlusCircle className="mr-2 size-4" />
+                <span>Browse Events</span>
+              </Link>
+            </DropdownMenuItem>
+            <DropdownMenuItem asChild>
+              <Link href="/my-tickets">
+                <Ticket className="mr-2 size-4" />
+                <span>My Tickets</span>
+              </Link>
+            </DropdownMenuItem>
+          </>
         )}
-        {canAccessDashboard() && (
+        {(user.currentRole === "eo-owner" || user.currentRole === "super-admin") && (
           <DropdownMenuItem asChild>
             <Link href="/dashboard">
               <Store className="mr-2 size-4" />

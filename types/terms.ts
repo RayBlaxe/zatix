@@ -20,7 +20,7 @@ export type TNCEventResponse = {
   success: boolean
   message: string
   data: {
-    [key: string]: TNCItem
+    [key: string]: TNCItem | boolean
     already_accepted: boolean
   }
 }

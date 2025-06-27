@@ -1,45 +1,39 @@
 import { Role, UserRole } from "./types"
-import { api } from "@/lib/api"
+import { rolesApi as libRolesApi } from "@/lib/api"
 
 export const rolesApi = {
   // Get all roles
   getRoles: async (): Promise<Role[]> => {
-    const response = await api.get("/roles")
-    return response.data
+    return await libRolesApi.getRoles()
   },
 
   // Create a new role
   createRole: async (data: { name: string; permissions: string[] }): Promise<Role> => {
-    const response = await api.post("/roles", data)
-    return response.data
+    return await libRolesApi.createRole(data)
   },
 
   // Update a role
   updateRole: async (id: string, data: { name: string; permissions: string[] }): Promise<Role> => {
-    const response = await api.put(`/roles/${id}`, data)
-    return response.data
+    return await libRolesApi.updateRole(id, data)
   },
 
-// Delete a role
+  // Delete a role
   deleteRole: async (id: string): Promise<void> => {
-    await api.delete(`/roles/${id}`)
+    return await libRolesApi.deleteRole(id)
   },
 
   // Get all users with their roles
   getUsers: async (): Promise<UserRole[]> => {
-    const response = await api.get("/users/roles")
-    return response.data
+    return await libRolesApi.getUsers()
   },
 
   // Assign roles to a user
   assignRoles: async (userId: string, roleIds: string[]): Promise<UserRole> => {
-    const response = await api.post(`/users/${userId}/roles`, { roleIds })
-    return response.data
+    return await libRolesApi.assignRoles(userId, roleIds)
   },
 
   // Get all available permissions
   getPermissions: async (): Promise<string[]> => {
-    const response = await api.get("/permissions")
-    return response.data
+    return await libRolesApi.getPermissions()
   },
 } 

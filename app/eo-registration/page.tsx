@@ -82,7 +82,7 @@ export default function EORegistrationPage() {
   }
 
   // Redirect if user is already an event organizer
-  if (user?.role === "event_organizer") {
+  if (user?.roles?.includes("eo-owner")) {
     router.push("/dashboard")
     return null
   }

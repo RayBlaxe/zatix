@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, Suspense } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
@@ -13,7 +13,7 @@ import { useAuth } from "@/hooks/use-auth"
 import { termsApi, tncApi, getToken } from "@/lib/api"
 import type { TermsAndConditions, TNCEventResponse } from "@/types/terms"
 
-export default function TermsAndConditions() {
+function TermsAndConditionsContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const { user } = useAuth()
@@ -94,15 +94,15 @@ export default function TermsAndConditions() {
   }
 
   // Redirect if user is already an event organizer and not for event creation
-  if (user?.role === "event_organizer" && !isForEvent) {
+  if (user?.roles?.includes("eo-owner") && !isForEvent) {
     router.push("/dashboard")
     return null
   }
 
   const getTermsContent = () => {
     if (isForEvent && tncEventData?.data) {
-      const firstTNC = Object.values(tncEventData.data).find(item => item.id !== undefined)
-      return firstTNC?.content || ""
+      const firstTNC = Object.values(tncEventData.data).find(item => typeof item === 'object' && item && 'id' in item)
+      return (firstTNC && typeof firstTNC === 'object' && 'content' in firstTNC) ? firstTNC.content : ""
     }
     return termsData?.content || ""
   }
@@ -252,5 +252,17 @@ export default function TermsAndConditions() {
         </div>
       </main>
     </div>
+  )
+}
+
+export default function TermsAndConditions() {
+  return (
+    <Suspense fallback={
+      <div className="flex min-h-screen items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin" />
+      </div>
+    }>
+      <TermsAndConditionsContent />
+    </Suspense>
   )
 }

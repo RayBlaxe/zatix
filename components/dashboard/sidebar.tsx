@@ -83,7 +83,7 @@ export function DashboardSidebar({ onNavigate }: DashboardSidebarProps = {}) {
   const routes = [
     ...baseRoutes,
     ...(hasRole("eo-owner") ? eoRoutes : []),
-    ...(hasRole("superadmin") ? adminRoutes : []),
+    ...(hasRole("super-admin") ? adminRoutes : []),
   ]
 
   const contentManagementRoutes = [
@@ -132,8 +132,8 @@ export function DashboardSidebar({ onNavigate }: DashboardSidebarProps = {}) {
             </Link>
           ))}
 
-          {/* Content Management - Only for eo-owner and superadmin */}
-          {(hasRole("eo-owner") || hasRole("superadmin")) && (
+          {/* Content Management - Only for eo-owner and super-admin */}
+          {(hasRole("eo-owner") || hasRole("super-admin")) && (
             <Collapsible open={contentManagementOpen} onOpenChange={setContentManagementOpen}>
               <CollapsibleTrigger asChild>
                 <button
@@ -181,7 +181,7 @@ export function DashboardSidebar({ onNavigate }: DashboardSidebarProps = {}) {
             <p className="text-xs text-muted-foreground">{user?.email}</p>
             <p className="text-xs text-muted-foreground">
               {user?.currentRole === "eo-owner" ? "Event Organizer" : 
-               user?.currentRole === "superadmin" ? "Super Admin" : 
+               user?.currentRole === "super-admin" ? "Super Admin" : 
                "Customer"}
             </p>
           </div>
