@@ -38,7 +38,7 @@ export default function VerifyOTPPage() {
 
     try {
       await verifyOtp(pendingVerificationEmail, otp_code)
-      router.push("/dashboard")
+      router.push("/")
     } catch (err) {
       if (err instanceof Error) {
         setError(err.message)
