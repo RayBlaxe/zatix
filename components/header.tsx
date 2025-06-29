@@ -220,7 +220,7 @@ export function Header() {
                       </Link>
                     )}
                     
-                    {/* Profile Section */}
+                    {/* Profile Menu Section */}
                     <div className="pt-2 border-t">
                       <div className="flex items-center space-x-3 pb-3">
                         <Avatar className="size-8">
