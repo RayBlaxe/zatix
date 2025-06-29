@@ -81,7 +81,7 @@ export function Header() {
               Home
             </Link>
             
-            {/* Event Organizer Navigation */}
+            {/* Event Organizer Role Navigation */}
             {isAuthenticated && (currentRole === "eo-owner" || currentRole === "super-admin") && (
               <Link href="/dashboard" className="text-sm font-medium">
                 Dashboard
