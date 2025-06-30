@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useRef } from "react"
 import { useRouter } from "next/navigation"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
@@ -11,7 +11,8 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { Loader2, ArrowLeft, Save } from "lucide-react"
+import { Separator } from "@/components/ui/separator"
+import { Loader2, ArrowLeft, Save, Bold, Italic, List, Type, Quote, Eye, Edit } from "lucide-react"
 import { tncApi, getToken } from "@/lib/api"
 import { toast } from "sonner"
 
@@ -28,6 +29,8 @@ export default function CreateTNCPage() {
   const router = useRouter()
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [showPreview, setShowPreview] = useState(false)
+  const textareaRef = useRef<HTMLTextAreaElement>(null)
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -36,6 +39,49 @@ export default function CreateTNCPage() {
       type: undefined,
     },
   })
+
+  const insertFormatting = (startTag: string, endTag: string = "", placeholder: string = "") => {
+    const textarea = textareaRef.current
+    if (!textarea) return
+
+    const start = textarea.selectionStart
+    const end = textarea.selectionEnd
+    const selectedText = textarea.value.substring(start, end)
+    const textToInsert = selectedText || placeholder
+    const formattedText = `${startTag}${textToInsert}${endTag}`
+    
+    const newContent = textarea.value.substring(0, start) + formattedText + textarea.value.substring(end)
+    
+    form.setValue("content", newContent)
+    
+    // Focus and set cursor position
+    setTimeout(() => {
+      textarea.focus()
+      const newCursorPos = start + startTag.length + textToInsert.length
+      textarea.setSelectionRange(newCursorPos, newCursorPos)
+    }, 0)
+  }
+
+  const formatBold = () => insertFormatting("<strong>", "</strong>", "Bold text")
+  const formatItalic = () => insertFormatting("<em>", "</em>", "Italic text")
+  const formatParagraph = () => insertFormatting("<p>", "</p>", "Your paragraph text here")
+  const formatHeading = () => insertFormatting("<h3>", "</h3>", "Heading text")
+  const formatBulletList = () => {
+    const listContent = `<ul>
+    <li>First item</li>
+    <li>Second item</li>
+    <li>Third item</li>
+</ul>`
+    insertFormatting("", "", listContent)
+  }
+  const formatNumberedList = () => {
+    const listContent = `<ol>
+    <li>First item</li>
+    <li>Second item</li>
+    <li>Third item</li>
+</ol>`
+    insertFormatting("", "", listContent)
+  }
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsSubmitting(true)
@@ -120,16 +166,117 @@ export default function CreateTNCPage() {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Content</FormLabel>
+                    
+                    {/* Formatting Toolbar */}
+                    <div className="border rounded-t-md p-2 bg-muted/50">
+                      <div className="flex flex-wrap gap-1 items-center justify-between">
+                        <div className="flex flex-wrap gap-1">
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={formatBold}
+                          className="h-8 px-2"
+                          title="Bold"
+                        >
+                          <Bold className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={formatItalic}
+                          className="h-8 px-2"
+                          title="Italic"
+                        >
+                          <Italic className="h-4 w-4" />
+                        </Button>
+                        <Separator orientation="vertical" className="h-6 mx-1" />
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={formatHeading}
+                          className="h-8 px-2"
+                          title="Heading"
+                        >
+                          <Type className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={formatParagraph}
+                          className="h-8 px-2"
+                          title="Paragraph"
+                        >
+                          <Quote className="h-4 w-4" />
+                        </Button>
+                        <Separator orientation="vertical" className="h-6 mx-1" />
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={formatBulletList}
+                          className="h-8 px-2"
+                          title="Bullet List"
+                        >
+                          <List className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={formatNumberedList}
+                          className="h-8 px-2 text-xs font-mono"
+                          title="Numbered List"
+                        >
+                          1.
+                        </Button>
+                        </div>
+                        
+                        {/* Preview Toggle */}
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setShowPreview(!showPreview)}
+                          className="h-8 px-2"
+                        >
+                          {showPreview ? (
+                            <>
+                              <Edit className="h-4 w-4 mr-1" />
+                              Edit
+                            </>
+                          ) : (
+                            <>
+                              <Eye className="h-4 w-4 mr-1" />
+                              Preview
+                            </>
+                          )}
+                        </Button>
+                      </div>
+                    </div>
+
                     <FormControl>
-                      <Textarea
-                        placeholder="Enter the terms and conditions content here. You can use HTML tags for formatting."
-                        className="min-h-[400px] resize-y"
-                        {...field}
-                      />
+                      {showPreview ? (
+                        <div className="border rounded-b-md border-t-0 min-h-[400px] p-4 bg-background">
+                          <div className="prose max-w-none">
+                            <div dangerouslySetInnerHTML={{ __html: field.value || "<p>No content to preview</p>" }} />
+                          </div>
+                        </div>
+                      ) : (
+                        <Textarea
+                          ref={textareaRef}
+                          placeholder="Enter the terms and conditions content here. Use the formatting buttons above to add HTML formatting."
+                          className="min-h-[400px] resize-y rounded-t-none border-t-0"
+                          {...field}
+                        />
+                      )}
                     </FormControl>
                     <FormMessage />
                     <p className="text-sm text-muted-foreground">
-                      You can use HTML tags like &lt;p&gt;, &lt;strong&gt;, &lt;ul&gt;, &lt;li&gt;, etc. for formatting.
+                      Use the formatting buttons above to add bold text, lists, headings, and paragraphs. You can also type HTML tags directly.
                     </p>
                   </FormItem>
                 )}
