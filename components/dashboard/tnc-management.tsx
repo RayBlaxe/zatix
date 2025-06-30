@@ -54,54 +54,60 @@ export function TNCManagement() {
 
   if (loading) {
     return (
-      <Card>
-        <CardHeader>
-          <CardTitle>Terms and Conditions Management</CardTitle>
-          <CardDescription>Manage all terms and conditions for the platform</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="flex items-center justify-center py-8">
-            <Loader2 className="h-8 w-8 animate-spin" />
-            <span className="ml-2">Loading TNC items...</span>
-          </div>
-        </CardContent>
-      </Card>
+      <>
+        <div className="flex items-center justify-between space-y-2">
+          <h2 className="text-3xl font-bold tracking-tight">Terms and Conditions</h2>
+          <Button disabled>
+            <FileText className="mr-2 h-4 w-4" />
+            Create New TNC
+          </Button>
+        </div>
+        <Card>
+          <CardContent>
+            <div className="flex items-center justify-center py-8">
+              <Loader2 className="h-8 w-8 animate-spin" />
+              <span className="ml-2">Loading TNC items...</span>
+            </div>
+          </CardContent>
+        </Card>
+      </>
     )
   }
 
   if (error) {
     return (
-      <Card>
-        <CardHeader>
-          <CardTitle>Terms and Conditions Management</CardTitle>
-          <CardDescription>Manage all terms and conditions for the platform</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Alert variant="destructive">
-            <AlertDescription>{error}</AlertDescription>
-          </Alert>
-          <Button onClick={loadTNCItems} className="mt-4">
-            Try Again
-          </Button>
-        </CardContent>
-      </Card>
-    )
-  }
-
-  return (
-    <Card>
-      <CardHeader>
-        <div className="flex items-center justify-between">
-          <div>
-            <CardTitle>Terms and Conditions Management</CardTitle>
-            <CardDescription>Manage all terms and conditions for the platform</CardDescription>
-          </div>
+      <>
+        <div className="flex items-center justify-between space-y-2">
+          <h2 className="text-3xl font-bold tracking-tight">Terms and Conditions</h2>
           <Button>
             <FileText className="mr-2 h-4 w-4" />
             Create New TNC
           </Button>
         </div>
-      </CardHeader>
+        <Card>
+          <CardContent>
+            <Alert variant="destructive">
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
+            <Button onClick={loadTNCItems} className="mt-4">
+              Try Again
+            </Button>
+          </CardContent>
+        </Card>
+      </>
+    )
+  }
+
+  return (
+    <>
+      <div className="flex items-center justify-between space-y-2">
+        <h2 className="text-3xl font-bold tracking-tight">Terms and Conditions</h2>
+        <Button>
+          <FileText className="mr-2 h-4 w-4" />
+          Create New TNC
+        </Button>
+      </div>
+      <Card>
       <CardContent>
         {tncItems.length === 0 ? (
           <div className="text-center py-8">
@@ -112,7 +118,7 @@ export function TNCManagement() {
             </p>
           </div>
         ) : (
-          <div className="space-y-4">
+          <div className="space-y-4 mt-6" >
             {tncItems.map((item) => (
               <Card key={item.id} className="border-l-4 border-l-blue-500">
                 <CardHeader>
@@ -159,6 +165,7 @@ export function TNCManagement() {
           </div>
         )}
       </CardContent>
-    </Card>
+      </Card>
+    </>
   )
 }
