@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { useRouter } from "next/navigation"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -11,6 +12,7 @@ import { tncApi, getToken } from "@/lib/api"
 import { TNCItem } from "@/types/terms"
 
 export function TNCManagement() {
+  const router = useRouter()
   const [tncItems, setTncItems] = useState<TNCItem[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -79,7 +81,7 @@ export function TNCManagement() {
       <>
         <div className="flex items-center justify-between space-y-2">
           <h2 className="text-3xl font-bold tracking-tight">Terms and Conditions</h2>
-          <Button>
+          <Button onClick={() => router.push("/dashboard/tnc/create")}>
             <FileText className="mr-2 h-4 w-4" />
             Create New TNC
           </Button>
@@ -102,7 +104,7 @@ export function TNCManagement() {
     <>
       <div className="flex items-center justify-between space-y-2">
         <h2 className="text-3xl font-bold tracking-tight">Terms and Conditions</h2>
-        <Button>
+        <Button onClick={() => router.push("/dashboard/tnc/create")}>
           <FileText className="mr-2 h-4 w-4" />
           Create New TNC
         </Button>

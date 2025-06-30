@@ -464,6 +464,11 @@ export const tncApi = {
     return apiRequest<TNCListResponse>("/tnc", "GET", null, token)
   },
 
+  // Super Admin - Create new TNC item
+  createTNC: (token: string, data: { content: string; type: "event" | "general" }) => {
+    return apiRequest<TNCItem>("/tnc", "POST", data, token)
+  },
+
   // EO Owner - Get TNC for events with acceptance status
   getTNCEvents: (token: string) => {
     return apiRequest<TNCEventResponse>("/tnc-events", "GET", null, token)
