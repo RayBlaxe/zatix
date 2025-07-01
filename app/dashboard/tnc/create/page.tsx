@@ -267,10 +267,10 @@ export default function CreateTNCPage() {
                         </div>
                       ) : (
                         <Textarea
-                          ref={textareaRef}
                           placeholder="Enter the terms and conditions content here. Use the formatting buttons above to add HTML formatting."
                           className="min-h-[400px] resize-y rounded-t-none border-t-0"
                           {...field}
+                          ref={textareaRef}
                         />
                       )}
                     </FormControl>

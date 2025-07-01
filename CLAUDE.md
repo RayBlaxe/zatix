@@ -25,7 +25,7 @@ npm run lint
 npm test
 ```
 
-Note: Multiple package managers are supported (npm, pnpm, bun) - use the appropriate lockfile present.
+Note: Multiple package managers are supported (npm, bun) - use the appropriate lockfile present.
 
 ## Architecture Overview
 

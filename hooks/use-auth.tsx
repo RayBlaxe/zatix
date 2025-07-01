@@ -2,8 +2,8 @@
 
 import type React from "react";
 
-import { createContext, useContext, useEffect, useState } from "react";
-import { authApi, getToken, removeToken, setToken } from "@/lib/api";
+import { createContext, useContext, useEffect, useState, useCallback } from "react";
+import { authApi, getToken, removeToken, setToken, isCurrentTokenExpired, getStoredTokenExpiration, getTokenTimeRemaining, getTokenRaw, validateTokenWithAPI } from "@/lib/api";
 import { RegisterResponse } from "@/types/auth/register";
 import { AuthUser, UserRole, AuthContextType } from "@/types/auth";
 
@@ -13,11 +13,42 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [pendingVerificationEmail, setPendingVerificationEmail] = useState<string | null>(null);
+  const [tokenExpiration, setTokenExpiration] = useState<Date | null>(null);
+
+  // Logout function (defined early to avoid circular dependency)
+  const logout = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      const token = getTokenRaw(); // Use raw token to avoid expiration check
+      if (token) {
+        await authApi.logout(token);
+      }
+    } catch (error) {
+      console.error("Logout error:", error);
+    } finally {
+      // Clear user state and tokens regardless of API call success
+      setUser(null);
+      setTokenExpiration(null);
+      removeToken();
+      localStorage.removeItem("user");
+      setIsLoading(false);
+    }
+  }, []);
+
+  // Check token expiration and logout if expired
+  const checkTokenExpiration = useCallback(() => {
+    if (isCurrentTokenExpired()) {
+      console.warn("Token expired, logging out user");
+      logout();
+      return true;
+    }
+    return false;
+  }, [logout]);
 
   // Initialize user from localStorage on app start
   useEffect(() => {
     const initializeAuth = () => {
-      const token = getToken();
+      const token = getToken(); // This already validates expiration
       const savedUser = localStorage.getItem("user");
       
       if (token && savedUser) {
@@ -31,6 +62,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             parsedUser.currentRole = "customer";
           }
           setUser(parsedUser);
+          
+          // Set token expiration info
+          const expiration = getStoredTokenExpiration();
+          setTokenExpiration(expiration);
+          
         } catch (error) {
           console.error("Failed to parse saved user:", error);
           removeToken();
@@ -42,6 +78,49 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     initializeAuth();
   }, []);
+
+  // Set up periodic token validation with API (Laravel Sanctum)
+  useEffect(() => {
+    if (!user) return;
+
+    const interval = setInterval(async () => {
+      const token = getTokenRaw();
+      if (token) {
+        try {
+          const validation = await validateTokenWithAPI(token);
+          if (!validation.valid) {
+            console.warn("Token validation failed, logging out user");
+            logout();
+          }
+        } catch (error) {
+          console.error("Token validation error:", error);
+          // Fall back to stored expiration check
+          checkTokenExpiration();
+        }
+      }
+    }, 5 * 60 * 1000); // Check every 5 minutes (less frequent for API calls)
+
+    return () => clearInterval(interval);
+  }, [user, checkTokenExpiration, logout]);
+
+  // Set up session timeout warning (5 minutes before expiration)
+  useEffect(() => {
+    if (!user || !tokenExpiration) return;
+
+    const timeRemaining = tokenExpiration.getTime() - new Date().getTime();
+    const warningTime = Math.max(0, timeRemaining - (5 * 60 * 1000)); // 5 minutes before expiration
+
+    if (warningTime > 0) {
+      const timeout = setTimeout(() => {
+        // Dispatch warning event
+        window.dispatchEvent(new CustomEvent("tokenExpirationWarning", {
+          detail: { expiresAt: tokenExpiration }
+        }));
+      }, warningTime);
+
+      return () => clearTimeout(timeout);
+    }
+  }, [user, tokenExpiration]);
 
   const login = async (email: string, password: string) => {
     setIsLoading(true);
@@ -59,7 +138,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         throw new Error(response?.message ?? "Invalid response from server. Please try again.");
       }
 
-      setToken(data.access_token);
+      // Store token with expiration info from Laravel Sanctum response
+      setToken(data.access_token, data.expires_in);
 
       // Map roles from string array to UserRole array
       const userRoles = (data.user.roles as string[]).filter(role => 
@@ -87,6 +167,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       setUser(newUser);
       localStorage.setItem("user", JSON.stringify(newUser));
+      
+      // Set token expiration info
+      const expiration = getStoredTokenExpiration();
+      setTokenExpiration(expiration);
     } catch (error) {
       throw error;
     } finally {
@@ -160,6 +244,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       setUser(newUser);
       localStorage.setItem("user", JSON.stringify(newUser));
+      
+      // Set token expiration info
+      const expiration = getStoredTokenExpiration();
+      setTokenExpiration(expiration);
 
       setPendingVerificationEmail(null);
     } finally {
@@ -205,23 +293,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return hasRole("eo-owner") || hasRole("super-admin");
   };
 
-  const logout = async () => {
-    setIsLoading(true);
-    try {
-      const token = getToken();
-      if (token) {
-        await authApi.logout(token);
-      }
-    } catch (error) {
-      console.error("Logout error:", error);
-    } finally {
-      // Clear user state and tokens regardless of API call success
-      setUser(null);
-      removeToken();
-      localStorage.removeItem("user");
-      setIsLoading(false);
-    }
-  };
 
   return (
     <AuthContext.Provider

@@ -4,6 +4,7 @@ import type React from "react"
 import { useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { useAuth } from "@/hooks/use-auth"
+import { isCurrentTokenExpired } from "@/lib/api"
 import { Loader2 } from "lucide-react"
 import { UserRole } from "@/types/auth"
 
@@ -18,10 +19,18 @@ export function ProtectedRoute({
   requiredRoles = [], 
   requireAllRoles = false 
 }: ProtectedRouteProps) {
-  const { user, isAuthenticated, isLoading, hasRole } = useAuth()
+  const { user, isAuthenticated, isLoading, hasRole, logout } = useAuth()
   const router = useRouter()
 
   useEffect(() => {
+    // Check token expiration on mount and redirect if expired
+    if (isAuthenticated && isCurrentTokenExpired()) {
+      console.warn("Token expired on protected route, logging out")
+      logout()
+      router.push("/login")
+      return
+    }
+
     if (!isLoading && !isAuthenticated) {
       router.push("/login")
       return
@@ -44,7 +53,30 @@ export function ProtectedRoute({
         router.push("/")
       }
     }
-  }, [isAuthenticated, isLoading, router, requiredRoles, requireAllRoles, hasRole, user])
+  }, [isAuthenticated, isLoading, router, requiredRoles, requireAllRoles, hasRole, user, logout])
+
+  // Listen for token expiration events
+  useEffect(() => {
+    const handleTokenExpired = () => {
+      console.warn("Token expired event received")
+      logout()
+      router.push("/login")
+    }
+
+    const handleAuthenticationFailed = (event: CustomEvent) => {
+      console.warn("Authentication failed event received", event.detail)
+      logout()
+      router.push("/login")
+    }
+
+    window.addEventListener("tokenExpired", handleTokenExpired)
+    window.addEventListener("authenticationFailed", handleAuthenticationFailed as EventListener)
+
+    return () => {
+      window.removeEventListener("tokenExpired", handleTokenExpired)
+      window.removeEventListener("authenticationFailed", handleAuthenticationFailed as EventListener)
+    }
+  }, [logout, router])
 
   if (isLoading) {
     return (

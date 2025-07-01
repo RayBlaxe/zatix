@@ -1,16 +1,88 @@
 import { APIResponse } from "@/types/api"
 import { LoginResponse } from "@/types/auth/login"
 import { RegisterResponse } from "@/types/auth/register"
-import { TermsAndConditions, TNCListResponse, TNCEventResponse, TNCAcceptResponse } from "@/types/terms"
+import { TermsAndConditions, TNCListResponse, TNCEventResponse, TNCAcceptResponse, TNCItem } from "@/types/terms"
 import { Role, UserRole } from "@/app/dashboard/roles/types"
 
 // Base API URL - use environment variable or fallback for development
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "https://api.zatix.id/api"
 
+// Laravel Sanctum token utilities
+export function getStoredTokenExpiration(): Date | null {
+  if (typeof window !== "undefined") {
+    const expirationStr = localStorage.getItem("token_expires_at")
+    if (expirationStr) {
+      return new Date(expirationStr)
+    }
+  }
+  return null
+}
+
+export function isTokenExpiredByStorage(): boolean {
+  const expiration = getStoredTokenExpiration()
+  if (!expiration) {
+    return false // If no expiration stored, assume valid
+  }
+  return new Date() >= expiration
+}
+
+export function getTokenTimeRemaining(): number {
+  const expiration = getStoredTokenExpiration()
+  if (!expiration) {
+    return 0
+  }
+  return Math.max(0, expiration.getTime() - new Date().getTime())
+}
+
+// API-based token validation for Laravel Sanctum
+export async function validateTokenWithAPI(token: string): Promise<{
+  valid: boolean;
+  expiresAt?: Date;
+  user?: any;
+}> {
+  try {
+    const response = await fetch(`${API_BASE_URL}/auth/me`, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+      },
+    })
+
+    if (response.ok) {
+      const data = await response.json()
+      return {
+        valid: true,
+        user: data.user || data.data,
+      }
+    } else if (response.status === 401) {
+      return { valid: false }
+    } else {
+      // For other errors, assume token might still be valid
+      return { valid: true }
+    }
+  } catch (error) {
+    console.error('Token validation error:', error)
+    // On network error, fall back to stored expiration
+    return { valid: !isTokenExpiredByStorage() }
+  }
+}
+
 // Helper function for making API requests
 async function apiRequest<T>(endpoint: string, method = "GET", data?: any, token?: string): Promise<any> {
   const url = `${API_BASE_URL}${endpoint}`
 
+  // Check stored token expiration before making request
+  if (token && isTokenExpiredByStorage()) {
+    console.warn("Token is expired based on stored expiration, removing from storage")
+    removeToken()
+    // Dispatch custom event to notify components of token expiration
+    if (typeof window !== "undefined") {
+      window.dispatchEvent(new CustomEvent("tokenExpired"))
+    }
+    throw new Error("Token expired")
+  }
 
   const headers: HeadersInit = {
     "Content-Type": "application/json",
@@ -34,6 +106,26 @@ async function apiRequest<T>(endpoint: string, method = "GET", data?: any, token
   try {
     const response = await fetch(url, config)
 
+    // Handle authentication errors (401/403)
+    if (response.status === 401 || response.status === 403) {
+      console.warn("Authentication failed, removing token")
+      removeToken()
+      // Dispatch custom event to notify components of authentication failure
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new CustomEvent("authenticationFailed", {
+          detail: { status: response.status, endpoint }
+        }))
+      }
+      
+      const responseData = await response.json().catch(() => ({
+        success: false,
+        message: "Authentication failed",
+        data: null
+      }))
+      
+      return responseData as APIResponse<T>
+    }
+
     // Handle non-JSON responses
     const contentType = response.headers.get("content-type")
     if (contentType && contentType.indexOf("application/json") !== -1) {
@@ -55,6 +147,12 @@ async function apiRequest<T>(endpoint: string, method = "GET", data?: any, token
     }
   } catch (error) {
     console.error("API request error:", error)
+    
+    // Check if error is due to token expiration
+    if (error instanceof Error && error.message === "Token expired") {
+      throw error
+    }
+    
     // Use mock responses only when explicitly enabled
     if (process.env.NEXT_PUBLIC_USE_MOCKS === "true") {
       return handleMockResponse<T>(endpoint, method, data)
@@ -84,12 +182,16 @@ function handleMockResponse<T>(endpoint: string, method: string, data?: any): T 
     )
     
     if (credential) {
+      // Create a mock Sanctum token (opaque string like Laravel Sanctum)
+      const mockSanctumToken = `${Math.floor(Math.random() * 1000)}|${Math.random().toString(36).substring(2, 40)}`
+      
       return {
         success: true,
         message: "Login successfully",
         data: {
-          access_token: `1|${Math.random().toString(36).substring(2, 15)}${Math.random().toString(36).substring(2, 15)}`,
+          access_token: mockSanctumToken,
           token_type: "Bearer",
+          expires_in: 480, // 8 hours in minutes
           user: {
             id: Math.floor(Math.random() * 1000) + 1,
             name: credential.email.split("@")[0].replace(/([a-z])([A-Z])/g, '$1 $2').replace(/^\w/, c => c.toUpperCase()),
@@ -155,6 +257,26 @@ function handleMockResponse<T>(endpoint: string, method: string, data?: any): T 
     return {
       success: true,
       message: "Password reset instructions sent to your email.",
+    } as unknown as T
+  }
+
+  // Laravel Sanctum /auth/me mock response
+  if (endpoint === "/auth/me" && method === "GET") {
+    // Simulate token validation - in real Laravel Sanctum, this would validate the token
+    return {
+      success: true,
+      message: "User data retrieved successfully",
+      data: {
+        user: {
+          id: Math.floor(Math.random() * 1000) + 1,
+          name: "Demo User",
+          email: "demo@zatix.com",
+          email_verified_at: "2024-12-31T17:00:00.000000Z",
+          roles: ["customer"],
+          created_at: "2025-06-23T02:11:31.000000Z",
+          updated_at: "2025-06-23T02:11:31.000000Z"
+        }
+      }
     } as unknown as T
   }
 
@@ -392,6 +514,11 @@ export const authApi = {
     return apiRequest<LoginResponse>("/login", "POST", { email, password })
   },
 
+  // Check current user and token validity (Laravel Sanctum /auth/me endpoint)
+  me: (token: string) => {
+    return apiRequest<{ user: any }>("/auth/me", "GET", null, token)
+  },
+
   register: (
     name: string,
     email: string,
@@ -428,18 +555,38 @@ export const authApi = {
   },
 }
 
-// Function to get token from localStorage
+// Function to get token from localStorage with expiration validation
 export function getToken(): string | null {
+  if (typeof window !== "undefined") {
+    const token = localStorage.getItem("token")
+    if (token && isTokenExpiredByStorage()) {
+      // Token is expired based on stored expiration, remove it
+      removeToken()
+      return null
+    }
+    return token
+  }
+  return null
+}
+
+// Function to get token without expiration validation (for internal use)
+export function getTokenRaw(): string | null {
   if (typeof window !== "undefined") {
     return localStorage.getItem("token")
   }
   return null
 }
 
-// Function to set token in localStorage
-export function setToken(token: string): void {
+// Function to set token in localStorage with expiration info
+export function setToken(token: string, expiresInMinutes?: number): void {
   if (typeof window !== "undefined") {
     localStorage.setItem("token", token)
+    
+    // Store expiration time if provided (Laravel Sanctum expiration)
+    if (expiresInMinutes) {
+      const expiration = new Date(Date.now() + expiresInMinutes * 60 * 1000)
+      localStorage.setItem("token_expires_at", expiration.toISOString())
+    }
   }
 }
 
@@ -447,7 +594,14 @@ export function setToken(token: string): void {
 export function removeToken(): void {
   if (typeof window !== "undefined") {
     localStorage.removeItem("token")
+    localStorage.removeItem("token_expires_at")
+    localStorage.removeItem("user")
   }
+}
+
+// Function to check if current token is expired based on stored expiration
+export function isCurrentTokenExpired(): boolean {
+  return isTokenExpiredByStorage()
 }
 
 // Terms and Conditions API functions
