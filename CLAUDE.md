@@ -192,3 +192,55 @@ Use existing patterns when adding new features:
 - Use dashboard layout patterns for new admin features
 - Implement responsive design with mobile-first approach
 - Use collapsible components for complex navigation structures
+
+## 🚨 MANDATORY PRE-WORK CHECKLIST
+
+**CRITICAL: Claude MUST follow this checklist before starting ANY task:**
+
+### 1. **Documentation Reading Phase**
+- [ ] Read CLAUDE.md (this file) completely
+- [ ] Read FEATURES.md to understand current feature implementation status
+- [ ] Read ROADMAP.md to understand planned features and priorities
+- [ ] Read DEVELOPMENT-WORKFLOW.md for process guidelines
+
+### 2. **Codebase Understanding Phase**
+- [ ] Identify relevant files/components mentioned in the task
+- [ ] Check existing implementations for similar features
+- [ ] Understand current architecture patterns in the affected areas
+- [ ] Verify dependencies and integration points
+
+### 3. **Planning Phase**
+- [ ] Update TodoWrite with findings from documentation review
+- [ ] Plan approach based on existing patterns and architecture
+- [ ] Identify potential conflicts with existing features
+- [ ] Define success criteria and testing approach
+
+### 4. **Implementation Phase**
+- [ ] Follow established patterns from existing code
+- [ ] Maintain consistency with current architecture
+- [ ] Update relevant documentation files after completion
+- [ ] Run linting and type checking before considering task complete
+
+### 5. **Documentation Update Phase**
+- [ ] Update FEATURES.md with new/modified features
+- [ ] Update ROADMAP.md if priorities changed
+- [ ] Update CLAUDE.md if new patterns were established
+- [ ] Commit changes with proper documentation
+
+## Workflow Enforcement
+
+**Every response must start with:** "Let me first check the current documentation to understand the project state..."
+
+**Before making ANY code changes, Claude must:**
+1. Reference specific sections from the documentation
+2. Explain how the planned changes align with existing architecture
+3. Identify which features are affected and their current status
+4. Plan the implementation approach based on documented patterns
+
+**After completing ANY task, Claude must:**
+1. Update the appropriate documentation files
+2. Verify the changes align with the established patterns
+3. Update the TodoWrite status to reflect completion
+4. Confirm all documentation is current and accurate
+
+This ensures continuity and prevents duplicate work or architectural inconsistencies.
