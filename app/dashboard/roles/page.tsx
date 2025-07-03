@@ -3,26 +3,21 @@
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Plus, Users, Shield } from "lucide-react"
+import { Plus, Users } from "lucide-react"
 import { DataTable } from "@/components/ui/data-table"
-import { columns as roleColumns } from "./columns"
-import { columns as userColumns } from "./user-columns"
-import { RoleDialog } from "./role-dialog"
-import { UserRoleDialog } from "./user-role-dialog"
+import { columns as staffColumns } from "./columns"
+import { StaffDialog } from "./staff-dialog"
 import { useToast } from "@/components/ui/use-toast"
-import { Role, UserRole } from "./types"
-import { rolesApi } from "@/lib/api"
+import { Staff, StaffResponse, StaffCreateRequest, StaffUpdateRequest } from "./types"
+import { staffApi } from "@/lib/api"
 
-export default function RolesPage() {
-  const [activeTab, setActiveTab] = useState("roles")
-  const [isRoleDialogOpen, setIsRoleDialogOpen] = useState(false)
-  const [isUserRoleDialogOpen, setIsUserRoleDialogOpen] = useState(false)
-  const [selectedRole, setSelectedRole] = useState<Role | undefined>()
-  const [selectedUser, setSelectedUser] = useState<UserRole | undefined>()
-  const [roles, setRoles] = useState<Role[]>([])
-  const [users, setUsers] = useState<UserRole[]>([])
-  const [permissions, setPermissions] = useState<string[]>([])
+export default function StaffPage() {
+  const [isStaffDialogOpen, setIsStaffDialogOpen] = useState(false)
+  const [selectedStaff, setSelectedStaff] = useState<Staff | undefined>()
+  const [staff, setStaff] = useState<Staff[]>([])
+  const [currentPage, setCurrentPage] = useState(1)
+  const [totalPages, setTotalPages] = useState(1)
+  const [totalStaff, setTotalStaff] = useState(0)
   const [isLoading, setIsLoading] = useState(true)
   const { toast } = useToast()
 
@@ -30,105 +25,72 @@ export default function RolesPage() {
     loadData()
   }, [])
 
-  const loadData = async () => {
+  const loadData = async (page = 1) => {
     try {
       setIsLoading(true)
-      const [rolesData, usersData, permissionsData] = await Promise.all([
-        rolesApi.getRoles().catch(() => []),
-        rolesApi.getUsers().catch(() => []),
-        rolesApi.getPermissions().catch(() => []),
-      ])
-      setRoles(Array.isArray(rolesData) ? rolesData : [])
-      setUsers(Array.isArray(usersData) ? usersData : [])
-      setPermissions(Array.isArray(permissionsData) ? permissionsData : [])
+      const response = await staffApi.getStaff(page) as StaffResponse
+      
+      if (response.success && response.data) {
+        setStaff(response.data.data || [])
+        setCurrentPage(response.data.current_page || 1)
+        setTotalPages(response.data.last_page || 1)
+        setTotalStaff(response.data.total || 0)
+      } else {
+        // Fallback for mock data that might not have the full structure
+        const staffData = Array.isArray(response) ? response : []
+        setStaff(staffData)
+      }
     } catch (error) {
-      console.error("Failed to load roles data:", error)
+      console.error("Failed to load staff data:", error)
       toast({
         title: "Error",
-        description: "Failed to load data. Please try again.",
+        description: "Failed to load staff data. Please try again.",
         variant: "destructive",
       })
-      // Set default empty arrays to prevent crashes
-      setRoles([])
-      setUsers([])
-      setPermissions([])
+      setStaff([])
     } finally {
       setIsLoading(false)
     }
   }
 
-  const handleCreateRole = async (data: { name: string; permissions: string[] }) => {
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page)
+    loadData(page)
+  }
+
+  const handleCreateStaff = async (data: StaffCreateRequest | StaffUpdateRequest) => {
     try {
-      const newRole = await rolesApi.createRole(data)
-      setRoles((prev) => [...prev, newRole])
+      const response = await staffApi.createStaff(data as StaffCreateRequest)
+      await loadData(currentPage) // Reload current page to show updated data
       toast({
-        title: "Role created",
-        description: "The role has been created successfully.",
+        title: "Staff created",
+        description: "The staff member has been created successfully.",
       })
-      setIsRoleDialogOpen(false)
+      setIsStaffDialogOpen(false)
     } catch (error) {
       toast({
         title: "Error",
-        description: "Failed to create role. Please try again.",
+        description: "Failed to create staff member. Please try again.",
         variant: "destructive",
       })
     }
   }
 
-  const handleEditRole = async (data: { name: string; permissions: string[] }) => {
-    if (!selectedRole) return
+  const handleEditStaff = async (data: StaffCreateRequest | StaffUpdateRequest) => {
+    if (!selectedStaff) return
 
     try {
-      const updatedRole = await rolesApi.updateRole(selectedRole.id, data)
-      setRoles((prev) =>
-        prev.map((role) => (role.id === selectedRole.id ? updatedRole : role))
-      )
+      const response = await staffApi.updateStaff(selectedStaff.id.toString(), data as StaffUpdateRequest)
+      await loadData(currentPage) // Reload current page to show updated data
       toast({
-        title: "Role updated",
-        description: "The role has been updated successfully.",
+        title: "Staff updated",
+        description: "The staff member has been updated successfully.",
       })
-      setIsRoleDialogOpen(false)
+      setIsStaffDialogOpen(false)
     } catch (error) {
       toast({
         title: "Error",
-        description: "Failed to update role. Please try again.",
-        variant: "destructive",
-      })
-    }
-  }
-
-  const handleDeleteRole = async (roleId: string) => {
-    try {
-      await rolesApi.deleteRole(roleId)
-      setRoles((prev) => prev.filter((role) => role.id !== roleId))
-      toast({
-        title: "Role deleted",
-        description: "The role has been deleted successfully.",
-      })
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to delete role. Please try again.",
-        variant: "destructive",
-      })
-    }
-  }
-
-  const handleAssignRoles = async (data: { userId: string; roleIds: string[] }) => {
-    try {
-      const updatedUser = await rolesApi.assignRoles(data.userId, data.roleIds)
-      setUsers((prev) =>
-        prev.map((user) => (user.id === data.userId ? updatedUser : user))
-      )
-      toast({
-        title: "Roles assigned",
-        description: "The roles have been assigned successfully.",
-      })
-      setIsUserRoleDialogOpen(false)
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to assign roles. Please try again.",
+        description: "Failed to update staff member. Please try again.",
         variant: "destructive",
       })
     }
@@ -145,85 +107,69 @@ export default function RolesPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight">Roles & Permissions</h1>
-        <p className="text-muted-foreground">Manage user roles and permissions for your organization.</p>
+        <h1 className="text-3xl font-bold tracking-tight">Staff Management</h1>
+        <p className="text-muted-foreground">Manage staff members and their roles for your organization.</p>
       </div>
 
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-        <TabsList>
-          <TabsTrigger value="roles" className="flex items-center gap-2">
-            <Shield className="h-4 w-4" />
-            Roles
-          </TabsTrigger>
-          <TabsTrigger value="users" className="flex items-center gap-2">
-            <Users className="h-4 w-4" />
-            User Assignments
-          </TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="roles" className="space-y-4">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle>Roles</CardTitle>
-              <Button onClick={() => {
-                setSelectedRole(undefined)
-                setIsRoleDialogOpen(true)
-              }}>
-                <Plus className="mr-2 h-4 w-4" />
-                Create Role
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between">
+          <CardTitle className="flex items-center gap-2">
+            <Users className="h-5 w-5" />
+            Staff Members
+            {totalStaff > 0 && (
+              <span className="text-sm text-muted-foreground">({totalStaff} total)</span>
+            )}
+          </CardTitle>
+          <Button onClick={() => {
+            setSelectedStaff(undefined)
+            setIsStaffDialogOpen(true)
+          }}>
+            <Plus className="mr-2 h-4 w-4" />
+            Add Staff Member
+          </Button>
+        </CardHeader>
+        <CardContent>
+          <DataTable
+            columns={staffColumns}
+            data={staff}
+            onEdit={(staffMember) => {
+              setSelectedStaff(staffMember)
+              setIsStaffDialogOpen(true)
+            }}
+          />
+          
+          {totalPages > 1 && (
+            <div className="flex items-center justify-center space-x-2 mt-4">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => handlePageChange(currentPage - 1)}
+                disabled={currentPage <= 1}
+              >
+                Previous
               </Button>
-            </CardHeader>
-            <CardContent>
-              <DataTable
-                columns={roleColumns}
-                data={roles}
-                onEdit={(role) => {
-                  setSelectedRole(role)
-                  setIsRoleDialogOpen(true)
-                }}
-                onDelete={handleDeleteRole}
-              />
-            </CardContent>
-          </Card>
-        </TabsContent>
+              <span className="text-sm text-muted-foreground">
+                Page {currentPage} of {totalPages}
+              </span>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => handlePageChange(currentPage + 1)}
+                disabled={currentPage >= totalPages}
+              >
+                Next
+              </Button>
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
-        <TabsContent value="users" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>User Role Assignments</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <DataTable
-                columns={userColumns}
-                data={users}
-                onManageRoles={(user) => {
-                  setSelectedUser(user)
-                  setIsUserRoleDialogOpen(true)
-                }}
-              />
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
-
-      <RoleDialog
-        open={isRoleDialogOpen}
-        onOpenChange={setIsRoleDialogOpen}
-        role={selectedRole}
-        permissions={permissions}
-        onSubmit={selectedRole ? handleEditRole : handleCreateRole}
+      <StaffDialog
+        open={isStaffDialogOpen}
+        onOpenChange={setIsStaffDialogOpen}
+        staff={selectedStaff}
+        onSubmit={selectedStaff ? handleEditStaff : handleCreateStaff}
       />
-
-      {selectedUser && (
-        <UserRoleDialog
-          open={isUserRoleDialogOpen}
-          onOpenChange={setIsUserRoleDialogOpen}
-          user={selectedUser}
-          roles={roles}
-          assignedRoles={selectedUser.roles}
-          onSubmit={handleAssignRoles}
-        />
-      )}
     </div>
   )
 }

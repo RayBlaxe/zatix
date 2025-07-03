@@ -2,7 +2,7 @@
 
 import { ColumnDef } from "@tanstack/react-table"
 import { Button } from "@/components/ui/button"
-import { MoreHorizontal, Pencil, Trash } from "lucide-react"
+import { MoreHorizontal, Pencil, Mail, User, Calendar } from "lucide-react"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -10,30 +10,60 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { Badge } from "@/components/ui/badge"
+import { Staff } from "./types"
 
-export type Role = {
-  id: string
-  name: string
-  permissions: string[]
-  usersCount: number
-  createdAt: string
-}
-
-export const columns: ColumnDef<Role>[] = [
+export const columns: ColumnDef<Staff>[] = [
   {
     accessorKey: "name",
-    header: "Role Name",
+    header: ({ column }) => (
+      <div className="flex items-center gap-2">
+        <User className="h-4 w-4" />
+        Staff Name
+      </div>
+    ),
+    cell: ({ row }) => {
+      const staff = row.original
+      return (
+        <div className="flex items-center gap-2">
+          <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
+            <span className="text-sm font-medium">
+              {staff.name.charAt(0).toUpperCase()}
+            </span>
+          </div>
+          <span className="font-medium">{staff.name}</span>
+        </div>
+      )
+    },
   },
   {
-    accessorKey: "permissions",
-    header: "Permissions",
+    accessorKey: "email",
+    header: ({ column }) => (
+      <div className="flex items-center gap-2">
+        <Mail className="h-4 w-4" />
+        Email
+      </div>
+    ),
     cell: ({ row }) => {
-      const permissions = row.getValue("permissions") as string[]
+      const email = row.getValue("email") as string
+      return <span className="text-muted-foreground">{email}</span>
+    },
+  },
+  {
+    accessorKey: "roles",
+    header: "Roles",
+    cell: ({ row }) => {
+      const staff = row.original
+      const roles = staff.roles || []
+      
+      if (roles.length === 0) {
+        return <span className="text-muted-foreground text-sm">No roles assigned</span>
+      }
+
       return (
         <div className="flex flex-wrap gap-1">
-          {permissions.map((permission) => (
-            <Badge key={permission} variant="secondary">
-              {permission}
+          {roles.map((role) => (
+            <Badge key={role.id} variant="secondary" className="capitalize">
+              {role.name}
             </Badge>
           ))}
         </div>
@@ -41,21 +71,39 @@ export const columns: ColumnDef<Role>[] = [
     },
   },
   {
-    accessorKey: "usersCount",
-    header: "Users",
+    accessorKey: "email_verified_at",
+    header: "Status",
+    cell: ({ row }) => {
+      const verifiedAt = row.getValue("email_verified_at") as string | null
+      return (
+        <Badge variant={verifiedAt ? "default" : "destructive"}>
+          {verifiedAt ? "Verified" : "Unverified"}
+        </Badge>
+      )
+    },
   },
   {
-    accessorKey: "createdAt",
-    header: "Created At",
+    accessorKey: "created_at",
+    header: ({ column }) => (
+      <div className="flex items-center gap-2">
+        <Calendar className="h-4 w-4" />
+        Created
+      </div>
+    ),
     cell: ({ row }) => {
-      return new Date(row.getValue("createdAt")).toLocaleDateString()
+      const createdAt = row.getValue("created_at") as string
+      return (
+        <span className="text-muted-foreground text-sm">
+          {new Date(createdAt).toLocaleDateString()}
+        </span>
+      )
     },
   },
   {
     id: "actions",
     cell: ({ row, table }) => {
-      const role = row.original
-      const { onEdit, onDelete } = table.options.meta as any
+      const staff = row.original
+      const { onEdit } = table.options.meta as any
 
       return (
         <DropdownMenu>
@@ -66,16 +114,9 @@ export const columns: ColumnDef<Role>[] = [
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
-            <DropdownMenuItem onClick={() => onEdit?.(role)}>
+            <DropdownMenuItem onClick={() => onEdit?.(staff)}>
               <Pencil className="mr-2 h-4 w-4" />
-              Edit Role
-            </DropdownMenuItem>
-            <DropdownMenuItem 
-              className="text-destructive"
-              onClick={() => onDelete?.(role.id)}
-            >
-              <Trash className="mr-2 h-4 w-4" />
-              Delete Role
+              Edit Staff
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

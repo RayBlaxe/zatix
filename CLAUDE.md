@@ -49,7 +49,7 @@ Note: Multiple package managers are supported (npm, bun) - use the appropriate l
 │   ├── demo/                  # Demo page
 │   ├── events/                # Event management with creation
 │   ├── finance/               # Financial management
-│   ├── roles/                 # Role and permissions management
+│   ├── roles/                 # Staff management and permissions
 │   ├── tnc/                   # Terms & Conditions management (Super Admin)
 │   ├── layout.tsx             # Dashboard layout with sidebar
 │   └── page.tsx               # Dashboard home
@@ -137,7 +137,7 @@ The app uses a complete authentication system:
 - **Event management**: Full CRUD operations for events with TNC acceptance workflow
 - **Content management**: Home page, pricing, and articles management
 - **Finance tracking**: Revenue and transaction management
-- **Role management**: User permissions and access control
+- **Staff management**: Staff member management with role assignments and pagination
 - **Terms & Conditions management**: Super Admin TNC creation and management
 - **Demo functionality**: Preview and testing capabilities
 
@@ -192,6 +192,43 @@ Use existing patterns when adding new features:
 - Use dashboard layout patterns for new admin features
 - Implement responsive design with mobile-first approach
 - Use collapsible components for complex navigation structures
+
+## Staff Management System
+
+The platform implements a comprehensive staff management system with role-based access:
+
+### Staff Management Features
+- **Staff Dashboard** (`/dashboard/roles`): View, create, and edit staff members
+- **Pagination Support**: Handle large staff lists with server-side pagination
+- **Role Display**: Show nested roles for each staff member
+- **Staff CRUD Operations**: Create, read, and update staff members
+
+### API Endpoints
+- **Staff Listing**: `GET /staff` - Retrieve paginated staff list with roles
+- **Staff Creation**: `POST /staff/create` - Create new staff member
+- **Staff Update**: `PUT /staff/{id}` - Update existing staff member
+
+### Implementation Details
+- **Staff Types**: `Staff`, `StaffRole`, `StaffResponse`, `StaffCreateRequest`, `StaffUpdateRequest`
+- **API Integration**: Full mock responses for development environment
+- **Components**:
+  - `StaffDialog`: Staff member creation/editing modal
+  - `StaffPage`: Main staff management dashboard
+  - `staffColumns`: Data table column definitions for staff display
+- **Authentication**: Bearer token authentication for all staff endpoints
+- **State Management**: React hooks for staff data and pagination state
+
+### Data Structure
+Staff members contain nested role information matching the API response:
+```typescript
+interface Staff {
+  id: number
+  name: string
+  email: string
+  roles: StaffRole[]
+  // ... additional fields
+}
+```
 
 ## 🚨 MANDATORY PRE-WORK CHECKLIST
 

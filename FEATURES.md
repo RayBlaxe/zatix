@@ -150,18 +150,25 @@ This document tracks all features in the ZaTix event management platform. Each f
 
 ---
 
-## 👥 Roles & Permissions
+## 👥 Staff Management & Roles
 
-### Role Management System
+### Staff Management System
 | Feature | Status | Priority | Files | Notes |
 |---------|--------|----------|-------|-------|
-| Roles Dashboard | ✅ | Critical | `app/dashboard/roles/page.tsx` | Role and permission management |
-| Role API | ✅ | Critical | `app/dashboard/roles/api.ts` | Backend integration |
-| Role Types | ✅ | Critical | `app/dashboard/roles/types.ts` | Role definitions |
-| Role Management Dialog | ✅ | High | `app/dashboard/roles/role-dialog.tsx` | Role creation/editing |
-| User Role Management | ✅ | High | `app/dashboard/roles/user-role-dialog.tsx` | Assign roles to users |
-| Role Columns Display | ✅ | High | `app/dashboard/roles/columns.tsx` | Table column definitions |
-| User Columns Display | ✅ | High | `app/dashboard/roles/user-columns.tsx` | User table columns |
+| Staff Dashboard | ✅ | Critical | `app/dashboard/roles/page.tsx` | Staff management with pagination |
+| Staff API Integration | ✅ | Critical | `lib/api.ts` | `/staff` endpoint integration with mock responses |
+| Staff Types | ✅ | Critical | `app/dashboard/roles/types.ts` | Staff and role type definitions |
+| Staff Management Dialog | ✅ | High | `app/dashboard/roles/staff-dialog.tsx` | Staff creation/editing interface |
+| Staff Data Table | ✅ | High | `app/dashboard/roles/columns.tsx` | Staff table with role display |
+| Staff Pagination | ✅ | Medium | `app/dashboard/roles/page.tsx` | Paginated staff listing |
+| Staff Role Display | ✅ | Medium | `app/dashboard/roles/columns.tsx` | Nested roles in table columns |
+
+### Legacy Role Management (Deprecated)
+| Feature | Status | Priority | Files | Notes |
+|---------|--------|----------|-------|-------|
+| Role Management Dialog | 🗑️ | Low | `app/dashboard/roles/role-dialog.tsx` | Legacy role creation/editing |
+| User Role Management | 🗑️ | Low | `app/dashboard/roles/user-role-dialog.tsx` | Legacy role assignment |
+| User Columns Display | 🗑️ | Low | `app/dashboard/roles/user-columns.tsx` | Legacy user table columns |
 
 ---
 
@@ -244,13 +251,13 @@ This document tracks all features in the ZaTix event management platform. Each f
 
 ## 🔄 Feature Development Status Summary
 
-### Completed Features (45 major features)
+### Completed Features (46 major features)
 - **Authentication System**: Complete with role-based access
 - **Dashboard Infrastructure**: Responsive layout with role-based navigation
 - **Financial Management**: Comprehensive finance dashboard with analytics
 - **Terms & Conditions**: Full TNC system with acceptance workflow
 - **Content Management**: Home, pricing, and articles management
-- **Roles & Permissions**: Complete role management system
+- **Staff Management**: Complete staff management system with pagination and role display
 - **UI Components**: 50+ shadcn/ui components implemented
 - **Technical Infrastructure**: Next.js 15, TypeScript, testing setup
 
@@ -265,7 +272,7 @@ This document tracks all features in the ZaTix event management platform. Each f
 - **Advanced Search**: Event discovery and filtering
 - **Mobile App**: React Native or PWA implementation
 
-### Feature Completion Rate: 78% (45/58 major features)
+### Feature Completion Rate: 79% (46/58 major features)
 
 ---
 

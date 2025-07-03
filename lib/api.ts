@@ -419,82 +419,167 @@ function handleMockResponse<T>(endpoint: string, method: string, data?: any): T 
     } as unknown as T
   }
 
-  // Roles API mock responses
-  if (endpoint === "/roles" && method === "GET") {
-    return [
-      {
-        id: "1",
-        name: "Event Manager",
-        permissions: ["create_events", "edit_events", "view_analytics", "manage_tickets"],
-        usersCount: 5,
-        createdAt: "2024-01-15T10:30:00Z"
-      },
-      {
-        id: "2", 
-        name: "Marketing Coordinator",
-        permissions: ["view_events", "manage_content", "view_analytics"],
-        usersCount: 3,
-        createdAt: "2024-01-20T14:20:00Z"
-      },
-      {
-        id: "3",
-        name: "Finance Manager", 
-        permissions: ["view_finance", "export_reports", "manage_payments"],
-        usersCount: 2,
-        createdAt: "2024-01-25T09:15:00Z"
-      }
-    ] as unknown as T
-  }
-
-  if (endpoint === "/roles" && method === "POST") {
+  // Staff API mock responses - matches /staff endpoint structure
+  if (endpoint === "/staff" && method === "GET") {
     return {
-      id: `role_${Date.now()}`,
-      name: data?.name || "New Role",
-      permissions: data?.permissions || [],
-      usersCount: 0,
-      createdAt: new Date().toISOString()
+      success: true,
+      message: "Staff retrieved successfully.",
+      data: {
+        current_page: 1,
+        data: [
+          {
+            id: 5,
+            name: "Finance",
+            email: "finance@zatix.com",
+            email_verified_at: "2024-12-31T17:00:00.000000Z",
+            two_factor_secret: null,
+            two_factor_recovery_codes: null,
+            two_factor_confirmed_at: null,
+            created_at: "2025-07-02T10:59:43.000000Z",
+            updated_at: "2025-07-02T10:59:43.000000Z",
+            roles: [
+              {
+                id: 4,
+                name: "finance",
+                guard_name: "api",
+                created_at: "2025-07-02T10:59:43.000000Z",
+                updated_at: "2025-07-02T10:59:43.000000Z",
+                pivot: {
+                  model_type: "App\\Models\\User",
+                  model_id: 5,
+                  role_id: 4
+                }
+              }
+            ],
+            pivot: {
+              eo_id: 1,
+              user_id: 5
+            }
+          },
+          {
+            id: 4,
+            name: "Crew",
+            email: "crew@zatix.com",
+            email_verified_at: "2024-12-31T17:00:00.000000Z",
+            two_factor_secret: null,
+            two_factor_recovery_codes: null,
+            two_factor_confirmed_at: null,
+            created_at: "2025-07-02T10:59:43.000000Z",
+            updated_at: "2025-07-02T10:59:43.000000Z",
+            roles: [
+              {
+                id: 3,
+                name: "crew",
+                guard_name: "api",
+                created_at: "2025-07-02T10:59:43.000000Z",
+                updated_at: "2025-07-02T10:59:43.000000Z",
+                pivot: {
+                  model_type: "App\\Models\\User",
+                  model_id: 4,
+                  role_id: 3
+                }
+              }
+            ],
+            pivot: {
+              eo_id: 1,
+              user_id: 4
+            }
+          },
+          {
+            id: 6,
+            name: "Cashier",
+            email: "cashier@zatix.com",
+            email_verified_at: "2024-12-31T17:00:00.000000Z",
+            two_factor_secret: null,
+            two_factor_recovery_codes: null,
+            two_factor_confirmed_at: null,
+            created_at: "2025-07-02T10:59:43.000000Z",
+            updated_at: "2025-07-02T10:59:43.000000Z",
+            roles: [
+              {
+                id: 5,
+                name: "cashier",
+                guard_name: "api",
+                created_at: "2025-07-02T10:59:43.000000Z",
+                updated_at: "2025-07-02T10:59:43.000000Z",
+                pivot: {
+                  model_type: "App\\Models\\User",
+                  model_id: 6,
+                  role_id: 5
+                }
+              }
+            ],
+            pivot: {
+              eo_id: 1,
+              user_id: 6
+            }
+          }
+        ],
+        first_page_url: "https://api.zatix.id/api/staff?page=1",
+        from: 1,
+        last_page: 1,
+        last_page_url: "https://api.zatix.id/api/staff?page=1",
+        links: [
+          {
+            url: null,
+            label: "&laquo; Previous",
+            active: false
+          },
+          {
+            url: "https://api.zatix.id/api/staff?page=1",
+            label: "1",
+            active: true
+          },
+          {
+            url: null,
+            label: "Next &raquo;",
+            active: false
+          }
+        ],
+        next_page_url: null,
+        path: "https://api.zatix.id/api/staff",
+        per_page: 15,
+        prev_page_url: null,
+        to: 3,
+        total: 3
+      }
     } as unknown as T
   }
 
-  if (endpoint.startsWith("/roles/") && method === "PUT") {
-    const roleId = endpoint.split("/")[2]
+  if (endpoint === "/staff/create" && method === "POST") {
     return {
-      id: roleId,
-      name: data?.name || "Updated Role",
-      permissions: data?.permissions || [],
-      usersCount: 1,
-      createdAt: "2024-01-15T10:30:00Z"
+      success: true,
+      message: "Staff member created successfully. An email has been sent to them to set up their password.",
+      data: {
+        name: data?.name || "New Staff",
+        email: data?.email || "newstaff@zatix.com",
+        role: data?.role || "staff"
+      }
     } as unknown as T
   }
 
-  if (endpoint.startsWith("/roles/") && method === "DELETE") {
-    return { success: true } as unknown as T
-  }
-
-  if (endpoint === "/users/roles" && method === "GET") {
-    return [
-      {
-        id: "user1",
-        name: "John Doe",
-        email: "john@zatix.com",
-        roles: ["Event Manager", "Marketing Coordinator"],
-        assignedAt: "2024-01-15T10:30:00Z"
-      },
-      {
-        id: "user2",
-        name: "Jane Smith", 
-        email: "jane@zatix.com",
-        roles: ["Finance Manager"],
-        assignedAt: "2024-01-20T14:20:00Z"
-      },
-      {
-        id: "user3",
-        name: "Mike Johnson",
-        email: "mike@zatix.com", 
-        roles: ["Marketing Coordinator"],
-        assignedAt: "2024-01-25T09:15:00Z"
+  if (endpoint.startsWith("/staff/") && method === "PUT") {
+    const staffId = endpoint.split("/")[2]
+    return {
+      success: true,
+      message: "Staff updated successfully.",
+      data: {
+        id: parseInt(staffId),
+        name: data?.name || "Updated Staff",
+        email: data?.email || "updated@zatix.com",
+        email_verified_at: "2024-12-31T17:00:00.000000Z",
+        two_factor_secret: null,
+        two_factor_recovery_codes: null,
+        two_factor_confirmed_at: null,
+        created_at: "2025-07-02T10:59:43.000000Z",
+        updated_at: new Date().toISOString(),
+        roles: data?.roles || [],
+        pivot: {
+          eo_id: 1,
+          user_id: parseInt(staffId)
+        }
       }
-    ] as unknown as T
+    } as unknown as T
   }
 
   if (endpoint.includes("/users/") && endpoint.includes("/roles") && method === "POST") {
@@ -714,49 +799,43 @@ export const tncApi = {
   }
 }
 
-// Roles API functions for EO Owner
-export const rolesApi = {
-  // Get all roles
-  getRoles: (): Promise<Role[]> => {
+// Staff API functions for EO Owner
+export const staffApi = {
+  // Get all staff members with pagination
+  getStaff: (page?: number): Promise<any> => {
     const token = getToken()
-    return apiRequest<Role[]>("/roles", "GET", null, token || undefined)
+    const url = page ? `/staff?page=${page}` : "/staff"
+    return apiRequest<any>(url, "GET", null, token || undefined)
   },
 
-  // Create a new role
-  createRole: (data: { name: string; permissions: string[] }): Promise<Role> => {
+  // Create a new staff member
+  createStaff: (data: { name: string; email: string; role: string }): Promise<any> => {
     const token = getToken()
-    return apiRequest<Role>("/roles", "POST", data, token || undefined)
+    return apiRequest<any>("/staff/create", "POST", data, token || undefined)
   },
 
-  // Update a role
-  updateRole: (id: string, data: { name: string; permissions: string[] }): Promise<Role> => {
+  // Update a staff member
+  updateStaff: (id: string, data: { name?: string; email?: string; roles?: any[] }): Promise<any> => {
     const token = getToken()
-    return apiRequest<Role>(`/roles/${id}`, "PUT", data, token || undefined)
+    return apiRequest<any>(`/staff/${id}`, "PUT", data, token || undefined)
   },
 
-  // Delete a role
-  deleteRole: (id: string): Promise<void> => {
-    const token = getToken()
-    return apiRequest<void>(`/roles/${id}`, "DELETE", null, token || undefined)
-  },
-
-  // Get all users with their roles
-  getUsers: (): Promise<UserRole[]> => {
-    const token = getToken()
-    return apiRequest<UserRole[]>("/users/roles", "GET", null, token || undefined)
-  },
-
-  // Assign roles to a user
-  assignRoles: (userId: string, roleIds: string[]): Promise<UserRole> => {
-    const token = getToken()
-    return apiRequest<UserRole>(`/users/${userId}/roles`, "POST", { roleIds }, token || undefined)
-  },
-
-  // Get all available permissions
+  // Get all available permissions (kept for role management)
   getPermissions: (): Promise<string[]> => {
     const token = getToken()
     return apiRequest<string[]>("/permissions", "GET", null, token || undefined)
   }
+}
+
+// Legacy rolesApi export for backward compatibility - will be removed after migration
+export const rolesApi = {
+  getRoles: staffApi.getStaff,
+  createRole: staffApi.createStaff,
+  updateRole: staffApi.updateStaff,
+  deleteRole: (id: string) => Promise.resolve(),
+  getUsers: staffApi.getStaff,
+  assignRoles: (userId: string, roleIds: string[]) => Promise.resolve({} as any),
+  getPermissions: staffApi.getPermissions
 }
 
 // Carousel API functions
