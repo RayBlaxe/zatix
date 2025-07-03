@@ -29,8 +29,8 @@ export function Carousel() {
         if (response.success) {
           // Filter only active carousels and sort by order
           const activeSlides = response.data
-            .filter(slide => slide.is_active === 1)
-            .sort((a, b) => parseInt(a.order) - parseInt(b.order))
+            .filter((slide: CarouselItem) => slide.is_active === 1)
+            .sort((a: CarouselItem, b: CarouselItem) => parseInt(a.order) - parseInt(b.order))
           setSlides(activeSlides)
         } else {
           setError("Failed to load carousel data")
