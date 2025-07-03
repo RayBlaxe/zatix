@@ -3,6 +3,7 @@ import { LoginResponse } from "@/types/auth/login"
 import { RegisterResponse } from "@/types/auth/register"
 import { TermsAndConditions, TNCListResponse, TNCEventResponse, TNCAcceptResponse, TNCItem } from "@/types/terms"
 import { Role, UserRole } from "@/app/dashboard/roles/types"
+import { CarouselResponse } from "@/types/carousel"
 
 // Base API URL - use environment variable or fallback for development
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "https://api.zatix.id/api"
@@ -398,6 +399,26 @@ function handleMockResponse<T>(endpoint: string, method: string, data?: any): T 
     } as unknown as T
   }
 
+  // Super Admin TNC update mock response
+  if (endpoint.startsWith("/tnc/") && method === "PUT") {
+    const id = parseInt(endpoint.split("/")[2])
+    return {
+      id: id,
+      content: data?.content || "Updated TNC content",
+      type: data?.type || "general",
+      created_at: "2025-07-02T10:00:00.000000Z",
+      updated_at: new Date().toISOString()
+    } as unknown as T
+  }
+
+  // Super Admin TNC delete mock response
+  if (endpoint.startsWith("/tnc/") && method === "DELETE") {
+    return {
+      success: true,
+      message: "TNC deleted successfully"
+    } as unknown as T
+  }
+
   // Roles API mock responses
   if (endpoint === "/roles" && method === "GET") {
     return [
@@ -502,6 +523,55 @@ function handleMockResponse<T>(endpoint: string, method: string, data?: any): T 
       "manage_users",
       "view_users"
     ] as unknown as T
+  }
+
+  // Carousel API mock response
+  if (endpoint === "/carousels" && method === "GET") {
+    return {
+      success: true,
+      message: "Carousel data retrieved successfully",
+      data: [
+        {
+          id: 1,
+          image: "carousels/sample-1.jpg",
+          title: "Diskon Spesial Musim Panas",
+          caption: "Nikmati potongan harga hingga 50% untuk semua produk fashion.",
+          link_url: "https://google.com",
+          link_target: "_self",
+          order: "1",
+          is_active: 1,
+          created_at: "2025-07-02T10:59:46.000000Z",
+          updated_at: "2025-07-02T10:59:46.000000Z",
+          image_url: "https://api.zatix.id/project/public/storage/carousels/sample-1.jpg"
+        },
+        {
+          id: 2,
+          image: "carousels/sample-2.jpg",
+          title: "Koleksi Terbaru Telah Tiba",
+          caption: "Jelajahi koleksi terbaru kami yang elegan dan modern.",
+          link_url: "https://google.com",
+          link_target: "_blank",
+          order: "2",
+          is_active: 1,
+          created_at: "2025-07-02T10:59:49.000000Z",
+          updated_at: "2025-07-02T10:59:49.000000Z",
+          image_url: "https://api.zatix.id/project/public/storage/carousels/sample-2.jpg"
+        },
+        {
+          id: 3,
+          image: "carousels/sample-3.jpg",
+          title: "Acara Komunitas Berikutnya",
+          caption: "Segera hadir, jangan sampai ketinggalan!",
+          link_url: null,
+          link_target: "_self",
+          order: "3",
+          is_active: 1,
+          created_at: "2025-07-02T10:59:52.000000Z",
+          updated_at: "2025-07-02T10:59:52.000000Z",
+          image_url: "https://api.zatix.id/project/public/storage/carousels/sample-3.jpg"
+        }
+      ]
+    } as unknown as T
   }
 
   // Default mock response
@@ -631,6 +701,16 @@ export const tncApi = {
   // EO Owner - Accept TNC for events
   acceptTNCEvents: (token: string) => {
     return apiRequest<TNCAcceptResponse>("/tnc-events/accept", "POST", {}, token)
+  },
+
+  // Super Admin - Update TNC item
+  updateTNC: (token: string, id: number, data: { content: string; type: "event" | "general" }) => {
+    return apiRequest<TNCItem>(`/tnc/${id}`, "PUT", data, token)
+  },
+
+  // Super Admin - Delete TNC item
+  deleteTNC: (token: string, id: number) => {
+    return apiRequest<{ success: boolean }>(`/tnc/${id}`, "DELETE", null, token)
   }
 }
 
@@ -676,5 +756,13 @@ export const rolesApi = {
   getPermissions: (): Promise<string[]> => {
     const token = getToken()
     return apiRequest<string[]>("/permissions", "GET", null, token || undefined)
+  }
+}
+
+// Carousel API functions
+export const carouselApi = {
+  // Get carousel data
+  getCarousels: () => {
+    return apiRequest<CarouselResponse>("/carousels", "GET")
   }
 }

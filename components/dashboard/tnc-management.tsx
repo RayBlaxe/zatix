@@ -7,15 +7,20 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Alert, AlertDescription } from "@/components/ui/alert"
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog"
 import { Loader2, FileText, Edit, Trash2 } from "lucide-react"
 import { tncApi, getToken } from "@/lib/api"
 import { TNCItem } from "@/types/terms"
+import { toast } from "sonner"
 
 export function TNCManagement() {
   const router = useRouter()
   const [tncItems, setTncItems] = useState<TNCItem[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
+  const [itemToDelete, setItemToDelete] = useState<TNCItem | null>(null)
+  const [isDeleting, setIsDeleting] = useState(false)
 
   useEffect(() => {
     loadTNCItems()
@@ -52,6 +57,42 @@ export function TNCManagement() {
     return textContent.length > maxLength 
       ? textContent.substring(0, maxLength) + "..." 
       : textContent
+  }
+
+  const handleEdit = (item: TNCItem) => {
+    router.push(`/dashboard/tnc/edit/${item.id}`)
+  }
+
+  const handleDeleteClick = (item: TNCItem) => {
+    setItemToDelete(item)
+    setDeleteDialogOpen(true)
+  }
+
+  const handleDeleteConfirm = async () => {
+    if (!itemToDelete) return
+    
+    setIsDeleting(true)
+    try {
+      const token = getToken()
+      if (!token) {
+        throw new Error("No authentication token found")
+      }
+
+      await tncApi.deleteTNC(token, itemToDelete.id)
+      
+      // Remove the item from the local state
+      setTncItems(items => items.filter(item => item.id !== itemToDelete.id))
+      
+      toast.success("TNC deleted successfully!")
+      setDeleteDialogOpen(false)
+      setItemToDelete(null)
+    } catch (err) {
+      console.error("Failed to delete TNC:", err)
+      const errorMessage = err instanceof Error ? err.message : "Failed to delete TNC"
+      toast.error(errorMessage)
+    } finally {
+      setIsDeleting(false)
+    }
   }
 
   if (loading) {
@@ -139,11 +180,20 @@ export function TNCManagement() {
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
-                      <Button variant="outline" size="sm">
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => handleEdit(item)}
+                      >
                         <Edit className="h-4 w-4 mr-2" />
                         Edit
                       </Button>
-                      <Button variant="outline" size="sm" className="text-destructive hover:bg-destructive hover:text-destructive-foreground">
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        className="text-destructive hover:bg-destructive hover:text-destructive-foreground"
+                        onClick={() => handleDeleteClick(item)}
+                      >
                         <Trash2 className="h-4 w-4 mr-2" />
                         Delete
                       </Button>
@@ -168,6 +218,36 @@ export function TNCManagement() {
         )}
       </CardContent>
       </Card>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete the TNC item
+              {itemToDelete && ` "#${itemToDelete.id}" (${itemToDelete.type})`}.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteConfirm}
+              disabled={isDeleting}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {isDeleting ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Deleting...
+                </>
+              ) : (
+                "Delete"
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   )
 }
