@@ -1,6 +1,7 @@
 "use client"
 
 import Link from "next/link"
+import Image from "next/image"
 import { Button } from "@/components/ui/button"
 import { CalendarDays, Menu, Plus, Ticket, ShoppingCart, Info, User, Settings, LogOut, Crown, Store, UserCheck, PlusCircle, Loader2 } from "lucide-react"
 import { useAuth } from "@/hooks/use-auth"
@@ -70,8 +71,13 @@ export function Header() {
       <div className="container flex h-16 items-center justify-between py-4">
         <div className="flex items-center gap-2">
           <Link href="/" className="flex items-center gap-2">
-            <Ticket className="size-6" />
-            <span className="text-xl font-bold">ZaTix</span>
+            <Image 
+              src="/zatix-logo.png" 
+              alt="ZaTix Logo" 
+              width={80} 
+              height={80}
+              className="h-30 w-30"
+            />
           </Link>
         </div>
 

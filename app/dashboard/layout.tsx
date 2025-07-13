@@ -1,16 +1,17 @@
-"use client"
+"use client";
 
-import type React from "react"
-import { useState } from "react"
-import { ProtectedRoute } from "@/components/protected-route"
-import { DashboardSidebar } from "@/components/dashboard/sidebar"
-import { Button } from "@/components/ui/button"
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
-import { Menu, Ticket } from "lucide-react"
-import Link from "next/link"
+import type React from "react";
+import { useState } from "react";
+import { ProtectedRoute } from "@/components/protected-route";
+import { DashboardSidebar } from "@/components/dashboard/sidebar";
+import { Button } from "@/components/ui/button";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { Menu, Ticket } from "lucide-react";
+import Link from "next/link";
+import Image from "next/image";
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
-  const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   return (
     <ProtectedRoute requiredRoles={["eo-owner", "super-admin"]}>
@@ -19,7 +20,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         <div className="hidden md:flex md:w-64 md:flex-col">
           <DashboardSidebar />
         </div>
-        
+
         <div className="flex flex-1 flex-col overflow-hidden">
           {/* Mobile Header */}
           <div className="flex h-14 items-center border-b bg-background px-4 md:hidden">
@@ -34,16 +35,21 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 <DashboardSidebar onNavigate={() => setSidebarOpen(false)} />
               </SheetContent>
             </Sheet>
-            
+
             <Link href="/" className="flex items-center gap-2">
-              <Ticket className="size-5" />
-              <span className="font-bold">ZaTix</span>
+              <Image
+                src="/zatix-logo.png"
+                alt="ZaTix Logo"
+                width={80}
+                height={80}
+                className="h-30 w-30"
+              />
             </Link>
           </div>
-          
+
           <main className="flex-1 overflow-y-auto bg-muted/20 p-4">{children}</main>
         </div>
       </div>
     </ProtectedRoute>
-  )
+  );
 }
