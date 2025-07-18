@@ -4,6 +4,19 @@ import { RegisterResponse } from "@/types/auth/register"
 import { TermsAndConditions, TNCListResponse, TNCEventResponse, TNCAcceptResponse, TNCItem } from "@/types/terms"
 import { Role, UserRole } from "@/app/dashboard/roles/types"
 import { CarouselResponse } from "@/types/carousel"
+import { 
+  EOProfileCreateRequest, 
+  EOProfileResponse, 
+  EOProfileDataResponse, 
+  DocumentUploadRequest, 
+  DocumentUploadResponse, 
+  DocumentListResponse, 
+  DocumentDetailResponse, 
+  DocumentStatusUpdateRequest, 
+  DocumentStatusUpdateResponse, 
+  NotificationListResponse, 
+  NotificationReadResponse 
+} from "@/types/verification"
 
 // Base API URL - use environment variable or fallback for development
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "https://api.zatix.id/api"
@@ -67,6 +80,97 @@ export async function validateTokenWithAPI(token: string): Promise<{
     console.error('Token validation error:', error)
     // On network error, fall back to stored expiration
     return { valid: !isTokenExpiredByStorage() }
+  }
+}
+
+// Helper function for making API requests with FormData
+async function apiRequestFormData<T>(endpoint: string, method = "GET", formData?: FormData, token?: string): Promise<any> {
+  const url = `${API_BASE_URL}${endpoint}`
+
+  // Check stored token expiration before making request
+  if (token && isTokenExpiredByStorage()) {
+    console.warn("Token is expired based on stored expiration, removing from storage")
+    removeToken()
+    // Dispatch custom event to notify components of token expiration
+    if (typeof window !== "undefined") {
+      window.dispatchEvent(new CustomEvent("tokenExpired"))
+    }
+    throw new Error("Token expired")
+  }
+
+  const headers: HeadersInit = {
+    "Accept": "application/json",
+  }
+
+  if (token) {
+    headers["Authorization"] = `Bearer ${token}`
+  }
+
+  const config: RequestInit = {
+    method,
+    headers,
+    credentials: "include",
+  }
+
+  if (formData) {
+    config.body = formData
+  }
+
+  try {
+    const response = await fetch(url, config)
+
+    // Handle authentication errors (401/403)
+    if (response.status === 401 || response.status === 403) {
+      console.warn("Authentication failed, removing token")
+      removeToken()
+      // Dispatch custom event to notify components of authentication failure
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new CustomEvent("authenticationFailed", {
+          detail: { status: response.status, endpoint }
+        }))
+      }
+      
+      const responseData = await response.json().catch(() => ({
+        success: false,
+        message: "Authentication failed",
+        data: null
+      }))
+      
+      return responseData as APIResponse<T>
+    }
+
+    // Handle non-JSON responses
+    const contentType = response.headers.get("content-type")
+    if (contentType && contentType.indexOf("application/json") !== -1) {
+      const responseData = await response.json()
+
+      if (!response.ok) {
+        // Return the error response as-is, so the frontend can handle it
+        return responseData as APIResponse<T>
+      }
+
+      return responseData as APIResponse<T>
+    } else {
+      // For non-JSON responses
+      if (!response.ok) {
+        throw new Error("An error occurred")
+      }
+
+      return {} as unknown as APIResponse<T>
+    }
+  } catch (error) {
+    console.error("API request error:", error)
+    
+    // Check if error is due to token expiration
+    if (error instanceof Error && error.message === "Token expired") {
+      throw error
+    }
+    
+    // Use mock responses only when explicitly enabled
+    if (process.env.NEXT_PUBLIC_USE_MOCKS === "true") {
+      return handleMockResponse<T>(endpoint, method, formData)
+    }
+    throw error
   }
 }
 
@@ -843,5 +947,84 @@ export const carouselApi = {
   // Get carousel data
   getCarousels: () => {
     return apiRequest<CarouselResponse>("/carousels", "GET")
+  }
+}
+
+// Verification API functions for Iteration 2
+export const verificationApi = {
+  // EO Profile Creation
+  createEOProfile: (data: EOProfileCreateRequest): Promise<EOProfileResponse> => {
+    const token = getToken()
+    const formData = new FormData()
+    
+    formData.append('name', data.name)
+    formData.append('description', data.description)
+    formData.append('email_eo', data.email_eo)
+    formData.append('phone_no_eo', data.phone_no_eo)
+    formData.append('address_eo', data.address_eo)
+    formData.append('organization_type', data.organization_type)
+    
+    if (data.logo) {
+      formData.append('logo', data.logo)
+    }
+    
+    return apiRequestFormData<EOProfileResponse>("/event-organizers/create", "POST", formData, token || undefined)
+  },
+
+  // Get EO Profile Data
+  getEOProfile: (): Promise<EOProfileDataResponse> => {
+    const token = getToken()
+    return apiRequest<EOProfileDataResponse>("/event-organizers/me/profile", "GET", null, token || undefined)
+  },
+
+  // Document Upload
+  uploadDocument: (data: DocumentUploadRequest): Promise<DocumentUploadResponse> => {
+    const token = getToken()
+    const formData = new FormData()
+    
+    formData.append('type', data.type)
+    formData.append('file', data.file)
+    formData.append('number', data.number)
+    formData.append('name', data.name)
+    formData.append('address', data.address)
+    
+    return apiRequestFormData<DocumentUploadResponse>("/documents/create", "POST", formData, token || undefined)
+  },
+
+  // Super Admin: Get all documents for verification
+  getAllDocuments: (page?: number): Promise<DocumentListResponse> => {
+    const token = getToken()
+    const url = page ? `/documents?page=${page}` : "/documents"
+    return apiRequest<DocumentListResponse>(url, "GET", null, token || undefined)
+  },
+
+  // Super Admin: Get specific document details
+  getDocumentDetail: (id: number): Promise<DocumentDetailResponse> => {
+    const token = getToken()
+    return apiRequest<DocumentDetailResponse>(`/documents/${id}`, "GET", null, token || undefined)
+  },
+
+  // Super Admin: Update document status (approve/reject)
+  updateDocumentStatus: (id: number, data: DocumentStatusUpdateRequest): Promise<DocumentStatusUpdateResponse> => {
+    const token = getToken()
+    return apiRequest<DocumentStatusUpdateResponse>(`/documents/${id}/status`, "POST", data, token || undefined)
+  },
+
+  // Get verification status
+  getVerificationStatus: (): Promise<any> => {
+    const token = getToken()
+    return apiRequest<any>("/event-organizers/me/verification-status", "GET", null, token || undefined)
+  },
+
+  // Get notifications
+  getNotifications: (): Promise<NotificationListResponse> => {
+    const token = getToken()
+    return apiRequest<NotificationListResponse>("/notifications", "GET", null, token || undefined)
+  },
+
+  // Mark notification as read
+  markNotificationRead: (id: string): Promise<NotificationReadResponse> => {
+    const token = getToken()
+    return apiRequest<NotificationReadResponse>(`/notifications/${id}/read`, "POST", null, token || undefined)
   }
 }

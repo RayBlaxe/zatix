@@ -18,6 +18,8 @@ import {
   DollarSign,
   Ticket,
   Shield,
+  UserCheck,
+  CheckCircle,
 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { useRouter } from "next/navigation";
@@ -66,6 +68,12 @@ export function DashboardSidebar({ onNavigate }: DashboardSidebarProps = {}) {
 
   const eoRoutes = [
     {
+      label: "Profile",
+      icon: UserCheck,
+      href: "/dashboard/profile",
+      active: pathname === "/dashboard/profile" || pathname.startsWith("/dashboard/profile/"),
+    },
+    {
       label: "Roles & Permissions",
       icon: Users,
       href: "/dashboard/roles",
@@ -74,6 +82,12 @@ export function DashboardSidebar({ onNavigate }: DashboardSidebarProps = {}) {
   ];
 
   const adminRoutes = [
+    {
+      label: "Document Verification",
+      icon: CheckCircle,
+      href: "/dashboard/admin/verification",
+      active: pathname === "/dashboard/admin/verification" || pathname.startsWith("/dashboard/admin/verification/"),
+    },
     {
       label: "Terms & Conditions",
       icon: Shield,
