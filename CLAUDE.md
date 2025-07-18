@@ -319,9 +319,9 @@ cat docs/iterations/iteration-XX-name.md
    - Files: `app/dashboard/roles/`, staff management system
    - Tests: Basic staff management tests
 
-4. **Iteration 4: Creation & Publication of Initial Events** 🚧 **PARTIAL**
-   - Event creation ✅, Event publication ❌, Event details ❌
-   - Missing: Status management, public event details
+4. **Iteration 4: Creation & Publication of Initial Events** ✅ **COMPLETED**
+   - Event creation ✅, Event publication ✅, Event details ✅
+   - Doc: `docs/iterations/iteration-04-events.md`
 
 5. **Iteration 5: Online Ticket Purchase Core** ❌ **NOT STARTED**
    - Ticket management, online purchase, Midtrans integration
@@ -347,8 +347,8 @@ cat docs/iterations/iteration-XX-name.md
     - Customer history, crew monitoring, master data
 
 ### **Current Development Focus**
-- **Active Iteration**: Completed Iteration 2 (Verification Process)
-- **Next Priority**: Iteration 4 (Event Publication System)
+- **Active Iteration**: Completed Iteration 4 (Event Publication System)
+- **Next Priority**: Iteration 5 (Online Ticket Purchase Core)
 - **Testing Strategy**: 90%+ coverage per iteration before moving to next
 
 ### **Memory Notes for New Conversations**
@@ -359,16 +359,3 @@ When starting a new conversation:
 4. Follow DEVELOPMENT-WORKFLOW.md for process guidelines
 
 This memory system ensures Claude can pick up work seamlessly across conversations.
-
-
-1. Manajemen Akun & Autentikasi: Meliputi proses registrasi, login, verifikasi OTP, dan lupa kata sandi.
-2. Profil & Verifikasi EO: Mencakup pembuatan profil Event Organizer (EO) dan proses unggah dokumen untuk verifikasi.
-3. Manajemen Peran Staf: Kemampuan untuk membuat peran, menugaskan peran ke staf, dan mengatur izin akses.
-4. Pembuatan & Manajemen Acara: Proses membuat acara dari draf hingga dipublikasikan untuk pelanggan.
-5. Tiket & Pembayaran: Alur pembelian tiket online oleh pelanggan, termasuk pembayaran dan penerimaan e-tiket.
-6. Validasi Tiket QR (Check-in): Proses pemindaian dan validasi tiket oleh kru di lokasi acara.
-7. Rundown & Manajemen Acara: Fitur untuk membuat dan mengelola jadwal atau rundown acara yang bisa diakses kru.
-8. Manajemen Keuangan: Dasbor dan laporan untuk melacak pendapatan, pengeluaran, dan keuntungan acara.
-9. Super Admin - Manajemen Sistem: Panel kontrol untuk Super Admin guna mengelola keseluruhan sistem, pengguna, dan peran.
-10. Penjualan Offline (Point of Sale): Sistem kasir untuk melakukan penjualan tiket secara langsung (di tempat).
-11. Fitur Tambahan & Lanjutan: Berbagai fitur pendukung seperti riwayat transaksi, monitoring, dan manajemen data master.

@@ -17,6 +17,20 @@ import {
   NotificationListResponse, 
   NotificationReadResponse 
 } from "@/types/verification"
+import {
+  Event,
+  EventCreateRequest,
+  EventUpdateRequest,
+  EventResponse,
+  EventListResponse,
+  EventPublishResponse,
+  EventDeleteResponse,
+  Facility,
+  FacilityResponse,
+  FacilityCreateRequest,
+  EventFilters,
+  PublicEventFilters
+} from "@/types/events"
 
 // Base API URL - use environment variable or fallback for development
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "https://api.zatix.id/api"
@@ -1026,5 +1040,178 @@ export const verificationApi = {
   markNotificationRead: (id: string): Promise<NotificationReadResponse> => {
     const token = getToken()
     return apiRequest<NotificationReadResponse>(`/notifications/${id}/read`, "POST", null, token || undefined)
+  }
+}
+
+// Event API functions for Iteration 4
+export const eventApi = {
+  // EO - Create new event
+  createEvent: (data: EventCreateRequest): Promise<EventResponse> => {
+    const token = getToken()
+    const formData = new FormData()
+    
+    formData.append('name', data.name)
+    formData.append('description', data.description)
+    formData.append('start_date', data.start_date)
+    formData.append('start_time', data.start_time)
+    formData.append('end_date', data.end_date)
+    formData.append('end_time', data.end_time)
+    formData.append('location', data.location)
+    formData.append('contact_phone', data.contact_phone)
+    formData.append('tnc_id', data.tnc_id.toString())
+    
+    // Add facilities array
+    data.facilities.forEach((facilityId, index) => {
+      formData.append(`facilities[${index}]`, facilityId.toString())
+    })
+    
+    // Add tickets array
+    data.tickets.forEach((ticket, index) => {
+      formData.append(`tickets[${index}][name]`, ticket.name)
+      formData.append(`tickets[${index}][price]`, ticket.price.toString())
+      formData.append(`tickets[${index}][stock]`, ticket.stock.toString())
+      formData.append(`tickets[${index}][limit]`, ticket.limit.toString())
+      formData.append(`tickets[${index}][start_date]`, ticket.start_date)
+      formData.append(`tickets[${index}][end_date]`, ticket.end_date)
+      formData.append(`tickets[${index}][ticket_type_id]`, ticket.ticket_type_id.toString())
+    })
+    
+    // Add poster if provided
+    if (data.poster) {
+      formData.append('poster', data.poster)
+    }
+    
+    return apiRequestFormData<EventResponse>("/my/events/create", "POST", formData, token || undefined)
+  },
+
+  // EO - Get all my events
+  getMyEvents: (page?: number, filters?: EventFilters): Promise<EventListResponse> => {
+    const token = getToken()
+    let url = page ? `/my/events?page=${page}` : "/my/events"
+    
+    // Add filters as query parameters
+    if (filters) {
+      const params = new URLSearchParams()
+      if (page) params.append('page', page.toString())
+      if (filters.status) params.append('status', filters.status)
+      if (filters.is_published !== undefined) params.append('is_published', filters.is_published.toString())
+      if (filters.is_public !== undefined) params.append('is_public', filters.is_public.toString())
+      if (filters.search) params.append('search', filters.search)
+      if (filters.start_date) params.append('start_date', filters.start_date)
+      if (filters.end_date) params.append('end_date', filters.end_date)
+      
+      url = `/my/events?${params.toString()}`
+    }
+    
+    return apiRequest<EventListResponse>(url, "GET", null, token || undefined)
+  },
+
+  // EO - Get specific event details
+  getMyEvent: (id: number): Promise<EventResponse> => {
+    const token = getToken()
+    return apiRequest<EventResponse>(`/my/events/${id}`, "GET", null, token || undefined)
+  },
+
+  // EO - Update event
+  updateEvent: (id: number, data: EventUpdateRequest): Promise<EventResponse> => {
+    const token = getToken()
+    const formData = new FormData()
+    
+    // Add _method for PUT request
+    formData.append('_method', 'PUT')
+    
+    // Add all fields that are provided
+    if (data.name) formData.append('name', data.name)
+    if (data.description) formData.append('description', data.description)
+    if (data.start_date) formData.append('start_date', data.start_date)
+    if (data.start_time) formData.append('start_time', data.start_time)
+    if (data.end_date) formData.append('end_date', data.end_date)
+    if (data.end_time) formData.append('end_time', data.end_time)
+    if (data.location) formData.append('location', data.location)
+    if (data.contact_phone) formData.append('contact_phone', data.contact_phone)
+    if (data.tnc_id) formData.append('tnc_id', data.tnc_id.toString())
+    
+    // Add facilities array if provided
+    if (data.facilities) {
+      data.facilities.forEach((facilityId, index) => {
+        formData.append(`facilities[${index}]`, facilityId.toString())
+      })
+    }
+    
+    // Add tickets array if provided
+    if (data.tickets) {
+      data.tickets.forEach((ticket, index) => {
+        formData.append(`tickets[${index}][name]`, ticket.name)
+        formData.append(`tickets[${index}][price]`, ticket.price.toString())
+        formData.append(`tickets[${index}][stock]`, ticket.stock.toString())
+        formData.append(`tickets[${index}][limit]`, ticket.limit.toString())
+        formData.append(`tickets[${index}][start_date]`, ticket.start_date)
+        formData.append(`tickets[${index}][end_date]`, ticket.end_date)
+        formData.append(`tickets[${index}][ticket_type_id]`, ticket.ticket_type_id.toString())
+      })
+    }
+    
+    // Add poster if provided
+    if (data.poster) {
+      formData.append('poster', data.poster)
+    }
+    
+    return apiRequestFormData<EventResponse>(`/my/events/update/${id}`, "POST", formData, token || undefined)
+  },
+
+  // EO - Delete event
+  deleteEvent: (id: number): Promise<EventDeleteResponse> => {
+    const token = getToken()
+    return apiRequest<EventDeleteResponse>(`/my/events/${id}`, "DELETE", null, token || undefined)
+  },
+
+  // EO - Publish event
+  publishEvent: (id: number): Promise<EventPublishResponse> => {
+    const token = getToken()
+    return apiRequest<EventPublishResponse>(`/my/events/${id}/publish`, "POST", null, token || undefined)
+  },
+
+  // EO - Unpublish event
+  unpublishEvent: (id: number): Promise<EventPublishResponse> => {
+    const token = getToken()
+    return apiRequest<EventPublishResponse>(`/my/events/${id}/unpublish`, "POST", null, token || undefined)
+  },
+
+  // Public - Get all public events
+  getPublicEvents: (page?: number, filters?: PublicEventFilters): Promise<EventListResponse> => {
+    let url = page ? `/events?page=${page}` : "/events"
+    
+    // Add filters as query parameters
+    if (filters) {
+      const params = new URLSearchParams()
+      if (page) params.append('page', page.toString())
+      if (filters.search) params.append('search', filters.search)
+      if (filters.start_date) params.append('start_date', filters.start_date)
+      if (filters.end_date) params.append('end_date', filters.end_date)
+      if (filters.location) params.append('location', filters.location)
+      
+      url = `/events?${params.toString()}`
+    }
+    
+    return apiRequest<EventListResponse>(url, "GET")
+  },
+
+  // Public - Get specific public event details
+  getPublicEvent: (id: number): Promise<EventResponse> => {
+    return apiRequest<EventResponse>(`/events/${id}`, "GET")
+  }
+}
+
+// Facility API functions for master data
+export const facilityApi = {
+  // Get all facilities
+  getFacilities: (): Promise<FacilityResponse> => {
+    return apiRequest<FacilityResponse>("/facilities", "GET")
+  },
+
+  // Create new facility
+  createFacility: (data: FacilityCreateRequest): Promise<Facility> => {
+    const token = getToken()
+    return apiRequest<Facility>("/facilities/create", "POST", data, token || undefined)
   }
 }

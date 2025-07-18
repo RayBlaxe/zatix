@@ -125,6 +125,7 @@ export function DashboardSidebar({ onNavigate }: DashboardSidebarProps = {}) {
         pathname.startsWith("/dashboard/content/articles/"),
     },
   ];
+  
 
   return (
     <div className="flex h-full flex-col border-r bg-background">
