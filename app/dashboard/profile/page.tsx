@@ -68,18 +68,24 @@ export default function ProfilePage() {
 
   const loadExistingProfile = async () => {
     try {
+      console.log('[PROFILE] Loading profile...')
       const response = await verificationApi.getEOProfile()
+      console.log('[PROFILE] API Response:', response)
       if (response.success) {
+        console.log('[PROFILE] Setting existing profile:', response.data)
+        console.log('[PROFILE] Organizer type from API:', response.data.organizer_type)
         setExistingProfile(response.data)
         setDocuments(response.data.documents || [])
-        form.reset({
+        const formData = {
           name: response.data.name,
           description: response.data.description,
           email_eo: response.data.email_eo,
           phone_no_eo: response.data.phone_no_eo,
           address_eo: response.data.address_eo,
           organization_type: response.data.organizer_type,
-        })
+        }
+        console.log('[PROFILE] Form data to reset:', formData)
+        form.reset(formData)
       }
     } catch (error) {
       console.error("Error loading profile:", error)
@@ -285,7 +291,7 @@ export default function ProfilePage() {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Organization Type</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <Select onValueChange={field.onChange} value={field.value}>
                         <FormControl>
                           <SelectTrigger>
                             <SelectValue placeholder="Select organization type" />

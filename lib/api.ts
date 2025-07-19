@@ -191,6 +191,7 @@ async function apiRequestFormData<T>(endpoint: string, method = "GET", formData?
 // Helper function for making API requests
 async function apiRequest<T>(endpoint: string, method = "GET", data?: any, token?: string): Promise<any> {
   const url = `${API_BASE_URL}${endpoint}`
+  console.log(`[API REQUEST] ${method} ${url}`, { data, token: token ? 'present' : 'missing' })
 
   // Check stored token expiration before making request
   if (token && isTokenExpiredByStorage()) {
@@ -274,8 +275,10 @@ async function apiRequest<T>(endpoint: string, method = "GET", data?: any, token
     
     // Use mock responses only when explicitly enabled
     if (process.env.NEXT_PUBLIC_USE_MOCKS === "true") {
+      console.log(`[FALLING BACK TO MOCKS] ${method} ${endpoint} - Mocks explicitly enabled`)
       return handleMockResponse<T>(endpoint, method, data)
     }
+    console.log(`[NO MOCK FALLBACK] ${method} ${endpoint} - Mocks disabled, throwing error`)
     throw error
   }
 }
@@ -843,6 +846,8 @@ function handleMockResponse<T>(endpoint: string, method: string, data?: any): T 
       }
     } as unknown as T
   }
+
+  // Removed EO Profile mock response - always use real API
 
   // Default mock response
   return {} as T
