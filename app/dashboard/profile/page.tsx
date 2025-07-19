@@ -12,15 +12,15 @@ import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { useToast } from "@/hooks/use-toast"
 import { verificationApi } from "@/lib/api"
-import { EOProfileCreateRequest, EOProfileData, OrganizerType } from "@/types/verification"
-import { Upload, Building, User, Check } from "lucide-react"
+import { EOProfileCreateRequest, EOProfileData, OrganizerType, DocumentData, DocumentType, DOCUMENT_RULES, DOCUMENT_LABELS, STATUS_LABELS } from "@/types/verification"
+import { Upload, Building, User, Check, FileText, AlertCircle, CheckCircle, XCircle, Clock } from "lucide-react"
 
 const profileSchema = z.object({
-  name: z.string().min(2, "Name must be at least 2 characters"),
-  description: z.string().min(10, "Description must be at least 10 characters"),
-  email_eo: z.string().email("Invalid email address"),
-  phone_no_eo: z.string().min(10, "Phone number must be at least 10 digits"),
-  address_eo: z.string().min(5, "Address must be at least 5 characters"),
+  name: z.string().min(1, "Organization name is required"),
+  description: z.string().optional(),
+  email_eo: z.string().optional(),
+  phone_no_eo: z.string().optional(),
+  address_eo: z.string().optional(),
   organization_type: z.enum(["company", "individual"] as const),
   logo: z.instanceof(FileList).optional().refine((files) => {
     if (!files || files.length === 0) return true // Optional field
@@ -46,6 +46,8 @@ export default function ProfilePage() {
   const [isLoading, setIsLoading] = useState(false)
   const [existingProfile, setExistingProfile] = useState<EOProfileData | null>(null)
   const [logoPreview, setLogoPreview] = useState<string | null>(null)
+  const [documents, setDocuments] = useState<DocumentData[]>([])
+  const [isDocumentUploading, setIsDocumentUploading] = useState(false)
   const { toast } = useToast()
 
   const form = useForm<ProfileFormData>({
@@ -69,6 +71,7 @@ export default function ProfilePage() {
       const response = await verificationApi.getEOProfile()
       if (response.success) {
         setExistingProfile(response.data)
+        setDocuments(response.data.documents || [])
         form.reset({
           name: response.data.name,
           description: response.data.description,
@@ -118,15 +121,97 @@ export default function ProfilePage() {
     }
   }
 
+  const getRequiredDocuments = (organizationType: OrganizerType): DocumentType[] => {
+    return DOCUMENT_RULES[organizationType].required
+  }
+
+  const getDocumentStatus = (documentType: DocumentType) => {
+    const doc = documents.find(d => d.type === documentType)
+    if (!doc) return null
+    return doc.status
+  }
+
+  const getStatusIcon = (status: string | null) => {
+    switch (status) {
+      case 'verified':
+        return <CheckCircle className="h-5 w-5 text-green-500" />
+      case 'rejected':
+        return <XCircle className="h-5 w-5 text-red-500" />
+      case 'pending':
+        return <Clock className="h-5 w-5 text-yellow-500" />
+      default:
+        return <AlertCircle className="h-5 w-5 text-gray-400" />
+    }
+  }
+
+  const getStatusColor = (status: string | null) => {
+    switch (status) {
+      case 'verified':
+        return 'text-green-600 bg-green-50 border-green-200'
+      case 'rejected':
+        return 'text-red-600 bg-red-50 border-red-200'
+      case 'pending':
+        return 'text-yellow-600 bg-yellow-50 border-yellow-200'
+      default:
+        return 'text-gray-600 bg-gray-50 border-gray-200'
+    }
+  }
+
+  const handleDocumentUpload = async (documentType: DocumentType, file: File, formData: { number: string; name: string; address: string }) => {
+    if (!existingProfile) {
+      toast({
+        title: "Error",
+        description: "Please complete your profile first before uploading documents",
+        variant: "destructive",
+      })
+      return
+    }
+
+    setIsDocumentUploading(true)
+    try {
+      const response = await verificationApi.uploadDocument({
+        type: documentType,
+        file: file,
+        number: formData.number,
+        name: formData.name,
+        address: formData.address
+      })
+
+      if (response.success) {
+        toast({
+          title: "Success",
+          description: "Document uploaded successfully",
+        })
+        // Refresh profile and documents
+        await loadExistingProfile()
+      } else {
+        toast({
+          title: "Error",
+          description: response.message || "Failed to upload document",
+          variant: "destructive",
+        })
+      }
+    } catch (error) {
+      console.error("Error uploading document:", error)
+      toast({
+        title: "Error",
+        description: "An error occurred while uploading document",
+        variant: "destructive",
+      })
+    } finally {
+      setIsDocumentUploading(false)
+    }
+  }
+
   const onSubmit = async (data: ProfileFormData) => {
     setIsLoading(true)
     try {
       const formData: EOProfileCreateRequest = {
         name: data.name,
-        description: data.description,
-        email_eo: data.email_eo,
-        phone_no_eo: data.phone_no_eo,
-        address_eo: data.address_eo,
+        description: data.description || "",
+        email_eo: data.email_eo || "",
+        phone_no_eo: data.phone_no_eo || "",
+        address_eo: data.address_eo || "",
         organization_type: data.organization_type,
         logo: data.logo?.[0]
       }
@@ -252,7 +337,7 @@ export default function ProfilePage() {
                 name="description"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Description</FormLabel>
+                    <FormLabel>Description (Optional)</FormLabel>
                     <FormControl>
                       <Textarea 
                         placeholder="Tell us about your organization and what kind of events you organize..."
@@ -274,7 +359,7 @@ export default function ProfilePage() {
                   name="email_eo"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Business Email</FormLabel>
+                      <FormLabel>Business Email (Optional)</FormLabel>
                       <FormControl>
                         <Input type="email" placeholder="business@example.com" {...field} />
                       </FormControl>
@@ -291,7 +376,7 @@ export default function ProfilePage() {
                   name="phone_no_eo"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Phone Number</FormLabel>
+                      <FormLabel>Phone Number (Optional)</FormLabel>
                       <FormControl>
                         <Input placeholder="+62123456789" {...field} />
                       </FormControl>
@@ -309,7 +394,7 @@ export default function ProfilePage() {
                 name="address_eo"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Business Address</FormLabel>
+                    <FormLabel>Business Address (Optional)</FormLabel>
                     <FormControl>
                       <Textarea 
                         placeholder="Enter your complete business address..."
@@ -389,6 +474,261 @@ export default function ProfilePage() {
           </Form>
         </CardContent>
       </Card>
+
+      {/* Legal Documents Section */}
+      {existingProfile && (
+        <Card className="mt-6">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <FileText className="h-5 w-5" />
+              Legal Documents
+            </CardTitle>
+            <CardDescription>
+              Upload required legal documents for verification. Required documents depend on your organization type.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-6">
+              {/* Required Documents */}
+              <div>
+                <h3 className="text-lg font-semibold mb-4">Required Documents</h3>
+                <div className="grid gap-4">
+                  {getRequiredDocuments(existingProfile.organizer_type).map((docType) => {
+                    const status = getDocumentStatus(docType)
+                    const document = documents.find(d => d.type === docType)
+                    
+                    return (
+                      <DocumentCard
+                        key={docType}
+                        documentType={docType}
+                        status={status}
+                        document={document}
+                        onUpload={handleDocumentUpload}
+                        isUploading={isDocumentUploading}
+                        getStatusIcon={getStatusIcon}
+                        getStatusColor={getStatusColor}
+                      />
+                    )
+                  })}
+                </div>
+              </div>
+
+              {/* Optional Documents */}
+              {DOCUMENT_RULES[existingProfile.organizer_type].optional.length > 0 && (
+                <div>
+                  <h3 className="text-lg font-semibold mb-4">Optional Documents</h3>
+                  <div className="grid gap-4">
+                    {DOCUMENT_RULES[existingProfile.organizer_type].optional.map((docType) => {
+                      const status = getDocumentStatus(docType)
+                      const document = documents.find(d => d.type === docType)
+                      
+                      return (
+                        <DocumentCard
+                          key={docType}
+                          documentType={docType}
+                          status={status}
+                          document={document}
+                          onUpload={handleDocumentUpload}
+                          isUploading={isDocumentUploading}
+                          getStatusIcon={getStatusIcon}
+                          getStatusColor={getStatusColor}
+                          optional={true}
+                        />
+                      )
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {/* Overall Verification Status */}
+              <div className={`p-4 rounded-lg border ${existingProfile.is_verified 
+                ? 'bg-green-50 border-green-200' 
+                : 'bg-yellow-50 border-yellow-200'
+              }`}>
+                <div className="flex items-center gap-2">
+                  {existingProfile.is_verified ? (
+                    <CheckCircle className="h-5 w-5 text-green-500" />
+                  ) : (
+                    <Clock className="h-5 w-5 text-yellow-500" />
+                  )}
+                  <span className={`font-semibold ${existingProfile.is_verified 
+                    ? 'text-green-800' 
+                    : 'text-yellow-800'
+                  }`}>
+                    {existingProfile.is_verified ? 'Account Verified' : 'Verification Pending'}
+                  </span>
+                </div>
+                <p className={`mt-1 text-sm ${existingProfile.is_verified 
+                  ? 'text-green-700' 
+                  : 'text-yellow-700'
+                }`}>
+                  {existingProfile.is_verified 
+                    ? 'Your account has been verified and you can start creating events.'
+                    : 'Upload all required documents to complete the verification process.'
+                  }
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+    </div>
+  )
+}
+
+// Document Card Component
+interface DocumentCardProps {
+  documentType: DocumentType
+  status: string | null
+  document?: DocumentData
+  onUpload: (documentType: DocumentType, file: File, formData: { number: string; name: string; address: string }) => void
+  isUploading: boolean
+  getStatusIcon: (status: string | null) => React.ReactNode
+  getStatusColor: (status: string | null) => string
+  optional?: boolean
+}
+
+function DocumentCard({ 
+  documentType, 
+  status, 
+  document, 
+  onUpload, 
+  isUploading, 
+  getStatusIcon, 
+  getStatusColor,
+  optional = false 
+}: DocumentCardProps) {
+  const [showUploadForm, setShowUploadForm] = useState(false)
+  const [formData, setFormData] = useState({
+    number: '',
+    name: '',
+    address: '',
+    file: null as File | null
+  })
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (file) {
+      setFormData(prev => ({ ...prev, file }))
+    }
+  }
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!formData.file || !formData.number || !formData.name || !formData.address) {
+      return
+    }
+    
+    onUpload(documentType, formData.file, {
+      number: formData.number,
+      name: formData.name,
+      address: formData.address
+    })
+    
+    setShowUploadForm(false)
+    setFormData({ number: '', name: '', address: '', file: null })
+  }
+
+  return (
+    <div className={`p-4 border rounded-lg ${getStatusColor(status)}`}>
+      <div className="flex items-center justify-between mb-2">
+        <div className="flex items-center gap-2">
+          {getStatusIcon(status)}
+          <span className="font-medium">
+            {DOCUMENT_LABELS[documentType]}
+            {optional && <span className="text-sm text-gray-500 ml-1">(Optional)</span>}
+          </span>
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="text-sm font-medium">
+            {status ? STATUS_LABELS[status as keyof typeof STATUS_LABELS] : 'Not Uploaded'}
+          </span>
+          {!status && (
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => setShowUploadForm(!showUploadForm)}
+              disabled={isUploading}
+            >
+              Upload
+            </Button>
+          )}
+        </div>
+      </div>
+
+      {document && (
+        <div className="text-sm text-gray-600 mb-2">
+          <p>Number: {document.number}</p>
+          <p>Name: {document.name}</p>
+          <p>Uploaded: {new Date(document.created_at).toLocaleDateString()}</p>
+          {document.reason_rejected && (
+            <p className="text-red-600 mt-1">Reason: {document.reason_rejected}</p>
+          )}
+        </div>
+      )}
+
+      {showUploadForm && (
+        <form onSubmit={handleSubmit} className="mt-4 space-y-3 border-t pt-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div>
+              <label className="block text-sm font-medium mb-1">Document Number</label>
+              <Input
+                placeholder="Enter document number"
+                value={formData.number}
+                onChange={(e) => setFormData(prev => ({ ...prev, number: e.target.value }))}
+                required
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-1">Full Name</label>
+              <Input
+                placeholder="Full name as in document"
+                value={formData.name}
+                onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
+                required
+              />
+            </div>
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-1">Address</label>
+            <Textarea
+              placeholder="Address as in document"
+              value={formData.address}
+              onChange={(e) => setFormData(prev => ({ ...prev, address: e.target.value }))}
+              className="min-h-[60px]"
+              required
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-1">Document File</label>
+            <Input
+              type="file"
+              accept=".jpg,.jpeg,.png,.pdf"
+              onChange={handleFileChange}
+              required
+            />
+            <p className="text-xs text-gray-500 mt-1">
+              Accepted formats: JPG, PNG, PDF (max 10MB)
+            </p>
+          </div>
+          <div className="flex justify-end gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setShowUploadForm(false)}
+              disabled={isUploading}
+            >
+              Cancel
+            </Button>
+            <Button
+              type="submit"
+              disabled={isUploading || !formData.file || !formData.number || !formData.name || !formData.address}
+            >
+              {isUploading ? 'Uploading...' : 'Upload Document'}
+            </Button>
+          </div>
+        </form>
+      )}
     </div>
   )
 }

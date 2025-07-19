@@ -777,6 +777,73 @@ function handleMockResponse<T>(endpoint: string, method: string, data?: any): T 
     } as unknown as T
   }
 
+  // EO Profile Creation mock response
+  if (endpoint === "/event-organizers/create" && method === "POST") {
+    // FormData access pattern
+    const organizationType = (data instanceof FormData ? data.get('organizer_type') : data?.organization_type) || 'individual'
+    const name = (data instanceof FormData ? data.get('name') : data?.name) || 'Demo Organization'
+    const email = (data instanceof FormData ? data.get('email_eo') : data?.email_eo) || 'demo@example.com'
+    
+    return {
+      success: true,
+      message: "EO profile created successfully",
+      data: {
+        id: Math.floor(Math.random() * 1000) + 1,
+        name: name,
+        organizer_type: organizationType,
+        logo: null,
+        description: (data instanceof FormData ? data.get('description') : data?.description) || 'Demo organization description',
+        email_eo: email,
+        phone_no_eo: (data instanceof FormData ? data.get('phone_no_eo') : data?.phone_no_eo) || '+1234567890',
+        address_eo: (data instanceof FormData ? data.get('address_eo') : data?.address_eo) || 'Demo address',
+        eo_owner_id: Math.floor(Math.random() * 1000) + 1,
+        updated_at: new Date().toISOString(),
+        created_at: new Date().toISOString(),
+        is_verified: false
+      }
+    } as unknown as T
+  }
+
+  // Document Upload mock response
+  if (endpoint === "/documents/create" && method === "POST") {
+    const documentType = (data instanceof FormData ? data.get('type') : data?.type) || 'ktp'
+    const number = (data instanceof FormData ? data.get('number') : data?.number) || '1234567890'
+    const name = (data instanceof FormData ? data.get('name') : data?.name) || 'Demo User'
+    const address = (data instanceof FormData ? data.get('address') : data?.address) || 'Demo Address'
+    
+    return {
+      success: true,
+      message: "Document uploaded successfully",
+      data: {
+        id: Math.floor(Math.random() * 1000) + 1,
+        type: documentType,
+        file: `documents/${documentType}_${Date.now()}.pdf`,
+        number: number,
+        name: name,
+        address: address,
+        status: "pending",
+        documentable_id: 1,
+        documentable_type: "App\\Models\\EventOrganizer",
+        updated_at: new Date().toISOString(),
+        created_at: new Date().toISOString(),
+        documentable: {
+          id: 1,
+          eo_owner_id: 1,
+          organizer_type: "individual",
+          name: "Demo Organization",
+          logo: null,
+          description: "Demo description",
+          email_eo: "demo@example.com",
+          phone_no_eo: "+1234567890",
+          address_eo: "Demo address",
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+          is_verified: false
+        }
+      }
+    } as unknown as T
+  }
+
   // Default mock response
   return {} as T
 }
@@ -976,7 +1043,7 @@ export const verificationApi = {
     formData.append('email_eo', data.email_eo)
     formData.append('phone_no_eo', data.phone_no_eo)
     formData.append('address_eo', data.address_eo)
-    formData.append('organization_type', data.organization_type)
+    formData.append('organizer_type', data.organization_type)
     
     if (data.logo) {
       formData.append('logo', data.logo)
@@ -1003,7 +1070,7 @@ export const verificationApi = {
     formData.append('email_eo', data.email_eo)
     formData.append('phone_no_eo', data.phone_no_eo)
     formData.append('address_eo', data.address_eo)
-    formData.append('organization_type', data.organization_type)
+    formData.append('organizer_type', data.organization_type)
     
     if (data.logo) {
       formData.append('logo', data.logo)
