@@ -990,6 +990,27 @@ export const verificationApi = {
     const token = getToken()
     return apiRequest<EOProfileDataResponse>("/event-organizers/me/profile", "GET", null, token || undefined)
   },
+  
+  // Update EO Profile Data
+  updateEOProfile: (id: number, data: EOProfileCreateRequest): Promise<EOProfileResponse> => {
+    const token = getToken()
+    const formData = new FormData()
+    
+    // Add _method field for Laravel to handle PUT request via POST
+    formData.append('_method', 'PUT')
+    formData.append('name', data.name)
+    formData.append('description', data.description)
+    formData.append('email_eo', data.email_eo)
+    formData.append('phone_no_eo', data.phone_no_eo)
+    formData.append('address_eo', data.address_eo)
+    formData.append('organization_type', data.organization_type)
+    
+    if (data.logo) {
+      formData.append('logo', data.logo)
+    }
+    
+    return apiRequestFormData<EOProfileResponse>(`/event-organizers/${id}`, "POST", formData, token || undefined)
+  },
 
   // Document Upload
   uploadDocument: (data: DocumentUploadRequest): Promise<DocumentUploadResponse> => {

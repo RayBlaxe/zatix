@@ -22,7 +22,22 @@ const profileSchema = z.object({
   phone_no_eo: z.string().min(10, "Phone number must be at least 10 digits"),
   address_eo: z.string().min(5, "Address must be at least 5 characters"),
   organization_type: z.enum(["company", "individual"] as const),
-  logo: z.instanceof(FileList).optional()
+  logo: z.instanceof(FileList).optional().refine((files) => {
+    if (!files || files.length === 0) return true // Optional field
+    const file = files[0]
+    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png']
+    const maxSize = 2 * 1024 * 1024 // 2MB
+    
+    if (!allowedTypes.includes(file.type)) {
+      return false
+    }
+    if (file.size > maxSize) {
+      return false
+    }
+    return true
+  }, {
+    message: "Logo must be JPG, JPEG, or PNG format and under 2MB"
+  })
 })
 
 type ProfileFormData = z.infer<typeof profileSchema>
@@ -71,6 +86,30 @@ export default function ProfilePage() {
   const handleLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (file) {
+      // Validate file type
+      const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png']
+      const maxSize = 2 * 1024 * 1024 // 2MB
+      
+      if (!allowedTypes.includes(file.type)) {
+        toast({
+          title: "Invalid file type",
+          description: "Please upload only JPG, JPEG, or PNG files",
+          variant: "destructive",
+        })
+        e.target.value = '' // Clear the input
+        return
+      }
+      
+      if (file.size > maxSize) {
+        toast({
+          title: "File too large",
+          description: "Logo must be under 2MB",
+          variant: "destructive",
+        })
+        e.target.value = '' // Clear the input
+        return
+      }
+      
       const reader = new FileReader()
       reader.onloadend = () => {
         setLogoPreview(reader.result as string)
@@ -92,7 +131,9 @@ export default function ProfilePage() {
         logo: data.logo?.[0]
       }
 
-      const response = await verificationApi.createEOProfile(formData)
+      const response = existingProfile 
+        ? await verificationApi.updateEOProfile(existingProfile.id, formData)
+        : await verificationApi.createEOProfile(formData)
       
       if (response.success) {
         toast({
@@ -103,15 +144,15 @@ export default function ProfilePage() {
       } else {
         toast({
           title: "Error",
-          description: response.message || "Failed to create profile",
+          description: response.message || `Failed to ${existingProfile ? 'update' : 'create'} profile`,
           variant: "destructive",
         })
       }
     } catch (error) {
-      console.error("Error creating profile:", error)
+      console.error(`Error ${existingProfile ? 'updating' : 'creating'} profile:`, error)
       toast({
         title: "Error",
-        description: "An error occurred while creating profile",
+        description: `An error occurred while ${existingProfile ? 'updating' : 'creating'} profile`,
         variant: "destructive",
       })
     } finally {
@@ -294,7 +335,7 @@ export default function ProfilePage() {
                       <div className="flex items-center gap-4">
                         <Input
                           type="file"
-                          accept="image/*"
+                          accept=".jpg,.jpeg,.png,image/jpeg,image/png"
                           onChange={(e) => {
                             handleLogoChange(e)
                             field.onChange(e.target.files)
@@ -322,7 +363,7 @@ export default function ProfilePage() {
                       </div>
                     </FormControl>
                     <FormDescription>
-                      Upload your organization logo (JPG, PNG, max 2MB)
+                      Upload your organization logo (JPG, JPEG, PNG only, max 2MB)
                     </FormDescription>
                     <FormMessage />
                   </FormItem>

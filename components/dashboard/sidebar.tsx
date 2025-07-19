@@ -128,8 +128,8 @@ export function DashboardSidebar({ onNavigate }: DashboardSidebarProps = {}) {
   
 
   return (
-    <div className="flex h-full flex-col border-r bg-background">
-      <div className="flex h-14 items-center border-b px-4">
+    <div className="flex h-full flex-col border-r" style={{ backgroundColor: '#1E32B8' }}>
+      <div className="flex h-14 items-center border-b border-white/20 px-4">
         <Link href="/" className="flex items-center gap-2">
           <Image
             src="/zatix-logo.png"
@@ -148,8 +148,8 @@ export function DashboardSidebar({ onNavigate }: DashboardSidebarProps = {}) {
               href={route.href}
               onClick={onNavigate}
               className={cn(
-                "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium hover:bg-accent hover:text-accent-foreground",
-                route.active ? "bg-accent text-accent-foreground" : "transparent"
+                "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium text-white hover:bg-white/10 hover:text-white",
+                route.active ? "bg-white/20 text-white" : "transparent"
               )}
             >
               <route.icon className="size-4" />
@@ -163,9 +163,9 @@ export function DashboardSidebar({ onNavigate }: DashboardSidebarProps = {}) {
               <CollapsibleTrigger asChild>
                 <button
                   className={cn(
-                    "flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm font-medium hover:bg-accent hover:text-accent-foreground",
+                    "flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm font-medium text-white hover:bg-white/10 hover:text-white",
                     pathname.startsWith("/dashboard/content")
-                      ? "bg-accent text-accent-foreground"
+                      ? "bg-white/20 text-white"
                       : "transparent"
                   )}
                 >
@@ -185,8 +185,8 @@ export function DashboardSidebar({ onNavigate }: DashboardSidebarProps = {}) {
                     href={route.href}
                     onClick={onNavigate}
                     className={cn(
-                      "flex items-center gap-3 rounded-md px-3 py-2 ml-4 text-sm font-medium hover:bg-accent hover:text-accent-foreground",
-                      route.active ? "bg-accent text-accent-foreground" : "transparent"
+                      "flex items-center gap-3 rounded-md px-3 py-2 ml-4 text-sm font-medium text-white/90 hover:bg-white/10 hover:text-white",
+                      route.active ? "bg-white/20 text-white" : "transparent"
                     )}
                   >
                     <route.icon className="size-3" />
@@ -198,15 +198,15 @@ export function DashboardSidebar({ onNavigate }: DashboardSidebarProps = {}) {
           )}
         </nav>
       </div>
-      <div className="mt-auto border-t p-4">
+      <div className="mt-auto border-t border-white/20 p-4">
         <div className="flex items-center gap-2 mb-4">
           <Avatar className="size-8">
-            <AvatarFallback>{user?.name.charAt(0).toUpperCase()}</AvatarFallback>
+            <AvatarFallback className="bg-white/20 text-white">{user?.name.charAt(0).toUpperCase()}</AvatarFallback>
           </Avatar>
           <div className="space-y-1">
-            <p className="text-sm font-medium leading-none">{user?.name}</p>
-            <p className="text-xs text-muted-foreground">{user?.email}</p>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-sm font-medium leading-none text-white">{user?.name}</p>
+            <p className="text-xs text-white/70">{user?.email}</p>
+            <p className="text-xs text-white/70">
               {user?.currentRole === "eo-owner"
                 ? "Event Organizer"
                 : user?.currentRole === "super-admin"
@@ -216,14 +216,14 @@ export function DashboardSidebar({ onNavigate }: DashboardSidebarProps = {}) {
           </div>
         </div>
         <div className="grid grid-cols-2 gap-2">
-          <Button variant="outline" size="sm" asChild>
+          <Button variant="outline" size="sm" asChild className="!text-white border-white/30 hover:bg-white/10 hover:!text-white">
             <Link href="/settings" onClick={onNavigate}>
-              <Settings className="mr-2 size-4" />
+              <Settings className="mr-2 size-4 text-white" />
               Settings
             </Link>
           </Button>
-          <Button variant="outline" size="sm" onClick={handleLogout}>
-            <LogOut className="mr-2 size-4" />
+          <Button variant="outline" size="sm" onClick={handleLogout} className="!text-white border-white/30 hover:bg-white/10 hover:!text-white">
+            <LogOut className="mr-2 size-4 text-white" />
             Logout
           </Button>
         </div>
