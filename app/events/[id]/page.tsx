@@ -356,7 +356,7 @@ export default function EventDetailPage() {
                           <div>
                             <p className="font-medium">{ticket.name}</p>
                             <p className="text-sm text-gray-600">
-                              {parseInt(ticket.stock)} available
+                              {Number(ticket.stock)} available
                             </p>
                           </div>
                           <div className="text-right">

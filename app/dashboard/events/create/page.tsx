@@ -32,7 +32,8 @@ import {
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { eventApi, facilityApi, tncApi } from "@/lib/api"
-import { EventFormData, Facility, TNCItem } from "@/types/events"
+import { EventFormData, Facility } from "@/types/events"
+import { TNCItem } from "@/types/terms"
 import { toast } from "@/components/ui/use-toast"
 
 // Form validation schema
