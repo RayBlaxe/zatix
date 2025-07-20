@@ -132,9 +132,27 @@ export default function ProfilePage() {
   }
 
   const getDocumentStatus = (documentType: DocumentType) => {
-    const doc = documents.find(d => d.type === documentType)
-    if (!doc) return null
-    return doc.status
+    // Get all documents of this type and find the latest one (for "replaced" status)
+    const docsOfType = documents.filter(d => d.type === documentType)
+    if (docsOfType.length === 0) return null
+    
+    // Sort by created_at desc to get the latest document
+    const latestDoc = docsOfType.sort((a, b) => 
+      new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+    )[0]
+    
+    return latestDoc.status
+  }
+
+  const getLatestDocument = (documentType: DocumentType): DocumentData | undefined => {
+    // Get all documents of this type and find the latest one
+    const docsOfType = documents.filter(d => d.type === documentType)
+    if (docsOfType.length === 0) return undefined
+    
+    // Sort by created_at desc to get the latest document
+    return docsOfType.sort((a, b) => 
+      new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+    )[0]
   }
 
   const getStatusIcon = (status: string | null) => {
@@ -145,6 +163,8 @@ export default function ProfilePage() {
         return <XCircle className="h-5 w-5 text-red-500" />
       case 'pending':
         return <Clock className="h-5 w-5 text-yellow-500" />
+      case 'replaced':
+        return <Clock className="h-5 w-5 text-blue-500" />
       default:
         return <AlertCircle className="h-5 w-5 text-gray-400" />
     }
@@ -158,12 +178,14 @@ export default function ProfilePage() {
         return 'text-red-600 bg-red-50 border-red-200'
       case 'pending':
         return 'text-yellow-600 bg-yellow-50 border-yellow-200'
+      case 'replaced':
+        return 'text-blue-600 bg-blue-50 border-blue-200'
       default:
         return 'text-gray-600 bg-gray-50 border-gray-200'
     }
   }
 
-  const handleDocumentUpload = async (documentType: DocumentType, file: File, formData: { number: string; name: string; address: string }) => {
+  const handleDocumentUpload = async (documentType: DocumentType, file: File, formData: { number: string; name: string; address: string }, isUpdate: boolean = false, documentId?: number) => {
     if (!existingProfile) {
       toast({
         title: "Error",
@@ -175,33 +197,37 @@ export default function ProfilePage() {
 
     setIsDocumentUploading(true)
     try {
-      const response = await verificationApi.uploadDocument({
+      const uploadData = {
         type: documentType,
         file: file,
         number: formData.number,
         name: formData.name,
         address: formData.address
-      })
+      }
+
+      const response = isUpdate && documentId 
+        ? await verificationApi.updateDocument(documentId, uploadData)
+        : await verificationApi.uploadDocument(uploadData)
 
       if (response.success) {
         toast({
           title: "Success",
-          description: "Document uploaded successfully",
+          description: isUpdate ? "Document updated successfully" : "Document uploaded successfully",
         })
         // Refresh profile and documents
         await loadExistingProfile()
       } else {
         toast({
           title: "Error",
-          description: response.message || "Failed to upload document",
+          description: response.message || `Failed to ${isUpdate ? 'update' : 'upload'} document`,
           variant: "destructive",
         })
       }
     } catch (error) {
-      console.error("Error uploading document:", error)
+      console.error(`Error ${isUpdate ? 'updating' : 'uploading'} document:`, error)
       toast({
         title: "Error",
-        description: "An error occurred while uploading document",
+        description: `An error occurred while ${isUpdate ? 'updating' : 'uploading'} document`,
         variant: "destructive",
       })
     } finally {
@@ -501,7 +527,7 @@ export default function ProfilePage() {
                 <div className="grid gap-4">
                   {getRequiredDocuments(existingProfile.organizer_type).map((docType) => {
                     const status = getDocumentStatus(docType)
-                    const document = documents.find(d => d.type === docType)
+                    const document = getLatestDocument(docType)
                     
                     return (
                       <DocumentCard
@@ -526,7 +552,7 @@ export default function ProfilePage() {
                   <div className="grid gap-4">
                     {DOCUMENT_RULES[existingProfile.organizer_type].optional.map((docType) => {
                       const status = getDocumentStatus(docType)
-                      const document = documents.find(d => d.type === docType)
+                      const document = getLatestDocument(docType)
                       
                       return (
                         <DocumentCard
@@ -587,7 +613,7 @@ interface DocumentCardProps {
   documentType: DocumentType
   status: string | null
   document?: DocumentData
-  onUpload: (documentType: DocumentType, file: File, formData: { number: string; name: string; address: string }) => void
+  onUpload: (documentType: DocumentType, file: File, formData: { number: string; name: string; address: string }, isUpdate?: boolean, documentId?: number) => void
   isUploading: boolean
   getStatusIcon: (status: string | null) => React.ReactNode
   getStatusColor: (status: string | null) => string
@@ -625,11 +651,14 @@ function DocumentCard({
       return
     }
     
+    // Determine if this is an update (for rejected documents) or new upload
+    const isUpdate = document && (document.status === 'rejected')
+    
     onUpload(documentType, formData.file, {
       number: formData.number,
       name: formData.name,
       address: formData.address
-    })
+    }, isUpdate, document?.id)
     
     setShowUploadForm(false)
     setFormData({ number: '', name: '', address: '', file: null })
@@ -649,14 +678,14 @@ function DocumentCard({
           <span className="text-sm font-medium">
             {status ? STATUS_LABELS[status as keyof typeof STATUS_LABELS] : 'Not Uploaded'}
           </span>
-          {!status && (
+          {(!status || status === 'rejected') && (
             <Button
               size="sm"
               variant="outline"
               onClick={() => setShowUploadForm(!showUploadForm)}
               disabled={isUploading}
             >
-              Upload
+              {status === 'rejected' ? 'Re-upload' : 'Upload'}
             </Button>
           )}
         </div>

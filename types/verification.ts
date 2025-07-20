@@ -4,7 +4,7 @@ export type OrganizerType = 'company' | 'individual'
 
 export type DocumentType = 'ktp' | 'nib' | 'npwp'
 
-export type DocumentStatus = 'pending' | 'verified' | 'rejected'
+export type DocumentStatus = 'pending' | 'verified' | 'rejected' | 'replaced'
 
 export type NotificationType = 'App\\Notifications\\DocumentStatusUpdated'
 
@@ -177,8 +177,8 @@ export interface DocumentDetailResponse {
 
 // Document Status Update
 export interface DocumentStatusUpdateRequest {
-  status: 'approved' | 'rejected'
-  reason?: string
+  status: 'verified' | 'rejected'
+  reason_rejected?: string
   _method: 'PUT'
 }
 
@@ -277,5 +277,6 @@ export const DOCUMENT_LABELS = {
 export const STATUS_LABELS = {
   pending: 'Pending Review',
   verified: 'Verified',
-  rejected: 'Rejected'
+  rejected: 'Rejected',
+  replaced: 'Replaced'
 } as const

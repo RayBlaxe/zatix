@@ -66,7 +66,8 @@ export default function AdminVerificationPage() {
     const statusConfig = {
       pending: { label: "Pending", icon: Clock, className: "bg-yellow-100 text-yellow-800" },
       verified: { label: "Verified", icon: CheckCircle, className: "bg-green-100 text-green-800" },
-      rejected: { label: "Rejected", icon: AlertCircle, className: "bg-red-100 text-red-800" }
+      rejected: { label: "Rejected", icon: AlertCircle, className: "bg-red-100 text-red-800" },
+      replaced: { label: "Replaced", icon: Clock, className: "bg-blue-100 text-blue-800" }
     }
 
     const config = statusConfig[status as keyof typeof statusConfig]
@@ -216,6 +217,7 @@ export default function AdminVerificationPage() {
                 <SelectItem value="pending">Pending</SelectItem>
                 <SelectItem value="verified">Verified</SelectItem>
                 <SelectItem value="rejected">Rejected</SelectItem>
+                <SelectItem value="replaced">Replaced</SelectItem>
               </SelectContent>
             </Select>
           </div>

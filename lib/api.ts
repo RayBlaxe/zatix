@@ -807,45 +807,7 @@ function handleMockResponse<T>(endpoint: string, method: string, data?: any): T 
     } as unknown as T
   }
 
-  // Document Upload mock response
-  if (endpoint === "/documents/create" && method === "POST") {
-    const documentType = (data instanceof FormData ? data.get('type') : data?.type) || 'ktp'
-    const number = (data instanceof FormData ? data.get('number') : data?.number) || '1234567890'
-    const name = (data instanceof FormData ? data.get('name') : data?.name) || 'Demo User'
-    const address = (data instanceof FormData ? data.get('address') : data?.address) || 'Demo Address'
-    
-    return {
-      success: true,
-      message: "Document uploaded successfully",
-      data: {
-        id: Math.floor(Math.random() * 1000) + 1,
-        type: documentType,
-        file: `documents/${documentType}_${Date.now()}.pdf`,
-        number: number,
-        name: name,
-        address: address,
-        status: "pending",
-        documentable_id: 1,
-        documentable_type: "App\\Models\\EventOrganizer",
-        updated_at: new Date().toISOString(),
-        created_at: new Date().toISOString(),
-        documentable: {
-          id: 1,
-          eo_owner_id: 1,
-          organizer_type: "individual",
-          name: "Demo Organization",
-          logo: null,
-          description: "Demo description",
-          email_eo: "demo@example.com",
-          phone_no_eo: "+1234567890",
-          address_eo: "Demo address",
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-          is_verified: false
-        }
-      }
-    } as unknown as T
-  }
+  // Document Upload - Removed mock response to force real API usage
 
   // Removed EO Profile mock response - always use real API
 
@@ -1096,6 +1058,20 @@ export const verificationApi = {
     formData.append('address', data.address)
     
     return apiRequestFormData<DocumentUploadResponse>("/documents/create", "POST", formData, token || undefined)
+  },
+
+  // Document Update (for rejected documents)
+  updateDocument: (id: number, data: DocumentUploadRequest): Promise<DocumentUploadResponse> => {
+    const token = getToken()
+    const formData = new FormData()
+    
+    formData.append('type', data.type)
+    formData.append('file', data.file)
+    formData.append('number', data.number)
+    formData.append('name', data.name)
+    formData.append('address', data.address)
+    
+    return apiRequestFormData<DocumentUploadResponse>(`/documents/${id}/update`, "POST", formData, token || undefined)
   },
 
   // Super Admin: Get all documents for verification

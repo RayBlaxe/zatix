@@ -77,7 +77,7 @@ export default function DocumentReviewPage() {
     setIsProcessing(true)
     try {
       const updateData: DocumentStatusUpdateRequest = {
-        status: "approved",
+        status: "verified",
         _method: "PUT"
       }
 
@@ -122,7 +122,7 @@ export default function DocumentReviewPage() {
     try {
       const updateData: DocumentStatusUpdateRequest = {
         status: "rejected",
-        reason: rejectionReason,
+        reason_rejected: rejectionReason,
         _method: "PUT"
       }
 
@@ -159,7 +159,8 @@ export default function DocumentReviewPage() {
     const statusConfig = {
       pending: { label: "Pending", icon: Clock, className: "bg-yellow-100 text-yellow-800" },
       verified: { label: "Verified", icon: CheckCircle, className: "bg-green-100 text-green-800" },
-      rejected: { label: "Rejected", icon: AlertCircle, className: "bg-red-100 text-red-800" }
+      rejected: { label: "Rejected", icon: AlertCircle, className: "bg-red-100 text-red-800" },
+      replaced: { label: "Replaced", icon: Clock, className: "bg-blue-100 text-blue-800" }
     }
 
     const config = statusConfig[status as keyof typeof statusConfig]
@@ -399,7 +400,7 @@ export default function DocumentReviewPage() {
               <CardTitle>Actions</CardTitle>
             </CardHeader>
             <CardContent>
-              {document.status === 'pending' && (
+              {(document.status === 'pending' || document.status === 'replaced') && (
                 <div className="space-y-3">
                   <Button
                     className="w-full"
@@ -487,6 +488,15 @@ export default function DocumentReviewPage() {
                   <AlertCircle className="h-4 w-4 text-red-600" />
                   <AlertDescription className="text-red-800">
                     This document has been rejected.
+                  </AlertDescription>
+                </Alert>
+              )}
+
+              {document.status === 'replaced' && (
+                <Alert className="border-blue-200 bg-blue-50">
+                  <Clock className="h-4 w-4 text-blue-600" />
+                  <AlertDescription className="text-blue-800">
+                    This document has been replaced with a newer version and requires review.
                   </AlertDescription>
                 </Alert>
               )}
