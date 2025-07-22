@@ -1,5 +1,4 @@
 "use client";
-
 import type React from "react";
 import { useState } from "react";
 import { ProtectedRoute } from "@/components/protected-route";
@@ -12,16 +11,16 @@ import Image from "next/image";
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
-
+  
   return (
     <ProtectedRoute requiredRoles={["eo-owner", "super-admin"]}>
-      <div className="flex h-screen overflow-hidden">
+      <div className="flex min-h-screen"> {/* Changed from h-screen overflow-hidden */}
         {/* Desktop Sidebar */}
-        <div className="hidden md:flex md:w-64 md:flex-col">
+        <div className="hidden md:flex md:w-64 md:flex-col md:fixed md:h-screen">
           <DashboardSidebar />
         </div>
-
-        <div className="flex flex-1 flex-col overflow-hidden">
+        
+        <div className="flex flex-1 flex-col md:ml-64"> {/* Added md:ml-64 for sidebar offset */}
           {/* Mobile Header */}
           <div className="flex h-14 items-center border-b bg-background px-4 md:hidden">
             <Sheet open={sidebarOpen} onOpenChange={setSidebarOpen}>
@@ -35,7 +34,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 <DashboardSidebar onNavigate={() => setSidebarOpen(false)} />
               </SheetContent>
             </Sheet>
-
             <Link href="/" className="flex items-center gap-2">
               <Image
                 src="/zatix-logo.png"
@@ -46,8 +44,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               />
             </Link>
           </div>
-
-          <main className="flex-1 overflow-y-auto bg-muted/20 p-4">{children}</main>
+          
+          <main className="flex-1 bg-muted/20 p-4"> {/* Removed overflow-y-auto */}
+            {children}
+          </main>
         </div>
       </div>
     </ProtectedRoute>

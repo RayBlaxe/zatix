@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react"
 import Link from "next/link"
+import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -17,14 +18,16 @@ import {
   DropdownMenuSeparator 
 } from "@/components/ui/dropdown-menu"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { eventApi } from "@/lib/api"
+import { eventApi, tncApi, getToken } from "@/lib/api"
 import { Event, EventFilters } from "@/types/events"
 import { format } from "date-fns"
 import { useAuth } from "@/hooks/use-auth"
 import { toast } from "@/components/ui/use-toast"
+import { TNCAcceptanceModal } from "@/components/tnc-acceptance-modal"
 
 export default function EventsPage() {
   const { user } = useAuth()
+  const router = useRouter()
   const [events, setEvents] = useState<Event[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -32,6 +35,7 @@ export default function EventsPage() {
   const [totalPages, setTotalPages] = useState(1)
   const [filters, setFilters] = useState<EventFilters>({})
   const [searchTerm, setSearchTerm] = useState("")
+  const [showTNCModal, setShowTNCModal] = useState(false)
 
   useEffect(() => {
     fetchEvents()
@@ -171,6 +175,50 @@ export default function EventsPage() {
     }
   }
 
+  const handleCreateEventClick = async () => {
+    try {
+      const token = getToken()
+      if (!token) {
+        toast({
+          title: "Authentication Required",
+          description: "Please log in to create an event",
+          variant: "destructive"
+        })
+        return
+      }
+
+      // Check if TNC has been accepted
+      const tncResponse = await tncApi.getTNCEvents(token)
+      if (tncResponse.success && tncResponse.data) {
+        if (tncResponse.data.already_accepted) {
+          // TNC already accepted, go directly to create event
+          router.push("/dashboard/events/create")
+        } else {
+          // Need to accept TNC first
+          setShowTNCModal(true)
+        }
+      } else {
+        toast({
+          title: "Error",
+          description: "Failed to check terms and conditions. Please try again.",
+          variant: "destructive"
+        })
+      }
+    } catch (error) {
+      console.error("Error checking TNC:", error)
+      toast({
+        title: "Error",
+        description: "Failed to check terms and conditions. Please try again.",
+        variant: "destructive"
+      })
+    }
+  }
+
+  const handleTNCAccepted = () => {
+    setShowTNCModal(false)
+    router.push("/dashboard/events/create")
+  }
+
   const getStatusBadge = (event: Event) => {
     switch (event.status) {
       case "draft":
@@ -205,12 +253,10 @@ export default function EventsPage() {
           <h1 className="text-3xl font-bold tracking-tight">Events</h1>
           <p className="text-muted-foreground">Manage your events and create new ones.</p>
         </div>
-        <Link href="/dashboard/events/create">
-          <Button>
-            <Plus className="mr-2 size-4" />
-            Create Event
-          </Button>
-        </Link>
+        <Button onClick={handleCreateEventClick}>
+          <Plus className="mr-2 size-4" />
+          Create Event
+        </Button>
       </div>
 
       {/* Search and Filters */}
@@ -304,12 +350,10 @@ export default function EventsPage() {
                 ? "Try adjusting your search or filters" 
                 : "Create your first event to get started"}
             </p>
-            <Link href="/dashboard/events/create">
-              <Button>
-                <Plus className="mr-2 size-4" />
-                Create Event
-              </Button>
-            </Link>
+            <Button onClick={handleCreateEventClick}>
+              <Plus className="mr-2 size-4" />
+              Create Event
+            </Button>
           </CardContent>
         </Card>
       ) : (
@@ -482,6 +526,13 @@ export default function EventsPage() {
           </Button>
         </div>
       )}
+
+      {/* TNC Acceptance Modal */}
+      <TNCAcceptanceModal
+        open={showTNCModal}
+        onOpenChange={setShowTNCModal}
+        onAccept={handleTNCAccepted}
+      />
     </div>
   )
 }

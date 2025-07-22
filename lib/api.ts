@@ -1348,9 +1348,36 @@ export const eventApi = {
 // Facility API functions for master data
 export const facilityApi = {
   // Get all facilities
-  getFacilities: (): Promise<FacilityResponse> => {
+  getFacilities: async (): Promise<FacilityResponse> => {
     const token = getToken()
-    return apiRequest<FacilityResponse>("/facilities", "GET", null, token || undefined)
+    try {
+      const response = await apiRequest<any>("/facilities", "GET", null, token || undefined)
+      
+      // Check if response is already in the expected format
+      if (response && typeof response === 'object' && 'success' in response) {
+        return response as FacilityResponse
+      }
+      
+      // If response is raw array (direct from API), wrap it in expected format
+      if (Array.isArray(response)) {
+        return {
+          success: true,
+          message: "Facilities retrieved successfully",
+          data: response
+        } as FacilityResponse
+      }
+      
+      // Fallback - treat as successful response
+      return {
+        success: true,
+        message: "Facilities retrieved successfully", 
+        data: response || []
+      } as FacilityResponse
+      
+    } catch (error) {
+      console.error("Error fetching facilities:", error)
+      throw error
+    }
   },
 
   // Create new facility

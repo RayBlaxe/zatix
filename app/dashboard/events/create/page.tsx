@@ -27,13 +27,11 @@ import {
   Clock,
   MapPin,
   Users,
-  DollarSign,
-  AlertCircle
+  DollarSign
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { eventApi, facilityApi, tncApi, getToken } from "@/lib/api"
 import { EventFormData, Facility } from "@/types/events"
-import { TNCItem } from "@/types/terms"
 import { toast } from "@/components/ui/use-toast"
 
 // Form validation schema
@@ -46,7 +44,6 @@ const eventFormSchema = z.object({
   end_time: z.string().min(1, "End time is required"),
   location: z.string().min(5, "Location must be at least 5 characters"),
   contact_phone: z.string().min(10, "Contact phone must be at least 10 characters"),
-  tnc_id: z.number().min(1, "Please select terms and conditions"),
   is_public: z.boolean().default(false),
   facilities: z.array(z.number()).min(1, "Please select at least one facility"),
   tickets: z.array(z.object({
@@ -67,7 +64,6 @@ export default function CreateEventPage() {
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(false)
   const [facilities, setFacilities] = useState<Facility[]>([])
-  const [tncItems, setTncItems] = useState<TNCItem[]>([])
   const [loadingData, setLoadingData] = useState(true)
   const [posterPreview, setPosterPreview] = useState<string | null>(null)
 
@@ -85,7 +81,6 @@ export default function CreateEventPage() {
       description: "",
       location: "",
       contact_phone: "",
-      tnc_id: 0,
       facilities: [],
       tickets: [{
         name: "Regular",
@@ -112,15 +107,16 @@ export default function CreateEventPage() {
         
         // Load facilities
         const facilitiesResponse = await facilityApi.getFacilities()
-        if (facilitiesResponse.success) {
+        if (facilitiesResponse.success && facilitiesResponse.data) {
           setFacilities(facilitiesResponse.data)
-        }
-
-        // Load TNC items for events
-        const token = getToken()
-        const tncResponse = await tncApi.getTNCEvents(token || "")
-        if (tncResponse.success && tncResponse.data && tncResponse.data["0"]) {
-          setTncItems([tncResponse.data["0"]])
+          console.log("Facilities loaded successfully:", facilitiesResponse.data.length, "facilities")
+        } else {
+          console.error("Failed to load facilities:", facilitiesResponse)
+          toast({
+            title: "Warning",
+            description: "Could not load facilities list. Please refresh the page.",
+            variant: "destructive"
+          })
         }
       } catch (error) {
         console.error("Error loading data:", error)
@@ -155,6 +151,9 @@ export default function CreateEventPage() {
     try {
       setIsLoading(true)
 
+      // Use TNC ID 1 as it's handled by the modal acceptance flow
+      const tncId = 1
+
       // Convert form data to API format
       const eventData = {
         name: data.name,
@@ -165,7 +164,7 @@ export default function CreateEventPage() {
         end_time: data.end_time,
         location: data.location,
         contact_phone: data.contact_phone,
-        tnc_id: data.tnc_id,
+        tnc_id: tncId,
         facilities: data.facilities,
         tickets: data.tickets.map(ticket => ({
           name: ticket.name,
@@ -205,7 +204,7 @@ export default function CreateEventPage() {
 
   if (loadingData) {
     return (
-      <div className="max-w-4xl mx-auto">
+      <div className="w-full max-w-none lg:max-w-5xl xl:max-w-6xl min-h-0">
         <div className="flex items-center justify-center h-64">
           <Loader2 className="size-8 animate-spin" />
         </div>
@@ -214,14 +213,15 @@ export default function CreateEventPage() {
   }
 
   return (
-    <div className="max-w-4xl mx-auto">
+    <div className="w-full max-w-none lg:max-w-5xl xl:max-w-6xl min-h-0">
       <div className="mb-6">
         <h1 className="text-3xl font-bold tracking-tight">Create Event</h1>
         <p className="text-muted-foreground">Fill in the details to create your event.</p>
       </div>
 
-      <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+      <div className="pb-6">
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
           {/* Basic Information */}
           <Card>
             <CardHeader>
@@ -370,7 +370,6 @@ export default function CreateEventPage() {
                             selected={field.value}
                             onSelect={field.onChange}
                             disabled={(date) => date < new Date()}
-                            initialFocus
                           />
                         </PopoverContent>
                       </Popover>
@@ -424,7 +423,6 @@ export default function CreateEventPage() {
                             selected={field.value}
                             onSelect={field.onChange}
                             disabled={(date) => date < new Date()}
-                            initialFocus
                           />
                         </PopoverContent>
                       </Popover>
@@ -467,7 +465,7 @@ export default function CreateEventPage() {
                 name="facilities"
                 render={() => (
                   <FormItem>
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 max-h-80 overflow-y-auto border rounded-lg p-4">
                       {facilities.map((facility) => (
                         <FormField
                           key={facility.id}
@@ -477,7 +475,7 @@ export default function CreateEventPage() {
                             return (
                               <FormItem
                                 key={facility.id}
-                                className="flex flex-row items-start space-x-3 space-y-0"
+                                className="flex flex-row items-center space-x-2 space-y-0 min-w-0"
                               >
                                 <FormControl>
                                   <Checkbox
@@ -493,10 +491,10 @@ export default function CreateEventPage() {
                                     }}
                                   />
                                 </FormControl>
-                                <FormLabel className="text-sm font-normal">
-                                  <div className="flex items-center gap-2">
-                                    <i className={facility.icon}></i>
-                                    {facility.name}
+                                <FormLabel className="text-xs font-normal cursor-pointer flex-1 min-w-0">
+                                  <div className="flex items-center gap-1.5">
+                                    <i className={`${facility.icon} text-sm`}></i>
+                                    <span className="truncate">{facility.name}</span>
                                   </div>
                                 </FormLabel>
                               </FormItem>
@@ -653,7 +651,6 @@ export default function CreateEventPage() {
                                 selected={field.value}
                                 onSelect={field.onChange}
                                 disabled={(date) => date < new Date()}
-                                initialFocus
                               />
                             </PopoverContent>
                           </Popover>
@@ -693,7 +690,6 @@ export default function CreateEventPage() {
                                 selected={field.value}
                                 onSelect={field.onChange}
                                 disabled={(date) => date < new Date()}
-                                initialFocus
                               />
                             </PopoverContent>
                           </Popover>
@@ -724,45 +720,6 @@ export default function CreateEventPage() {
             </CardContent>
           </Card>
 
-          {/* Terms & Conditions */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <AlertCircle className="size-5" />
-                Terms & Conditions
-              </CardTitle>
-              <CardDescription>
-                Select the terms and conditions for your event
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <FormField
-                control={form.control}
-                name="tnc_id"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Terms & Conditions *</FormLabel>
-                    <Select onValueChange={(value) => field.onChange(parseInt(value))} value={field.value?.toString()}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select terms and conditions" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {tncItems.map((tnc) => (
-                          <SelectItem key={tnc.id} value={tnc.id.toString()}>
-                            Event Terms & Conditions
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </CardContent>
-          </Card>
-
           {/* Submit Buttons */}
           <div className="flex justify-end gap-4">
             <Button 
@@ -785,6 +742,7 @@ export default function CreateEventPage() {
           </div>
         </form>
       </Form>
+      </div>
     </div>
   )
 }
