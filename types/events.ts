@@ -51,7 +51,7 @@ export interface Event {
   end_date: string
   end_time: string
   location: string
-  status: 'draft' | 'active' | 'completed'
+  status: 'draft' | 'active' | 'inactive' | 'archive' | 'completed'
   is_published: boolean
   is_public: boolean
   contact_phone: string

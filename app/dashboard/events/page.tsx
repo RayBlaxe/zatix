@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Badge } from "@/components/ui/badge"
-import { Calendar, Edit, Eye, MoreHorizontal, Plus, Search, Trash2, Users, MapPin, Clock, Image as ImageIcon } from "lucide-react"
+import { Calendar, Edit, Eye, MoreHorizontal, Plus, Search, Trash2, Users, MapPin, Clock, Image as ImageIcon, Globe, Lock, Archive, Pause } from "lucide-react"
 import { 
   DropdownMenu, 
   DropdownMenuContent, 
@@ -72,16 +72,65 @@ export default function EventsPage() {
 
   const handlePublishToggle = async (eventId: number, isPublished: boolean) => {
     try {
+      // Business rule: published events cannot be unpublished
       if (isPublished) {
-        await eventApi.unpublishEvent(eventId)
+        toast({
+          title: "Cannot Unpublish",
+          description: "Published events cannot be unpublished",
+          variant: "destructive"
+        })
+        return
+      }
+      
+      await eventApi.publishEvent(eventId)
+      
+      // Refresh events list
+      fetchEvents()
+    } catch (err) {
+      console.error("Error publishing event:", err)
+    }
+  }
+
+  const handleVisibilityToggle = async (eventId: number, isPublic: boolean, isPublished: boolean) => {
+    try {
+      // Business rule: can only change visibility for published events
+      if (!isPublished) {
+        toast({
+          title: "Cannot Change Visibility",
+          description: "Event must be published before you can change its visibility",
+          variant: "destructive"
+        })
+        return
+      }
+      
+      const newIsPublic = !isPublic
+      await eventApi.toggleEventVisibility(eventId, newIsPublic)
+      
+      // Refresh events list
+      fetchEvents()
+    } catch (err) {
+      console.error("Error toggling visibility:", err)
+    }
+  }
+
+  const handleStatusChange = async (eventId: number, newStatus: 'deactivate' | 'archive') => {
+    const confirmMessage = newStatus === 'archive' 
+      ? "Are you sure you want to archive this event?"
+      : "Are you sure you want to deactivate this event?"
+    
+    if (!window.confirm(confirmMessage)) return
+    
+    try {
+      if (newStatus === 'deactivate') {
+        await eventApi.deactivateEvent(eventId)
       } else {
-        await eventApi.publishEvent(eventId)
+        await eventApi.archiveEvent(eventId)
       }
       
       // Refresh events list
       fetchEvents()
     } catch (err) {
-      console.error("Error toggling publish status:", err)
+      console.error("Error changing event status:", err)
     }
   }
 
@@ -97,14 +146,21 @@ export default function EventsPage() {
   }
 
   const getStatusBadge = (event: Event) => {
-    if (event.status === "draft") {
-      return <Badge variant="outline">Draft</Badge>
-    } else if (event.status === "active" && event.is_published) {
-      return <Badge variant="default">Published</Badge>
-    } else if (event.status === "active" && !event.is_published) {
-      return <Badge variant="secondary">Unpublished</Badge>
-    } else {
-      return <Badge variant="destructive">Completed</Badge>
+    switch (event.status) {
+      case "draft":
+        return <Badge variant="outline" className="bg-gray-100 text-gray-800">Draft</Badge>
+      case "active":
+        if (event.is_published) {
+          return <Badge variant="default" className="bg-green-100 text-green-800">Active & Published</Badge>
+        } else {
+          return <Badge variant="secondary" className="bg-yellow-100 text-yellow-800">Active (Unpublished)</Badge>
+        }
+      case "inactive":
+        return <Badge variant="destructive" className="bg-red-100 text-red-800">Inactive</Badge>
+      case "archive":
+        return <Badge variant="outline" className="bg-purple-100 text-purple-800">Archived</Badge>
+      default:
+        return <Badge variant="outline">Unknown</Badge>
     }
   }
 
@@ -158,7 +214,8 @@ export default function EventsPage() {
               <SelectItem value="all">All Status</SelectItem>
               <SelectItem value="draft">Draft</SelectItem>
               <SelectItem value="active">Active</SelectItem>
-              <SelectItem value="completed">Completed</SelectItem>
+              <SelectItem value="inactive">Inactive</SelectItem>
+              <SelectItem value="archive">Archive</SelectItem>
             </SelectContent>
           </Select>
 
@@ -255,18 +312,62 @@ export default function EventsPage() {
                           View Details
                         </Link>
                       </DropdownMenuItem>
-                      <DropdownMenuItem asChild>
-                        <Link href={`/dashboard/events/${event.id}/edit`}>
+                      {event.status === 'draft' ? (
+                        <DropdownMenuItem asChild>
+                          <Link href={`/dashboard/events/${event.id}/edit`}>
+                            <Edit className="mr-2 h-4 w-4" />
+                            Edit
+                          </Link>
+                        </DropdownMenuItem>
+                      ) : (
+                        <DropdownMenuItem disabled>
                           <Edit className="mr-2 h-4 w-4" />
-                          Edit
-                        </Link>
+                          Edit (Draft Only)
+                        </DropdownMenuItem>
+                      )}
+                      <DropdownMenuSeparator />
+                      {!event.is_published && (
+                        <DropdownMenuItem 
+                          onClick={() => handlePublishToggle(event.id, event.is_published)}
+                        >
+                          <Eye className="mr-2 h-4 w-4" />
+                          Publish
+                        </DropdownMenuItem>
+                      )}
+                      <DropdownMenuItem 
+                        onClick={() => handleVisibilityToggle(event.id, event.is_public, event.is_published)}
+                        disabled={!event.is_published}
+                      >
+                        {event.is_public ? (
+                          <>
+                            <Lock className="mr-2 h-4 w-4" />
+                            Make Private
+                          </>
+                        ) : (
+                          <>
+                            <Globe className="mr-2 h-4 w-4" />
+                            Make Public
+                          </>
+                        )}
+                        {!event.is_published && <span className="text-xs text-muted-foreground ml-2">(Requires Published)</span>}
                       </DropdownMenuItem>
                       <DropdownMenuSeparator />
-                      <DropdownMenuItem 
-                        onClick={() => handlePublishToggle(event.id, event.is_published)}
-                      >
-                        {event.is_published ? 'Unpublish' : 'Publish'}
-                      </DropdownMenuItem>
+                      {event.status === 'active' && (
+                        <DropdownMenuItem 
+                          onClick={() => handleStatusChange(event.id, 'deactivate')}
+                        >
+                          <Pause className="mr-2 h-4 w-4" />
+                          Deactivate
+                        </DropdownMenuItem>
+                      )}
+                      {(event.status === 'active' || event.status === 'inactive') && (
+                        <DropdownMenuItem 
+                          onClick={() => handleStatusChange(event.id, 'archive')}
+                        >
+                          <Archive className="mr-2 h-4 w-4" />
+                          Archive
+                        </DropdownMenuItem>
+                      )}
                       <DropdownMenuSeparator />
                       <DropdownMenuItem 
                         onClick={() => handleDeleteEvent(event.id)}

@@ -811,6 +811,53 @@ function handleMockResponse<T>(endpoint: string, method: string, data?: any): T 
 
   // Removed EO Profile mock response - always use real API
 
+  // Event API mock responses removed - using real API endpoints
+
+  // Facilities mock response
+  if (endpoint === "/facilities" && method === "GET") {
+    return {
+      success: true,
+      message: "Facilities retrieved successfully",
+      data: [
+        {
+          id: 1,
+          name: "Toilet",
+          icon: "fa-solid fa-toilet",
+          created_at: null,
+          updated_at: null
+        },
+        {
+          id: 2,
+          name: "Konsumsi",
+          icon: "fa-solid fa-utensils",
+          created_at: null,
+          updated_at: null
+        },
+        {
+          id: 3,
+          name: "Snack",
+          icon: "fa-solid fa-cookie-bite",
+          created_at: null,
+          updated_at: null
+        },
+        {
+          id: 4,
+          name: "Parkir",
+          icon: "fa-solid fa-car",
+          created_at: null,
+          updated_at: null
+        },
+        {
+          id: 5,
+          name: "WiFi",
+          icon: "fa-solid fa-wifi",
+          created_at: null,
+          updated_at: null
+        }
+      ]
+    } as unknown as T
+  }
+
   // Default mock response
   return {} as T
 }
@@ -1244,6 +1291,29 @@ export const eventApi = {
   unpublishEvent: (id: number): Promise<EventPublishResponse> => {
     const token = getToken()
     return apiRequest<EventPublishResponse>(`/my/events/${id}/unpublish`, "POST", null, token || undefined)
+  },
+
+  // EO - Toggle event visibility (public/private) via update endpoint
+  toggleEventVisibility: (id: number, isPublic: boolean): Promise<EventResponse> => {
+    const token = getToken()
+    const formData = new FormData()
+    
+    formData.append('_method', 'PUT')
+    formData.append('is_public', isPublic ? '1' : '0')
+    
+    return apiRequestFormData<EventResponse>(`/my/events/update/${id}`, "POST", formData, token || undefined)
+  },
+
+  // EO - Deactivate event
+  deactivateEvent: (id: number): Promise<EventPublishResponse> => {
+    const token = getToken()
+    return apiRequest<EventPublishResponse>(`/my/events/${id}/deactivate`, "POST", null, token || undefined)
+  },
+
+  // EO - Archive event
+  archiveEvent: (id: number): Promise<EventPublishResponse> => {
+    const token = getToken()
+    return apiRequest<EventPublishResponse>(`/my/events/${id}/archive`, "POST", null, token || undefined)
   },
 
   // Public - Get all public events

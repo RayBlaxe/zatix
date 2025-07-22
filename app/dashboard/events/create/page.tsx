@@ -47,6 +47,7 @@ const eventFormSchema = z.object({
   location: z.string().min(5, "Location must be at least 5 characters"),
   contact_phone: z.string().min(10, "Contact phone must be at least 10 characters"),
   tnc_id: z.number().min(1, "Please select terms and conditions"),
+  is_public: z.boolean().default(false),
   facilities: z.array(z.number()).min(1, "Please select at least one facility"),
   tickets: z.array(z.object({
     name: z.string().min(1, "Ticket name is required"),
