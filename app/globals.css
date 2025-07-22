@@ -11,7 +11,7 @@
     --card-foreground: 233 25% 15%;
     --popover: 233 15% 100%;
     --popover-foreground: 233 25% 15%;
-    --primary: 233 80% 40%;
+    --primary: 209 100% 14%;
     --primary-foreground: 233 25% 100%;
     --secondary: 53 80% 40%;
     --secondary-foreground: 233 25% 100%;
@@ -23,18 +23,18 @@
     --destructive-foreground: 233 25% 100%;
     --border: 233 25% 80%;
     --input: 233 25% 70%;
-    --ring: 233 80% 40%;
+    --ring: 209 100% 14%;
     --radius: 0.5rem;
 
     /* Sidebar variables */
     --sidebar-background: 233 15% 96%;
     --sidebar-foreground: 233 25% 15%;
-    --sidebar-primary: 233 80% 40%;
+    --sidebar-primary: 209 100% 14%;
     --sidebar-primary-foreground: 233 25% 100%;
     --sidebar-accent: 233 15% 92%;
     --sidebar-accent-foreground: 233 25% 15%;
     --sidebar-border: 233 25% 70%;
-    --sidebar-ring: 233 80% 40%;
+    --sidebar-ring: 209 100% 14%;
     
     /* Additional scheme2 variables */
     --warning: 100 40% 50%;

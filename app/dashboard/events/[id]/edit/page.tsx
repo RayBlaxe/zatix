@@ -33,7 +33,7 @@ import {
   Save
 } from "lucide-react"
 import { cn } from "@/lib/utils"
-import { eventApi, facilityApi, tncApi } from "@/lib/api"
+import { eventApi, facilityApi, tncApi, getToken } from "@/lib/api"
 import { Event, EventFormData, Facility } from "@/types/events"
 import { TNCItem } from "@/types/terms"
 import { toast } from "@/components/ui/use-toast"
@@ -183,7 +183,7 @@ export default function EventEditPage() {
 
   const fetchTNCItems = async () => {
     try {
-      const token = localStorage.getItem("token")
+      const token = getToken()
       if (token) {
         const response = await tncApi.getTNCEvents(token)
         if (response.success) {

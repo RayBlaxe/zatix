@@ -41,7 +41,7 @@ export default function HomePage() {
           </div>
         </section>
 
-        <section className="py-12" style={{ backgroundColor: '#1E32B8' }}>
+        <section className="py-12" style={{ backgroundColor: '#002547' }}>
           <div className="container">
             <div className="text-center mb-10">
               <h2 className="text-3xl font-bold tracking-tight mb-2 text-white">Upcoming Events</h2>
@@ -122,7 +122,7 @@ export default function HomePage() {
               <Link href="/events">
                 <Button 
                   size="lg" 
-                  className="bg-white text-[#1E32B8] border-2 border-white hover:bg-white/90 hover:text-[#1E32B8] font-semibold"
+                  className="bg-white text-[#002547] border-2 border-white hover:bg-white/90 hover:text-[#002547] font-semibold"
                 >
                   View All Events
                 </Button>

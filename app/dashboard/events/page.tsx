@@ -83,12 +83,37 @@ export default function EventsPage() {
         return
       }
       
+      // Show confirmation dialog before publishing
+      const confirmed = window.confirm(
+        "⚠️ IMPORTANT WARNING ⚠️\n\n" +
+        "Once you publish this event:\n" +
+        "• It CANNOT be edited anymore\n" +
+        "• It CANNOT be unpublished\n" +
+        "• Changes become permanent\n\n" +
+        "Are you sure you want to publish this event now?"
+      )
+      
+      if (!confirmed) {
+        return
+      }
+      
       await eventApi.publishEvent(eventId)
+      
+      toast({
+        title: "Event Published",
+        description: "Your event has been successfully published and is now live!",
+        variant: "default"
+      })
       
       // Refresh events list
       fetchEvents()
     } catch (err) {
       console.error("Error publishing event:", err)
+      toast({
+        title: "Error",
+        description: "Failed to publish event. Please try again.",
+        variant: "destructive"
+      })
     }
   }
 

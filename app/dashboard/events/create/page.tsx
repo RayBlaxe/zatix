@@ -31,7 +31,7 @@ import {
   AlertCircle
 } from "lucide-react"
 import { cn } from "@/lib/utils"
-import { eventApi, facilityApi, tncApi } from "@/lib/api"
+import { eventApi, facilityApi, tncApi, getToken } from "@/lib/api"
 import { EventFormData, Facility } from "@/types/events"
 import { TNCItem } from "@/types/terms"
 import { toast } from "@/components/ui/use-toast"
@@ -117,7 +117,8 @@ export default function CreateEventPage() {
         }
 
         // Load TNC items for events
-        const tncResponse = await tncApi.getTNCEvents("")
+        const token = getToken()
+        const tncResponse = await tncApi.getTNCEvents(token || "")
         if (tncResponse.success && tncResponse.data && tncResponse.data["0"]) {
           setTncItems([tncResponse.data["0"]])
         }

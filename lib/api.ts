@@ -1349,7 +1349,8 @@ export const eventApi = {
 export const facilityApi = {
   // Get all facilities
   getFacilities: (): Promise<FacilityResponse> => {
-    return apiRequest<FacilityResponse>("/facilities", "GET")
+    const token = getToken()
+    return apiRequest<FacilityResponse>("/facilities", "GET", null, token || undefined)
   },
 
   // Create new facility

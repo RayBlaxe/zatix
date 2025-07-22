@@ -128,11 +128,11 @@ export function DashboardSidebar({ onNavigate }: DashboardSidebarProps = {}) {
   
 
   return (
-    <div className="flex h-full flex-col border-r" style={{ backgroundColor: '#1E32B8' }}>
+    <div className="flex h-full flex-col border-r" style={{ backgroundColor: '#002547' }}>
       <div className="flex h-14 items-center border-b border-white/20 px-4">
         <Link href="/" className="flex items-center gap-2">
           <Image
-            src="/zatix-logo.png"
+            src="/zatix-putih.png"
             alt="ZaTix Logo"
             width={60}
             height={60}
