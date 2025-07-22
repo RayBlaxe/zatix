@@ -21,6 +21,7 @@ import { eventApi } from "@/lib/api"
 import { Event, EventFilters } from "@/types/events"
 import { format } from "date-fns"
 import { useAuth } from "@/hooks/use-auth"
+import { toast } from "@/components/ui/use-toast"
 
 export default function EventsPage() {
   const { user } = useAuth()

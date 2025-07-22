@@ -207,3 +207,77 @@ export interface PublicEventFilters {
   end_date?: string
   location?: string
 }
+
+// Ticket Purchase Types for Iteration 5
+export interface OrderItem {
+  ticket_id: number
+  quantity: number
+}
+
+export interface OrderCreateRequest {
+  event_id: number
+  items: OrderItem[]
+  payment_method_id: string
+  customer_name: string
+  customer_email: string
+  customer_phone: string
+}
+
+export interface Order {
+  id: number
+  customer_id: number
+  event_id: number
+  order_number: string
+  total_amount: number
+  status: 'pending' | 'paid' | 'cancelled' | 'expired'
+  payment_method_id: string
+  payment_status: 'pending' | 'success' | 'failed'
+  payment_url?: string
+  created_at: string
+  updated_at: string
+  items: OrderItemDetail[]
+  event?: Event
+}
+
+export interface OrderItemDetail {
+  id: number
+  order_id: number
+  ticket_id: number
+  quantity: number
+  price: number
+  subtotal: number
+  ticket?: Ticket
+}
+
+export interface OrderResponse {
+  success: boolean
+  message: string
+  data: Order
+}
+
+export interface CustomerTicket {
+  id: number
+  order_id: number
+  ticket_id: number
+  ticket_code: string
+  status: 'active' | 'used' | 'expired'
+  qr_code?: string
+  created_at: string
+  order?: Order
+  ticket?: Ticket
+}
+
+export interface CustomerTicketResponse {
+  success: boolean
+  message: string
+  data: CustomerTicket[]
+}
+
+export interface QRCodeResponse {
+  success: boolean
+  message: string
+  data: {
+    qr_code: string
+    ticket_code: string
+  }
+}

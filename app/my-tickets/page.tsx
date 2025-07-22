@@ -8,78 +8,43 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Calendar, MapPin, Clock, Download, QrCode, RefreshCw } from "lucide-react"
 import { useAuth } from "@/hooks/use-auth"
 import { ProtectedRoute } from "@/components/protected-route"
-
-interface Ticket {
-  id: string
-  eventId: string
-  eventTitle: string
-  eventDate: string
-  eventTime: string
-  eventLocation: string
-  ticketType: string
-  quantity: number
-  totalPrice: number
-  status: "confirmed" | "pending" | "cancelled"
-  purchaseDate: string
-  qrCode?: string
-}
+import { orderApi } from "@/lib/api"
+import { CustomerTicket } from "@/types/events"
+import { toast } from "@/components/ui/use-toast"
+import { QRCodeModal } from "@/components/qr-code-modal"
 
 export default function MyTicketsPage() {
   const { user } = useAuth()
-  const [tickets, setTickets] = useState<Ticket[]>([])
+  const [tickets, setTickets] = useState<CustomerTicket[]>([])
   const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const [selectedTicket, setSelectedTicket] = useState<CustomerTicket | null>(null)
+  const [qrCodeData, setQrCodeData] = useState<string | null>(null)
+  const [showQRModal, setShowQRModal] = useState(false)
 
-  // Mock tickets data
   useEffect(() => {
-    const mockTickets: Ticket[] = [
-      {
-        id: "TIX001",
-        eventId: "1",
-        eventTitle: "Tech Conference 2024",
-        eventDate: "2024-03-15",
-        eventTime: "09:00",
-        eventLocation: "Jakarta Convention Center",
-        ticketType: "Regular",
-        quantity: 2,
-        totalPrice: 300000,
-        status: "confirmed",
-        purchaseDate: "2024-02-15",
-        qrCode: "QR123456789"
-      },
-      {
-        id: "TIX002",
-        eventId: "2",
-        eventTitle: "Music Festival Jakarta",
-        eventDate: "2024-03-20",
-        eventTime: "18:00",
-        eventLocation: "Gelora Bung Karno",
-        ticketType: "VIP",
-        quantity: 1,
-        totalPrice: 150000,
-        status: "confirmed",
-        purchaseDate: "2024-02-20",
-        qrCode: "QR987654321"
-      },
-      {
-        id: "TIX003",
-        eventId: "3",
-        eventTitle: "Food & Culinary Expo",
-        eventDate: "2024-03-25",
-        eventTime: "10:00",
-        eventLocation: "Plaza Indonesia",
-        ticketType: "Standard",
-        quantity: 1,
-        totalPrice: 25000,
-        status: "pending",
-        purchaseDate: "2024-02-25"
-      }
-    ]
-    
-    setTimeout(() => {
-      setTickets(mockTickets)
-      setIsLoading(false)
-    }, 1000)
+    fetchMyTickets()
   }, [])
+
+  const fetchMyTickets = async () => {
+    try {
+      setIsLoading(true)
+      setError(null)
+      
+      const response = await orderApi.getMyTickets()
+      
+      if (response.success) {
+        setTickets(response.data)
+      } else {
+        setError(response.message || "Failed to fetch tickets")
+      }
+    } catch (err) {
+      console.error("Error fetching tickets:", err)
+      setError("An error occurred while fetching your tickets")
+    } finally {
+      setIsLoading(false)
+    }
+  }
 
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('id-ID', {
@@ -99,106 +64,165 @@ export default function MyTicketsPage() {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case "confirmed":
+      case "active":
         return "default"
-      case "pending":
+      case "used":
         return "secondary"
-      case "cancelled":
+      case "expired":
         return "destructive"
       default:
         return "secondary"
     }
   }
 
+  const getOrderStatus = (order: any) => {
+    if (order?.payment_status === "success") return "confirmed"
+    if (order?.payment_status === "pending") return "pending"
+    return "cancelled"
+  }
+
   const upcomingTickets = tickets.filter(ticket => {
-    const eventDate = new Date(ticket.eventDate)
+    if (!ticket.order?.event) return false
+    const eventDate = new Date(ticket.order.event.start_date)
     const today = new Date()
-    return eventDate >= today && ticket.status === "confirmed"
+    return eventDate >= today && ticket.status === "active" && getOrderStatus(ticket.order) === "confirmed"
   })
 
   const pastTickets = tickets.filter(ticket => {
-    const eventDate = new Date(ticket.eventDate)
+    if (!ticket.order?.event) return false
+    const eventDate = new Date(ticket.order.event.start_date)
     const today = new Date()
     return eventDate < today
   })
 
-  const pendingTickets = tickets.filter(ticket => ticket.status === "pending")
+  const pendingTickets = tickets.filter(ticket => {
+    return getOrderStatus(ticket.order) === "pending"
+  })
 
-  const renderTicketCard = (ticket: Ticket) => (
-    <Card key={ticket.id} className="hover:shadow-md transition-shadow">
-      <CardHeader>
-        <div className="flex justify-between items-start">
-          <div className="flex-1">
-            <CardTitle className="text-lg">{ticket.eventTitle}</CardTitle>
-            <CardDescription>Ticket ID: {ticket.id}</CardDescription>
+  const handleViewQR = async (ticket: CustomerTicket) => {
+    try {
+      const response = await orderApi.getTicketQR(ticket.ticket_code)
+      if (response.success) {
+        setSelectedTicket(ticket)
+        setQrCodeData(response.data.qr_code)
+        setShowQRModal(true)
+        toast({
+          title: "QR Code Loaded",
+          description: "Your e-ticket QR code is ready"
+        })
+      } else {
+        toast({
+          title: "Error",
+          description: response.message || "Failed to load QR code",
+          variant: "destructive"
+        })
+      }
+    } catch (err) {
+      console.error("Error fetching QR code:", err)
+      toast({
+        title: "Error",
+        description: "An error occurred while loading QR code",
+        variant: "destructive"
+      })
+    }
+  }
+
+  const handleCloseQRModal = () => {
+    setShowQRModal(false)
+    setSelectedTicket(null)
+    setQrCodeData(null)
+  }
+
+  const renderTicketCard = (ticket: CustomerTicket) => {
+    const event = ticket.order?.event
+    const orderStatus = getOrderStatus(ticket.order)
+    
+    if (!event) return null
+    
+    return (
+      <Card key={ticket.id} className="hover:shadow-md transition-shadow">
+        <CardHeader>
+          <div className="flex justify-between items-start">
+            <div className="flex-1">
+              <CardTitle className="text-lg">{event.name}</CardTitle>
+              <CardDescription>Ticket Code: {ticket.ticket_code}</CardDescription>
+            </div>
+            <Badge variant={getStatusColor(ticket.status)}>
+              {ticket.status.charAt(0).toUpperCase() + ticket.status.slice(1)}
+            </Badge>
           </div>
-          <Badge variant={getStatusColor(ticket.status)}>
-            {ticket.status.charAt(0).toUpperCase() + ticket.status.slice(1)}
-          </Badge>
-        </div>
-      </CardHeader>
-      
-      <CardContent className="space-y-4">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="space-y-2">
-            <div className="flex items-center text-sm text-muted-foreground">
-              <Calendar className="mr-2 size-4" />
-              {formatDate(ticket.eventDate)}
+        </CardHeader>
+        
+        <CardContent className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <div className="flex items-center text-sm text-muted-foreground">
+                <Calendar className="mr-2 size-4" />
+                {formatDate(event.start_date)}
+              </div>
+              
+              <div className="flex items-center text-sm text-muted-foreground">
+                <Clock className="mr-2 size-4" />
+                {event.start_time} - {event.end_time} WIB
+              </div>
+              
+              <div className="flex items-center text-sm text-muted-foreground">
+                <MapPin className="mr-2 size-4" />
+                {event.location}
+              </div>
             </div>
             
-            <div className="flex items-center text-sm text-muted-foreground">
-              <Clock className="mr-2 size-4" />
-              {ticket.eventTime} WIB
-            </div>
-            
-            <div className="flex items-center text-sm text-muted-foreground">
-              <MapPin className="mr-2 size-4" />
-              {ticket.eventLocation}
+            <div className="space-y-2">
+              <div className="text-sm">
+                <span className="font-medium">Ticket Type:</span> {ticket.ticket?.name || 'N/A'}
+              </div>
+              <div className="text-sm">
+                <span className="font-medium">Order:</span> {ticket.order?.order_number}
+              </div>
+              <div className="text-sm">
+                <span className="font-medium">Total:</span> {formatPrice(ticket.order?.total_amount || 0)}
+              </div>
             </div>
           </div>
           
-          <div className="space-y-2">
-            <div className="text-sm">
-              <span className="font-medium">Ticket Type:</span> {ticket.ticketType}
+          {orderStatus === "confirmed" && ticket.status === "active" && (
+            <div className="flex flex-wrap gap-2 pt-4">
+              <Button size="sm" variant="outline">
+                <Download className="mr-2 size-4" />
+                Download Ticket
+              </Button>
+              <Button 
+                size="sm" 
+                variant="outline"
+                onClick={() => handleViewQR(ticket)}
+              >
+                <QrCode className="mr-2 size-4" />
+                View QR Code
+              </Button>
             </div>
-            <div className="text-sm">
-              <span className="font-medium">Quantity:</span> {ticket.quantity}
+          )}
+          
+          {orderStatus === "pending" && (
+            <div className="flex items-center gap-2 pt-4">
+              <RefreshCw className="size-4 text-muted-foreground" />
+              <span className="text-sm text-muted-foreground">
+                Payment confirmation pending
+              </span>
             </div>
-            <div className="text-sm">
-              <span className="font-medium">Total:</span> {formatPrice(ticket.totalPrice)}
-            </div>
-          </div>
-        </div>
-        
-        {ticket.status === "confirmed" && (
-          <div className="flex flex-wrap gap-2 pt-4">
-            <Button size="sm" variant="outline">
-              <Download className="mr-2 size-4" />
-              Download Ticket
-            </Button>
-            <Button size="sm" variant="outline">
-              <QrCode className="mr-2 size-4" />
-              View QR Code
-            </Button>
-          </div>
-        )}
-        
-        {ticket.status === "pending" && (
-          <div className="flex items-center gap-2 pt-4">
-            <RefreshCw className="size-4 text-muted-foreground" />
-            <span className="text-sm text-muted-foreground">
-              Payment confirmation pending
-            </span>
-          </div>
-        )}
-      </CardContent>
-    </Card>
-  )
+          )}
+        </CardContent>
+      </Card>
+    )
+  }
 
   if (isLoading) {
     return (
       <ProtectedRoute requiredRoles={["customer"]}>
         <div className="container mx-auto py-8">
+          <div className="mb-8">
+            <h1 className="text-3xl font-bold mb-2">My Tickets</h1>
+            <p className="text-muted-foreground">Loading your tickets...</p>
+          </div>
           <div className="space-y-4">
             {[...Array(3)].map((_, i) => (
               <Card key={i} className="animate-pulse">
@@ -213,6 +237,31 @@ export default function MyTicketsPage() {
               </Card>
             ))}
           </div>
+        </div>
+      </ProtectedRoute>
+    )
+  }
+
+  if (error) {
+    return (
+      <ProtectedRoute requiredRoles={["customer"]}>
+        <div className="container mx-auto py-8">
+          <div className="mb-8">
+            <h1 className="text-3xl font-bold mb-2">My Tickets</h1>
+          </div>
+          <Card>
+            <CardContent className="p-8 text-center">
+              <div className="text-red-500 mb-4">
+                <RefreshCw className="size-12 mx-auto" />
+              </div>
+              <h3 className="text-lg font-semibold mb-2">Unable to Load Tickets</h3>
+              <p className="text-muted-foreground mb-4">{error}</p>
+              <Button onClick={fetchMyTickets}>
+                <RefreshCw className="mr-2 size-4" />
+                Try Again
+              </Button>
+            </CardContent>
+          </Card>
         </div>
       </ProtectedRoute>
     )
@@ -289,6 +338,14 @@ export default function MyTicketsPage() {
             )}
           </TabsContent>
         </Tabs>
+
+        {/* QR Code Modal */}
+        <QRCodeModal
+          ticket={selectedTicket}
+          qrCodeData={qrCodeData}
+          isOpen={showQRModal}
+          onClose={handleCloseQRModal}
+        />
       </div>
     </ProtectedRoute>
   )

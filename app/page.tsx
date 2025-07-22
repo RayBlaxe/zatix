@@ -18,11 +18,7 @@ export default function HomePage() {
     const fetchEvents = async () => {
       try {
         setLoading(true)
-        const response = await eventApi.getPublicEvents(1, {
-          status: "active",
-          is_published: true,
-          limit: 3
-        })
+        const response = await eventApi.getPublicEvents(1, {})
         if (response.success) {
           setEvents(response.data.data)
         }

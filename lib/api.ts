@@ -29,7 +29,11 @@ import {
   FacilityResponse,
   FacilityCreateRequest,
   EventFilters,
-  PublicEventFilters
+  PublicEventFilters,
+  OrderCreateRequest,
+  OrderResponse,
+  CustomerTicketResponse,
+  QRCodeResponse
 } from "@/types/events"
 
 // Base API URL - use environment variable or fallback for development
@@ -1352,5 +1356,32 @@ export const facilityApi = {
   createFacility: (data: FacilityCreateRequest): Promise<Facility> => {
     const token = getToken()
     return apiRequest<Facility>("/facilities/create", "POST", data, token || undefined)
+  }
+}
+
+// Ticket Purchase API functions for Iteration 5
+export const orderApi = {
+  // Create new order (purchase tickets)
+  createOrder: (data: OrderCreateRequest): Promise<OrderResponse> => {
+    const token = getToken()
+    return apiRequest<OrderResponse>("/orders", "POST", data, token || undefined)
+  },
+
+  // Get customer's tickets
+  getMyTickets: (): Promise<CustomerTicketResponse> => {
+    const token = getToken()
+    return apiRequest<CustomerTicketResponse>("/my-tickets", "GET", null, token || undefined)
+  },
+
+  // Get specific ticket details
+  getMyTicket: (ticketCode: string): Promise<CustomerTicketResponse> => {
+    const token = getToken()
+    return apiRequest<CustomerTicketResponse>(`/my-tickets/${ticketCode}`, "GET", null, token || undefined)
+  },
+
+  // Get QR code for e-ticket
+  getTicketQR: (ticketCode: string): Promise<QRCodeResponse> => {
+    const token = getToken()
+    return apiRequest<QRCodeResponse>(`/e-tickets/${ticketCode}/qr`, "GET", null, token || undefined)
   }
 }
