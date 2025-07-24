@@ -9,7 +9,6 @@ import {
   CalendarDays,
   LayoutDashboard,
   LogOut,
-  Settings,
   Users,
   ChevronDown,
   ChevronRight,
@@ -157,8 +156,8 @@ export function DashboardSidebar({ onNavigate }: DashboardSidebarProps = {}) {
             </Link>
           ))}
 
-          {/* Content Management - Only for eo-owner and super-admin */}
-          {(hasRole("eo-owner") || hasRole("super-admin")) && (
+          {/* Content Management - Only for super-admin */}
+          {hasRole("super-admin") && (
             <Collapsible open={contentManagementOpen} onOpenChange={setContentManagementOpen}>
               <CollapsibleTrigger asChild>
                 <button
@@ -215,15 +214,9 @@ export function DashboardSidebar({ onNavigate }: DashboardSidebarProps = {}) {
             </p>
           </div>
         </div>
-        <div className="grid grid-cols-2 gap-2">
-          <Button variant="outline" size="sm" asChild className="!text-white border-white/30 hover:bg-white/10 hover:!text-white">
-            <Link href="/settings" onClick={onNavigate}>
-              <Settings className="mr-2 size-4 text-white" />
-              Settings
-            </Link>
-          </Button>
-          <Button variant="outline" size="sm" onClick={handleLogout} className="!text-white border-white/30 hover:bg-white/10 hover:!text-white">
-            <LogOut className="mr-2 size-4 text-white" />
+        <div className="grid grid-cols-1 gap-2">
+          <Button variant="outline" size="sm" onClick={handleLogout} className="!text-red-100 border-red-300/50 bg-red-900/30 hover:bg-red-600/50 hover:!text-white hover:border-red-200 ">
+            <LogOut className="mr-2 size-4" />
             Logout
           </Button>
         </div>

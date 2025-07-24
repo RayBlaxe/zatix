@@ -126,12 +126,7 @@ export function UserAccountNav() {
             <span>Profile</span>
           </Link>
         </DropdownMenuItem>
-        <DropdownMenuItem asChild>
-          <Link href="/settings">
-            <Settings className="mr-2 size-4" />
-            <span>Settings</span>
-          </Link>
-        </DropdownMenuItem>
+        
         
         {/* Role-based menu items */}
         {user.currentRole === "customer" && (

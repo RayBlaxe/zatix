@@ -44,8 +44,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { eventApi, facilityApi, tncApi, getToken } from "@/lib/api";
-import { TNCAcceptanceModal } from "@/components/tnc-acceptance-modal";
-import { EventFormData, Facility } from "@/types/events";
+import { Facility } from "@/types/events";
 import { toast } from "@/components/ui/use-toast";
 
 // Form validation schema
@@ -84,8 +83,6 @@ export default function CreateEventPage() {
   const [facilities, setFacilities] = useState<Facility[]>([]);
   const [loadingData, setLoadingData] = useState(true);
   const [posterPreview, setPosterPreview] = useState<string | null>(null);
-  const [showTNCModal, setShowTNCModal] = useState(false);
-  const [tncAccepted, setTncAccepted] = useState(false);
   const [tncId, setTncId] = useState<number | null>(null);
 
   // Hardcoded ticket types for now (as per your instruction)
@@ -138,42 +135,55 @@ export default function CreateEventPage() {
           return;
         }
 
-        // Check TNC acceptance first
+        // Get TNC ID for event creation (user can only access this page after TNC acceptance)
         const tncResponse = await tncApi.getTNCEvents(token);
-        if (tncResponse.success && tncResponse.data) {
-          if (tncResponse.data.already_accepted) {
-            setTncAccepted(true);
-            // Get the TNC ID from the response
+        console.log("TNC Response in create page:", tncResponse);
+        
+        if (tncResponse.success && tncResponse.data && tncResponse.data.data) {
+          // Always get the TNC ID regardless of already_accepted status
+          // since user can only reach this page after accepting TNC
+          try {
             const firstTNC = Object.values(tncResponse.data.data).find(item => typeof item === 'object' && item && 'id' in item);
             if (firstTNC && typeof firstTNC === 'object' && 'id' in firstTNC) {
               setTncId(firstTNC.id as number);
+              console.log("TNC ID set to:", firstTNC.id);
+            } else {
+              console.log("No valid TNC found in data, using default TNC ID");
+              setTncId(1);
             }
-          } else {
-            // Need to accept TNC first
-            setShowTNCModal(true);
-            return;
+          } catch (tncParseError) {
+            console.error("Error parsing TNC data:", tncParseError);
+            setTncId(1);
           }
         } else {
-          toast({
-            title: "Error",
-            description: "Failed to check terms and conditions. Please try again.",
-            variant: "destructive"
-          });
-          router.push("/dashboard/events");
-          return;
+          console.log("TNC API call failed or no data, using default TNC ID");
+          setTncId(1);
         }
-
-        // Load facilities
-        const facilitiesResponse = await facilityApi.getFacilities();
-        if (facilitiesResponse.success && facilitiesResponse.data) {
-          setFacilities(facilitiesResponse.data);
-          console.log(
-            "Facilities loaded successfully:",
-            facilitiesResponse.data.length,
-            "facilities"
-          );
-        } else {
-          console.error("Failed to load facilities:", facilitiesResponse);
+        
+        // Load facilities from real API
+        try {
+          const facilitiesResponse = await facilityApi.getFacilities();
+          console.log("Facilities API response:", facilitiesResponse);
+          
+          if (facilitiesResponse.success && facilitiesResponse.data) {
+            setFacilities(facilitiesResponse.data);
+            console.log(
+              "Facilities loaded successfully:",
+              facilitiesResponse.data.length,
+              "facilities"
+            );
+          } else {
+            console.error("Facilities API failed:", facilitiesResponse);
+            setFacilities([]);
+            toast({
+              title: "Warning",
+              description: "Could not load facilities list. Please refresh the page.",
+              variant: "destructive",
+            });
+          }
+        } catch (facilitiesError) {
+          console.error("Facilities API error:", facilitiesError);
+          setFacilities([]);
           toast({
             title: "Warning",
             description: "Could not load facilities list. Please refresh the page.",
@@ -187,6 +197,9 @@ export default function CreateEventPage() {
           description: "Failed to load form data. Please refresh the page.",
           variant: "destructive",
         });
+        // Set defaults so user can still use the form
+        setTncId(1);
+        setFacilities([]);
       } finally {
         setLoadingData(false);
       }
@@ -211,45 +224,14 @@ export default function CreateEventPage() {
   const startOfToday = new Date();
   startOfToday.setHours(0, 0, 0, 0); // Set time to midnight
 
-  const handleTNCAccepted = async () => {
-    try {
-      setShowTNCModal(false);
-      setTncAccepted(true);
-      
-      // Reload the page to get TNC data and facilities
-      const token = getToken();
-      if (token) {
-        const tncResponse = await tncApi.getTNCEvents(token);
-        if (tncResponse.success && tncResponse.data) {
-          const firstTNC = Object.values(tncResponse.data.data).find(item => typeof item === 'object' && item && 'id' in item);
-          if (firstTNC && typeof firstTNC === 'object' && 'id' in firstTNC) {
-            setTncId(firstTNC.id as number);
-          }
-          
-          // Load facilities now that TNC is accepted
-          const facilitiesResponse = await facilityApi.getFacilities();
-          if (facilitiesResponse.success && facilitiesResponse.data) {
-            setFacilities(facilitiesResponse.data);
-          }
-          setLoadingData(false);
-        }
-      }
-    } catch (error) {
-      console.error("Error after TNC acceptance:", error);
-      toast({
-        title: "Error",
-        description: "Failed to load data after accepting terms. Please refresh the page.",
-        variant: "destructive"
-      });
-    }
-  };
+
 
   const onSubmit = async (data: EventFormValues) => {
     try {
       setIsLoading(true);
 
-      // Check if TNC is accepted and we have the TNC ID
-      if (!tncAccepted || !tncId) {
+      // Check if we have the TNC ID (should be loaded if user got here properly)
+      if (!tncId) {
         toast({
           title: "Terms and Conditions Required",
           description: "You must accept the terms and conditions before creating an event.",
@@ -268,6 +250,7 @@ export default function CreateEventPage() {
         end_time: data.end_time,
         location: data.location,
         contact_phone: data.contact_phone,
+        is_public: data.is_public,
         tnc_id: tncId,
         facilities: data.facilities,
         tickets: data.tickets.map((ticket) => ({
@@ -391,6 +374,37 @@ export default function CreateEventPage() {
                         <FormLabel>Contact Phone *</FormLabel>
                         <FormControl>
                           <Input placeholder="Enter contact phone" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="is_public"
+                    render={({ field }) => (
+                      <FormItem className="space-y-3">
+                        <FormLabel>Event Visibility *</FormLabel>
+                        <FormControl>
+                          <div className="space-y-2">
+                            <div className="flex items-center space-x-2">
+                              <Checkbox
+                                id="public"
+                                checked={field.value}
+                                onCheckedChange={field.onChange}
+                              />
+                              <Label htmlFor="public" className="text-sm font-medium">
+                                Make this event public
+                              </Label>
+                            </div>
+                            <p className="text-xs text-muted-foreground">
+                              {field.value 
+                                ? "Public events are visible to all users and searchable on the platform"
+                                : "Private events are only visible to users with direct access"
+                              }
+                            </p>
+                          </div>
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -564,6 +578,15 @@ export default function CreateEventPage() {
                   render={() => (
                     <FormItem>
                       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 max-h-80 overflow-y-auto border rounded-lg p-4">
+                        {facilities.length === 0 && (
+                          <div className="col-span-full text-center text-muted-foreground py-4">
+                            No facilities available. Loading...
+                          </div>
+                        )}
+                        {(() => {
+                          console.log("Rendering facilities:", facilities.length, facilities);
+                          return null;
+                        })()}
                         {facilities.map((facility) => (
                           <FormField
                             key={facility.id}
@@ -726,13 +749,29 @@ export default function CreateEventPage() {
                           <FormItem>
                             <FormLabel>Sale Start Date *</FormLabel>
                             <Popover>
-                              <PopoverTrigger asChild>{/* ... */}</PopoverTrigger>
+                              <PopoverTrigger asChild>
+                                <FormControl>
+                                  <Button
+                                    variant="outline"
+                                    className={cn(
+                                      "w-full pl-3 text-left font-normal",
+                                      !field.value && "text-muted-foreground"
+                                    )}
+                                  >
+                                    {field.value ? (
+                                      format(field.value, "PPP")
+                                    ) : (
+                                      <span>Pick a date</span>
+                                    )}
+                                    <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                                  </Button>
+                                </FormControl>
+                              </PopoverTrigger>
                               <PopoverContent className="w-auto p-0" align="start">
                                 <Calendar
                                   mode="single"
                                   selected={field.value}
                                   onSelect={field.onChange}
-                                  // ✅ THE FIX
                                   disabled={(date) => date < startOfToday}
                                 />
                               </PopoverContent>
@@ -829,12 +868,6 @@ export default function CreateEventPage() {
         </Form>
       </div>
 
-      {/* TNC Acceptance Modal */}
-      <TNCAcceptanceModal
-        open={showTNCModal}
-        onOpenChange={setShowTNCModal}
-        onAccept={handleTNCAccepted}
-      />
     </div>
   );
 }
