@@ -92,6 +92,20 @@ export default function EventDetailPage() {
       return
     }
     
+    // Show confirmation dialog before publishing
+    const confirmed = window.confirm(
+      "⚠️ IMPORTANT WARNING ⚠️\n\n" +
+      "Once you publish this event:\n" +
+      "• It CANNOT be edited anymore\n" +
+      "• It CANNOT be unpublished\n" +
+      "• Changes become permanent\n\n" +
+      "Are you sure you want to publish this event now?"
+    )
+    
+    if (!confirmed) {
+      return
+    }
+    
     try {
       await eventApi.publishEvent(event.id)
       toast({
@@ -124,8 +138,26 @@ export default function EventDetailPage() {
       return
     }
     
+    const newIsPublic = !event.is_public
+    const action = newIsPublic ? "make public" : "make private"
+    const visibility = newIsPublic ? "PUBLIC" : "PRIVATE"
+    
+    // Show confirmation dialog before changing visibility
+    const confirmed = window.confirm(
+      `⚠️ VISIBILITY CHANGE WARNING ⚠️\n\n` +
+      `You are about to ${action} this event.\n\n` +
+      `Once published, the event will be ${visibility} and:\n` +
+      `• ${newIsPublic ? "Visible to all users on the platform" : "Only visible to users with direct access"}\n` +
+      `• ${newIsPublic ? "Searchable by the public" : "Hidden from public search results"}\n` +
+      `• This change will take effect immediately\n\n` +
+      `Are you sure you want to ${action} this event?`
+    )
+    
+    if (!confirmed) {
+      return
+    }
+    
     try {
-      const newIsPublic = !event.is_public
       await eventApi.toggleEventVisibility(event.id, newIsPublic)
       
       toast({
