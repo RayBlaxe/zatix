@@ -14,7 +14,7 @@ import { Header } from "@/components/header"
 import { BlurFade } from "@/components/ui/blur-fade"
 import { DotPattern } from "@/components/ui/dot-pattern"
 import { cn } from "@/lib/utils"
-import { eventApi } from "@/lib/api"
+import { eventApi, getEventPosterUrl } from "@/lib/api"
 import { Event, PublicEventFilters } from "@/types/events"
 import { format } from "date-fns"
 
@@ -292,7 +292,7 @@ export default function EventsPage() {
                         <div className="relative h-48 bg-gradient-to-br from-blue-50 to-purple-50 overflow-hidden">
                           {event.poster ? (
                             <img 
-                              src={event.poster} 
+                              src={getEventPosterUrl(event.poster)} 
                               alt={event.name}
                               className="w-full h-full object-cover"
                             />

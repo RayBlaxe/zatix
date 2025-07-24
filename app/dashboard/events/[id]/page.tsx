@@ -38,7 +38,7 @@ import {
   MoreHorizontal
 } from "lucide-react"
 import { format } from "date-fns"
-import { eventApi } from "@/lib/api"
+import { eventApi, getEventPosterUrl } from "@/lib/api"
 import { Event } from "@/types/events"
 import { useAuth } from "@/hooks/use-auth"
 import { toast } from "@/components/ui/use-toast"
@@ -475,7 +475,7 @@ export default function EventDetailPage() {
             <div className="relative h-64 bg-gray-100 rounded-lg overflow-hidden">
               {event.poster ? (
                 <img 
-                  src={event.poster} 
+                  src={getEventPosterUrl(event.poster)} 
                   alt={event.name}
                   className="w-full h-full object-cover"
                 />

@@ -39,6 +39,24 @@ import {
 // Base API URL - use environment variable or fallback for development
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "https://api.zatix.id/api"
 
+// Utility function to construct event poster URLs
+export function getEventPosterUrl(posterPath: string | null | undefined): string {
+  if (!posterPath) {
+    return "/placeholder.svg"
+  }
+  
+  // If it's already a full URL, return as is
+  if (posterPath.startsWith('http://') || posterPath.startsWith('https://')) {
+    return posterPath
+  }
+  
+  // Remove leading slash if present to avoid double slashes
+  const cleanPath = posterPath.startsWith('/') ? posterPath.substring(1) : posterPath
+  
+  // Construct full URL using the API base URL pattern with /storage/
+  return `https://api.zatix.id/storage/${cleanPath}`
+}
+
 // Laravel Sanctum token utilities
 export function getStoredTokenExpiration(): Date | null {
   if (typeof window !== "undefined") {

@@ -18,7 +18,7 @@ import {
   DropdownMenuSeparator 
 } from "@/components/ui/dropdown-menu"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { eventApi, tncApi, getToken } from "@/lib/api"
+import { eventApi, tncApi, getToken, getEventPosterUrl } from "@/lib/api"
 import { Event, EventFilters } from "@/types/events"
 import { format } from "date-fns"
 import { useAuth } from "@/hooks/use-auth"
@@ -456,7 +456,7 @@ export default function EventsPage() {
                 <div className="relative h-32 bg-gray-100 rounded-lg mb-4 overflow-hidden">
                   {event.poster ? (
                     <img 
-                      src={event.poster} 
+                      src={getEventPosterUrl(event.poster)} 
                       alt={event.name}
                       className="w-full h-full object-cover"
                     />

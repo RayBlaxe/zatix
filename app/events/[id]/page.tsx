@@ -23,7 +23,7 @@ import {
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { useAuth } from "@/hooks/use-auth"
 import { Header } from "@/components/header"
-import { eventApi } from "@/lib/api"
+import { eventApi, getEventPosterUrl } from "@/lib/api"
 import { Event } from "@/types/events"
 import { format } from "date-fns"
 import { toast } from "@/components/ui/use-toast"
@@ -225,7 +225,7 @@ export default function EventDetailPage() {
               <div className="relative h-64 md:h-80 bg-gradient-to-br from-blue-50 to-purple-50 rounded-lg overflow-hidden mb-6">
                 {event.poster ? (
                   <img 
-                    src={event.poster} 
+                    src={getEventPosterUrl(event.poster)} 
                     alt={event.name}
                     className="w-full h-full object-cover"
                   />

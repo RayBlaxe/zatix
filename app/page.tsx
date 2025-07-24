@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Carousel } from "@/components/carousel"
 import { Header } from "@/components/header"
 import { useEffect, useState } from "react"
-import { eventApi } from "@/lib/api"
+import { eventApi, getEventPosterUrl } from "@/lib/api"
 import { Event } from "@/types/events"
 import { format } from "date-fns"
 import Image from "next/image"
@@ -74,7 +74,7 @@ export default function HomePage() {
                     <div className="aspect-video overflow-hidden rounded-md bg-gray-100">
                       {event.poster ? (
                         <Image
-                          src={event.poster}
+                          src={getEventPosterUrl(event.poster)}
                           alt={event.name}
                           width={500}
                           height={300}
