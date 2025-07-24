@@ -125,57 +125,6 @@ export default function EventDetailPage() {
     }
   }
 
-  const handleVisibilityToggle = async () => {
-    if (!event) return
-    
-    // Business rule: can only change visibility for published events
-    if (!event.is_published) {
-      toast({
-        title: "Cannot Change Visibility",
-        description: "Event must be published before you can change its visibility",
-        variant: "destructive"
-      })
-      return
-    }
-    
-    const newIsPublic = !event.is_public
-    const action = newIsPublic ? "make public" : "make private"
-    const visibility = newIsPublic ? "PUBLIC" : "PRIVATE"
-    
-    // Show confirmation dialog before changing visibility
-    const confirmed = window.confirm(
-      `⚠️ VISIBILITY CHANGE WARNING ⚠️\n\n` +
-      `You are about to ${action} this event.\n\n` +
-      `Once published, the event will be ${visibility} and:\n` +
-      `• ${newIsPublic ? "Visible to all users on the platform" : "Only visible to users with direct access"}\n` +
-      `• ${newIsPublic ? "Searchable by the public" : "Hidden from public search results"}\n` +
-      `• This change will take effect immediately\n\n` +
-      `Are you sure you want to ${action} this event?`
-    )
-    
-    if (!confirmed) {
-      return
-    }
-    
-    try {
-      await eventApi.toggleEventVisibility(event.id, newIsPublic)
-      
-      toast({
-        title: "Success",
-        description: newIsPublic ? "Event is now public" : "Event is now private"
-      })
-      
-      // Refresh event details
-      fetchEventDetail()
-    } catch (err) {
-      console.error("Error toggling visibility:", err)
-      toast({
-        title: "Error",
-        description: "Failed to update visibility",
-        variant: "destructive"
-      })
-    }
-  }
 
   const handleStatusChange = async (newStatus: 'deactivate' | 'archive') => {
     if (!event) return
@@ -354,20 +303,19 @@ export default function EventDetailPage() {
           
           <Button 
             variant="outline" 
-            onClick={handleVisibilityToggle}
-            disabled={!event.is_published}
+            disabled
             className="flex items-center gap-2"
-            title={!event.is_published ? "Event must be published to change visibility" : ""}
+            title="Visibility is set during event creation and cannot be changed"
           >
             {event.is_public ? (
               <>
-                <Lock className="h-4 w-4" />
-                Make Private
+                <Globe className="h-4 w-4" />
+                Public Event
               </>
             ) : (
               <>
-                <Globe className="h-4 w-4" />
-                Make Public
+                <Lock className="h-4 w-4" />
+                Private Event
               </>
             )}
           </Button>

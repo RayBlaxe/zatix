@@ -121,45 +121,6 @@ export default function EventsPage() {
     }
   }
 
-  const handleVisibilityToggle = async (eventId: number, isPublic: boolean, isPublished: boolean) => {
-    try {
-      // Business rule: can only change visibility for published events
-      if (!isPublished) {
-        toast({
-          title: "Cannot Change Visibility",
-          description: "Event must be published before you can change its visibility",
-          variant: "destructive"
-        })
-        return
-      }
-      
-      const newIsPublic = !isPublic
-      const action = newIsPublic ? "make public" : "make private"
-      const visibility = newIsPublic ? "PUBLIC" : "PRIVATE"
-      
-      // Show confirmation dialog before changing visibility
-      const confirmed = window.confirm(
-        `⚠️ VISIBILITY CHANGE WARNING ⚠️\n\n` +
-        `You are about to ${action} this event.\n\n` +
-        `Once published, the event will be ${visibility} and:\n` +
-        `• ${newIsPublic ? "Visible to all users on the platform" : "Only visible to users with direct access"}\n` +
-        `• ${newIsPublic ? "Searchable by the public" : "Hidden from public search results"}\n` +
-        `• This change will take effect immediately\n\n` +
-        `Are you sure you want to ${action} this event?`
-      )
-      
-      if (!confirmed) {
-        return
-      }
-      
-      await eventApi.toggleEventVisibility(eventId, newIsPublic)
-      
-      // Refresh events list
-      fetchEvents()
-    } catch (err) {
-      console.error("Error toggling visibility:", err)
-    }
-  }
 
   const handleStatusChange = async (eventId: number, newStatus: 'deactivate' | 'archive') => {
     const confirmMessage = newStatus === 'archive' 
@@ -422,22 +383,19 @@ export default function EventsPage() {
                           Publish
                         </DropdownMenuItem>
                       )}
-                      <DropdownMenuItem 
-                        onClick={() => handleVisibilityToggle(event.id, event.is_public, event.is_published)}
-                        disabled={!event.is_published}
-                      >
+                      <DropdownMenuItem disabled>
                         {event.is_public ? (
                           <>
-                            <Lock className="mr-2 h-4 w-4" />
-                            Make Private
+                            <Globe className="mr-2 h-4 w-4" />
+                            Public Event
                           </>
                         ) : (
                           <>
-                            <Globe className="mr-2 h-4 w-4" />
-                            Make Public
+                            <Lock className="mr-2 h-4 w-4" />
+                            Private Event
                           </>
                         )}
-                        {!event.is_published && <span className="text-xs text-muted-foreground ml-2">(Requires Published)</span>}
+                        <span className="text-xs text-muted-foreground ml-2">(Set during creation)</span>
                       </DropdownMenuItem>
                       <DropdownMenuSeparator />
                       {event.status === 'active' && (

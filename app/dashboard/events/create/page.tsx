@@ -44,6 +44,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { eventApi, facilityApi, tncApi, getToken } from "@/lib/api";
+import { TNCAcceptanceModal } from "@/components/tnc-acceptance-modal";
 import { EventFormData, Facility } from "@/types/events";
 import { toast } from "@/components/ui/use-toast";
 
@@ -83,6 +84,9 @@ export default function CreateEventPage() {
   const [facilities, setFacilities] = useState<Facility[]>([]);
   const [loadingData, setLoadingData] = useState(true);
   const [posterPreview, setPosterPreview] = useState<string | null>(null);
+  const [showTNCModal, setShowTNCModal] = useState(false);
+  const [tncAccepted, setTncAccepted] = useState(false);
+  const [tncId, setTncId] = useState<number | null>(null);
 
   // Hardcoded ticket types for now (as per your instruction)
   const ticketTypes = [
@@ -122,11 +126,42 @@ export default function CreateEventPage() {
     name: "tickets",
   });
 
-  // Load facilities and TNC data
+  // Load facilities and check TNC acceptance
   useEffect(() => {
     const loadData = async () => {
       try {
         setLoadingData(true);
+
+        const token = getToken();
+        if (!token) {
+          router.push("/login");
+          return;
+        }
+
+        // Check TNC acceptance first
+        const tncResponse = await tncApi.getTNCEvents(token);
+        if (tncResponse.success && tncResponse.data) {
+          if (tncResponse.data.already_accepted) {
+            setTncAccepted(true);
+            // Get the TNC ID from the response
+            const firstTNC = Object.values(tncResponse.data.data).find(item => typeof item === 'object' && item && 'id' in item);
+            if (firstTNC && typeof firstTNC === 'object' && 'id' in firstTNC) {
+              setTncId(firstTNC.id as number);
+            }
+          } else {
+            // Need to accept TNC first
+            setShowTNCModal(true);
+            return;
+          }
+        } else {
+          toast({
+            title: "Error",
+            description: "Failed to check terms and conditions. Please try again.",
+            variant: "destructive"
+          });
+          router.push("/dashboard/events");
+          return;
+        }
 
         // Load facilities
         const facilitiesResponse = await facilityApi.getFacilities();
@@ -176,12 +211,52 @@ export default function CreateEventPage() {
   const startOfToday = new Date();
   startOfToday.setHours(0, 0, 0, 0); // Set time to midnight
 
+  const handleTNCAccepted = async () => {
+    try {
+      setShowTNCModal(false);
+      setTncAccepted(true);
+      
+      // Reload the page to get TNC data and facilities
+      const token = getToken();
+      if (token) {
+        const tncResponse = await tncApi.getTNCEvents(token);
+        if (tncResponse.success && tncResponse.data) {
+          const firstTNC = Object.values(tncResponse.data.data).find(item => typeof item === 'object' && item && 'id' in item);
+          if (firstTNC && typeof firstTNC === 'object' && 'id' in firstTNC) {
+            setTncId(firstTNC.id as number);
+          }
+          
+          // Load facilities now that TNC is accepted
+          const facilitiesResponse = await facilityApi.getFacilities();
+          if (facilitiesResponse.success && facilitiesResponse.data) {
+            setFacilities(facilitiesResponse.data);
+          }
+          setLoadingData(false);
+        }
+      }
+    } catch (error) {
+      console.error("Error after TNC acceptance:", error);
+      toast({
+        title: "Error",
+        description: "Failed to load data after accepting terms. Please refresh the page.",
+        variant: "destructive"
+      });
+    }
+  };
+
   const onSubmit = async (data: EventFormValues) => {
     try {
       setIsLoading(true);
 
-      // Use TNC ID 1 as it's handled by the modal acceptance flow
-      const tncId = 1;
+      // Check if TNC is accepted and we have the TNC ID
+      if (!tncAccepted || !tncId) {
+        toast({
+          title: "Terms and Conditions Required",
+          description: "You must accept the terms and conditions before creating an event.",
+          variant: "destructive"
+        });
+        return;
+      }
 
       // Convert form data to API format
       const eventData = {
@@ -753,6 +828,13 @@ export default function CreateEventPage() {
           </form>
         </Form>
       </div>
+
+      {/* TNC Acceptance Modal */}
+      <TNCAcceptanceModal
+        open={showTNCModal}
+        onOpenChange={setShowTNCModal}
+        onAccept={handleTNCAccepted}
+      />
     </div>
   );
 }
