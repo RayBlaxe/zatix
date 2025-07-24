@@ -32,15 +32,22 @@ export default function MyTicketsPage() {
       setError(null)
       
       const response = await orderApi.getMyTickets()
+      console.log("My tickets API response:", response) // Debug log
       
       if (response.success) {
-        setTickets(response.data)
+        // Ensure data is an array, fallback to empty array if null/undefined
+        const ticketsData = Array.isArray(response.data) ? response.data : []
+        console.log("Setting tickets:", ticketsData) // Debug log
+        setTickets(ticketsData)
       } else {
+        console.log("API returned error:", response.message) // Debug log
         setError(response.message || "Failed to fetch tickets")
+        setTickets([]) // Set empty array on error
       }
     } catch (err) {
       console.error("Error fetching tickets:", err)
       setError("An error occurred while fetching your tickets")
+      setTickets([]) // Set empty array on error
     } finally {
       setIsLoading(false)
     }
@@ -81,23 +88,23 @@ export default function MyTicketsPage() {
     return "cancelled"
   }
 
-  const upcomingTickets = tickets.filter(ticket => {
+  const upcomingTickets = Array.isArray(tickets) ? tickets.filter(ticket => {
     if (!ticket.order?.event) return false
     const eventDate = new Date(ticket.order.event.start_date)
     const today = new Date()
     return eventDate >= today && ticket.status === "active" && getOrderStatus(ticket.order) === "confirmed"
-  })
+  }) : []
 
-  const pastTickets = tickets.filter(ticket => {
+  const pastTickets = Array.isArray(tickets) ? tickets.filter(ticket => {
     if (!ticket.order?.event) return false
     const eventDate = new Date(ticket.order.event.start_date)
     const today = new Date()
     return eventDate < today
-  })
+  }) : []
 
-  const pendingTickets = tickets.filter(ticket => {
+  const pendingTickets = Array.isArray(tickets) ? tickets.filter(ticket => {
     return getOrderStatus(ticket.order) === "pending"
-  })
+  }) : []
 
   const handleViewQR = async (ticket: CustomerTicket) => {
     try {

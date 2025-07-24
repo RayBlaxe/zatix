@@ -30,7 +30,9 @@ import { z } from "zod"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
-import { openMidtransPayment } from "@/lib/midtrans"
+import { PaymentForm } from "@/components/payment/payment-form"
+import { CustomerDetails, ItemDetail } from "@/types/payment"
+import { formatAmountForMidtrans } from "@/lib/midtrans"
 
 // Form validation schema
 const checkoutFormSchema = z.object({
@@ -59,6 +61,8 @@ export default function TicketPurchasePage() {
   const [error, setError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
   const [ticketSelections, setTicketSelections] = useState<TicketSelection[]>([])
+  const [showPaymentForm, setShowPaymentForm] = useState(false)
+  const [orderData, setOrderData] = useState<OrderCreateRequest | null>(null)
 
   const form = useForm<CheckoutFormData>({
     resolver: zodResolver(checkoutFormSchema),
@@ -170,89 +174,61 @@ export default function TicketPurchasePage() {
       return
     }
 
-    try {
-      setSubmitting(true)
-      
-      const orderData: OrderCreateRequest = {
-        event_id: Number(params.id),
-        items: selectedItems,
-        payment_method_id: "1", // Midtrans payment method
-        customer_name: data.customer_name,
-        customer_email: data.customer_email,
-        customer_phone: data.customer_phone
-      }
-
-      const response = await orderApi.createOrder(orderData)
-      
-      if (response.success) {
-        toast({
-          title: "Order Created",
-          description: "Opening payment window...",
-        })
-        
-        // If payment URL contains snap token, use Midtrans Snap
-        if (response.data.payment_url) {
-          try {
-            // Extract snap token from payment_url if it's a Midtrans snap token
-            const snapToken = response.data.payment_url
-            
-            await openMidtransPayment(snapToken, {
-              onSuccess: (result) => {
-                toast({
-                  title: "Payment Successful",
-                  description: "Your tickets have been purchased successfully!",
-                })
-                router.push("/my-tickets")
-              },
-              onPending: (result) => {
-                toast({
-                  title: "Payment Pending",
-                  description: "Your payment is being processed. Check your tickets for updates.",
-                })
-                router.push("/my-tickets")
-              },
-              onError: (result) => {
-                toast({
-                  title: "Payment Failed",
-                  description: "There was an error processing your payment. Please try again.",
-                  variant: "destructive"
-                })
-              },
-              onClose: () => {
-                // User closed the payment popup
-                toast({
-                  title: "Payment Cancelled",
-                  description: "Payment was cancelled. You can retry anytime.",
-                  variant: "destructive"
-                })
-              }
-            })
-          } catch (error) {
-            console.error("Midtrans payment error:", error)
-            // Fallback to direct redirect if Midtrans fails
-            window.location.href = response.data.payment_url
-          }
-        } else {
-          // No payment URL, redirect to tickets
-          router.push("/my-tickets")
-        }
-      } else {
-        toast({
-          title: "Order Failed",
-          description: response.message || "Failed to create order",
-          variant: "destructive"
-        })
-      }
-    } catch (err) {
-      console.error("Error creating order:", err)
-      toast({
-        title: "Error",
-        description: "An error occurred while creating order",
-        variant: "destructive"
-      })
-    } finally {
-      setSubmitting(false)
+    // Prepare order data and show payment form
+    const orderData: OrderCreateRequest = {
+      event_id: Number(params.id),
+      items: selectedItems,
+      payment_method_id: "1", // Midtrans payment method  
+      customer_name: data.customer_name,
+      customer_email: data.customer_email,
+      customer_phone: data.customer_phone
     }
+
+    setOrderData(orderData)
+    setShowPaymentForm(true)
+  }
+
+  const generateOrderId = (): string => {
+    return `ORDER-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
+  }
+
+  const handlePaymentSuccess = (result: any) => {
+    toast({
+      title: "Payment Successful",
+      description: "Your tickets have been purchased successfully!",
+    })
+    router.push("/my-tickets")
+  }
+
+  const handlePaymentError = (error: string) => {
+    toast({
+      title: "Payment Failed",
+      description: error,
+      variant: "destructive"
+    })
+  }
+
+  const prepareCustomerDetails = (): CustomerDetails => {
+    const formData = form.getValues()
+    const nameParts = formData.customer_name.split(' ')
+    
+    return {
+      first_name: nameParts[0] || '',
+      last_name: nameParts.slice(1).join(' ') || nameParts[0] || '',
+      email: formData.customer_email,
+      phone: formData.customer_phone
+    }
+  }
+
+  const prepareItemDetails = (): ItemDetail[] => {
+    return ticketSelections
+      .filter(selection => selection.quantity > 0)
+      .map(selection => ({
+        id: selection.ticketId.toString(),
+        price: selection.price,
+        quantity: selection.quantity,
+        name: selection.name
+      }))
   }
 
   if (loading) {
@@ -518,6 +494,33 @@ export default function TicketPurchasePage() {
                 </Card>
               </div>
             </div>
+
+            {/* Payment Form Modal/Section */}
+            {showPaymentForm && orderData && (
+              <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+                <div className="bg-white p-6 rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+                  <div className="flex items-center justify-between mb-4">
+                    <h2 className="text-xl font-semibold">Complete Payment</h2>
+                    <Button 
+                      variant="ghost" 
+                      size="sm"
+                      onClick={() => setShowPaymentForm(false)}
+                    >
+                      ✕
+                    </Button>
+                  </div>
+                  
+                  <PaymentForm
+                    orderId={generateOrderId()}
+                    totalAmount={formatAmountForMidtrans(getTotalAmount())}
+                    customerDetails={prepareCustomerDetails()}
+                    itemDetails={prepareItemDetails()}
+                    onPaymentSuccess={handlePaymentSuccess}
+                    onPaymentError={handlePaymentError}
+                  />
+                </div>
+              </div>
+            )}
           </div>
         </main>
       </div>

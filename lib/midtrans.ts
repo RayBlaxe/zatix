@@ -1,131 +1,184 @@
-// Midtrans integration utilities for ticket payment
+// Midtrans Core API integration utilities for custom payment forms
+import { CoreAPIChargeRequest, CoreAPIResponse, PaymentStatusResponse } from '@/types/payment'
 
-export interface MidtransSnapToken {
-  token: string
-  redirect_url: string
+const MIDTRANS_BASE_URL = process.env.NODE_ENV === 'production' 
+  ? 'https://api.midtrans.com/v2' 
+  : 'https://api.sandbox.midtrans.com/v2'
+
+const MIDTRANS_SERVER_KEY = process.env.MIDTRANS_SERVER_KEY || ''
+const MIDTRANS_CLIENT_KEY = process.env.NEXT_PUBLIC_MIDTRANS_CLIENT_KEY || ''
+
+// Create authorization header for server-side calls
+const getAuthHeader = () => {
+  const encodedKey = btoa(MIDTRANS_SERVER_KEY + ':')
+  return `Basic ${encodedKey}`
 }
 
-export interface MidtransTransaction {
-  transaction_id: string
-  order_id: string
-  payment_type: string
-  transaction_status: string
-  transaction_time: string
-  settlement_time?: string
-  gross_amount: string
-}
-
-// Client-side Midtrans Snap integration
-declare global {
-  interface Window {
-    snap: {
-      pay: (snapToken: string, options?: {
-        onSuccess?: (result: any) => void
-        onPending?: (result: any) => void
-        onError?: (result: any) => void
-        onClose?: () => void
-      }) => void
-      embed: (snapToken: string, options: {
-        embedId: string
-        onSuccess?: (result: any) => void
-        onPending?: (result: any) => void
-        onError?: (result: any) => void
-      }) => void
-    }
-  }
-}
-
-export const loadMidtransScript = (): Promise<void> => {
-  return new Promise((resolve, reject) => {
-    // Check if script is already loaded
-    if (window.snap) {
-      resolve()
-      return
-    }
-
-    const script = document.createElement('script')
-    script.src = 'https://app.sandbox.midtrans.com/snap/snap.js' // Use sandbox for development
-    script.setAttribute('data-client-key', process.env.NEXT_PUBLIC_MIDTRANS_CLIENT_KEY || '')
-    
-    script.onload = () => resolve()
-    script.onerror = () => reject(new Error('Failed to load Midtrans script'))
-    
-    document.head.appendChild(script)
-  })
-}
-
-export const openMidtransPayment = async (
-  snapToken: string,
-  callbacks?: {
-    onSuccess?: (result: any) => void
-    onPending?: (result: any) => void
-    onError?: (result: any) => void
-    onClose?: () => void
-  }
-): Promise<void> => {
+// Core API charge request
+export const chargeTransaction = async (chargeData: CoreAPIChargeRequest): Promise<CoreAPIResponse> => {
   try {
-    await loadMidtransScript()
-    
-    window.snap.pay(snapToken, {
-      onSuccess: (result) => {
-        console.log('Payment success:', result)
-        callbacks?.onSuccess?.(result)
+    const response = await fetch(`${MIDTRANS_BASE_URL}/charge`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': getAuthHeader(),
+        'Accept': 'application/json'
       },
-      onPending: (result) => {
-        console.log('Payment pending:', result)
-        callbacks?.onPending?.(result)
-      },
-      onError: (result) => {
-        console.log('Payment error:', result)
-        callbacks?.onError?.(result)
-      },
-      onClose: () => {
-        console.log('Payment popup closed')
-        callbacks?.onClose?.()
-      }
+      body: JSON.stringify(chargeData)
     })
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`)
+    }
+
+    const result: CoreAPIResponse = await response.json()
+    return result
   } catch (error) {
-    console.error('Error opening Midtrans payment:', error)
+    console.error('Error charging transaction:', error)
     throw error
   }
 }
 
-export const embedMidtransPayment = async (
-  snapToken: string,
-  embedId: string,
-  callbacks?: {
-    onSuccess?: (result: any) => void
-    onPending?: (result: any) => void
-    onError?: (result: any) => void
-  }
-): Promise<void> => {
+// Check payment status
+export const checkPaymentStatus = async (orderId: string): Promise<PaymentStatusResponse> => {
   try {
-    await loadMidtransScript()
-    
-    window.snap.embed(snapToken, {
-      embedId,
-      onSuccess: (result) => {
-        console.log('Payment success:', result)
-        callbacks?.onSuccess?.(result)
-      },
-      onPending: (result) => {
-        console.log('Payment pending:', result)
-        callbacks?.onPending?.(result)
-      },
-      onError: (result) => {
-        console.log('Payment error:', result)
-        callbacks?.onError?.(result)
+    const response = await fetch(`${MIDTRANS_BASE_URL}/${orderId}/status`, {
+      method: 'GET',
+      headers: {
+        'Authorization': getAuthHeader(),
+        'Accept': 'application/json'
       }
     })
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`)
+    }
+
+    const result: PaymentStatusResponse = await response.json()
+    return result
   } catch (error) {
-    console.error('Error embedding Midtrans payment:', error)
+    console.error('Error checking payment status:', error)
     throw error
   }
 }
 
-// Helper function to format amount for Midtrans (in cents)
+// Create charge request for credit card
+export const createCreditCardCharge = (
+  orderId: string,
+  grossAmount: number,
+  customerDetails: any,
+  itemDetails: any[],
+  cardData: {
+    card_number: string
+    card_exp_month: string
+    card_exp_year: string
+    card_cvv: string
+  }
+): CoreAPIChargeRequest => {
+  return {
+    payment_type: 'credit_card',
+    transaction_details: {
+      order_id: orderId,
+      gross_amount: grossAmount
+    },
+    customer_details: customerDetails,
+    item_details: itemDetails,
+    credit_card: cardData
+  }
+}
+
+// Create charge request for bank transfer
+export const createBankTransferCharge = (
+  orderId: string,
+  grossAmount: number,
+  customerDetails: any,
+  itemDetails: any[],
+  bank: string
+): CoreAPIChargeRequest => {
+  return {
+    payment_type: 'bank_transfer',
+    transaction_details: {
+      order_id: orderId,
+      gross_amount: grossAmount
+    },
+    customer_details: customerDetails,
+    item_details: itemDetails,
+    bank_transfer: {
+      bank: bank
+    }
+  }
+}
+
+// Create charge request for e-channel (Mandiri)
+export const createEchannelCharge = (
+  orderId: string,
+  grossAmount: number,
+  customerDetails: any,
+  itemDetails: any[]
+): CoreAPIChargeRequest => {
+  return {
+    payment_type: 'echannel',
+    transaction_details: {
+      order_id: orderId,
+      gross_amount: grossAmount
+    },
+    customer_details: customerDetails,
+    item_details: itemDetails,
+    echannel: {
+      bill_info1: 'Payment for tickets',
+      bill_info2: 'Order: ' + orderId
+    }
+  }
+}
+
+// Create charge request for GoPay
+export const createGopayCharge = (
+  orderId: string,
+  grossAmount: number,
+  customerDetails: any,
+  itemDetails: any[],
+  callbackUrl?: string
+): CoreAPIChargeRequest => {
+  return {
+    payment_type: 'gopay',
+    transaction_details: {
+      order_id: orderId,
+      gross_amount: grossAmount
+    },
+    customer_details: customerDetails,
+    item_details: itemDetails,
+    gopay: {
+      enable_callback: true,
+      callback_url: callbackUrl || `${window.location.origin}/payment/callback`
+    }
+  }
+}
+
+// Create charge request for ShopeePay
+export const createShopeepayCharge = (
+  orderId: string,
+  grossAmount: number,
+  customerDetails: any,
+  itemDetails: any[],
+  callbackUrl?: string
+): CoreAPIChargeRequest => {
+  return {
+    payment_type: 'shopeepay',
+    transaction_details: {
+      order_id: orderId,
+      gross_amount: grossAmount
+    },
+    customer_details: customerDetails,
+    item_details: itemDetails,
+    shopeepay: {
+      callback_url: callbackUrl || `${window.location.origin}/payment/callback`
+    }
+  }
+}
+
+// Helper function to format amount for Midtrans (in IDR)
 export const formatAmountForMidtrans = (amount: number): number => {
-  return Math.round(amount) // Midtrans expects amount in IDR, not cents
+  return Math.round(amount) // Midtrans expects amount in IDR
 }
 
 // Payment status mapping
@@ -144,4 +197,59 @@ export const mapMidtransStatus = (status: string): 'pending' | 'success' | 'fail
     default:
       return 'pending'
   }
+}
+
+// Validate credit card number (basic Luhn algorithm)
+export const validateCreditCard = (cardNumber: string): boolean => {
+  const cleanNumber = cardNumber.replace(/\D/g, '')
+  
+  if (cleanNumber.length < 13 || cleanNumber.length > 19) {
+    return false
+  }
+  
+  let sum = 0
+  let isEven = false
+  
+  for (let i = cleanNumber.length - 1; i >= 0; i--) {
+    let digit = parseInt(cleanNumber[i])
+    
+    if (isEven) {
+      digit *= 2
+      if (digit > 9) {
+        digit -= 9
+      }
+    }
+    
+    sum += digit
+    isEven = !isEven
+  }
+  
+  return sum % 10 === 0
+}
+
+// Format credit card number with spaces
+export const formatCreditCardNumber = (value: string): string => {
+  const v = value.replace(/\s+/g, '').replace(/[^0-9]/gi, '')
+  const matches = v.match(/\d{4,16}/g)
+  const match = matches && matches[0] || ''
+  const parts = []
+  
+  for (let i = 0, len = match.length; i < len; i += 4) {
+    parts.push(match.substring(i, i + 4))
+  }
+  
+  if (parts.length) {
+    return parts.join(' ')
+  } else {
+    return v
+  }
+}
+
+// Format expiry date
+export const formatExpiryDate = (value: string): string => {
+  const v = value.replace(/\s+/g, '').replace(/[^0-9]/gi, '')
+  if (v.length >= 2) {
+    return v.substring(0, 2) + (v.length > 2 ? '/' + v.substring(2, 4) : '')
+  }
+  return v
 }
