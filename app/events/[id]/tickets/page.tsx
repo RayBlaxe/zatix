@@ -23,16 +23,21 @@ import {
 import { useAuth } from "@/hooks/use-auth"
 import { Header } from "@/components/header"
 import { ProtectedRoute } from "@/components/protected-route"
-import { eventApi, orderApi } from "@/lib/api"
-import { Event, OrderItem, OrderCreateRequest } from "@/types/events"
+import { eventApi, orderApi, paymentApi } from "@/lib/api"
+import { Event, OrderItem } from "@/types/events"
+import { 
+  OrderCreateRequest, 
+  OrderCreateResponse, 
+  PaymentMethodsResponse,
+  PaymentMethodSelectionData 
+} from "@/types/payment"
 import { toast } from "@/components/ui/use-toast"
 import { z } from "zod"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { PaymentForm } from "@/components/payment/payment-form"
-import { CustomerDetails, ItemDetail } from "@/types/payment"
-import { formatAmountForMidtrans } from "@/lib/midtrans"
+import { PaymentMethodSelection } from "@/components/payment/payment-method-selection"
 
 // Form validation schema
 const checkoutFormSchema = z.object({
@@ -61,8 +66,11 @@ export default function TicketPurchasePage() {
   const [error, setError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
   const [ticketSelections, setTicketSelections] = useState<TicketSelection[]>([])
+  const [showPaymentMethodSelection, setShowPaymentMethodSelection] = useState(false)
   const [showPaymentForm, setShowPaymentForm] = useState(false)
-  const [orderData, setOrderData] = useState<OrderCreateRequest | null>(null)
+  const [orderResponse, setOrderResponse] = useState<OrderCreateResponse | null>(null)
+  const [paymentMethods, setPaymentMethods] = useState<PaymentMethodsResponse | null>(null)
+  const [customerFormData, setCustomerFormData] = useState<CheckoutFormData | null>(null)
 
   const form = useForm<CheckoutFormData>({
     resolver: zodResolver(checkoutFormSchema),
@@ -76,6 +84,7 @@ export default function TicketPurchasePage() {
   useEffect(() => {
     if (params.id) {
       fetchEvent()
+      fetchPaymentMethods()
     }
   }, [params.id])
 
@@ -116,6 +125,15 @@ export default function TicketPurchasePage() {
     }
   }
 
+  const fetchPaymentMethods = async () => {
+    try {
+      const response = await paymentApi.getPaymentMethods()
+      setPaymentMethods(response)
+    } catch (err) {
+      console.error("Error fetching payment methods:", err)
+    }
+  }
+
   const updateTicketQuantity = (ticketId: number, delta: number) => {
     setTicketSelections(prev => prev.map(selection => {
       if (selection.ticketId === ticketId) {
@@ -136,7 +154,7 @@ export default function TicketPurchasePage() {
     return ticketSelections.reduce((total, selection) => total + selection.quantity, 0)
   }
 
-  const getSelectedItems = (): OrderItem[] => {
+  const getSelectedItems = (): Array<{ ticket_id: number; quantity: number }> => {
     return ticketSelections
       .filter(selection => selection.quantity > 0)
       .map(selection => ({
@@ -174,22 +192,77 @@ export default function TicketPurchasePage() {
       return
     }
 
-    // Prepare order data and show payment form
-    const orderData: OrderCreateRequest = {
-      event_id: Number(params.id),
-      items: selectedItems,
-      payment_method_id: "1", // Midtrans payment method  
-      customer_name: data.customer_name,
-      customer_email: data.customer_email,
-      customer_phone: data.customer_phone
+    // Validate payment methods are loaded
+    if (!paymentMethods) {
+      toast({
+        title: "Payment Methods Not Available",
+        description: "Please wait for payment methods to load",
+        variant: "destructive"
+      })
+      return
     }
 
-    setOrderData(orderData)
-    setShowPaymentForm(true)
+    // Store customer form data and show payment method selection
+    setCustomerFormData(data)
+    setShowPaymentMethodSelection(true)
   }
 
-  const generateOrderId = (): string => {
-    return `ORDER-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
+  const handlePaymentMethodSelected = async (data: PaymentMethodSelectionData) => {
+    try {
+      setSubmitting(true)
+      
+      // Find payment method ID - need to map from the payment methods response
+      let paymentMethodId = 1 // Default fallback
+      
+      // Find the payment method ID by looking through all groups
+      for (const group of paymentMethods?.data || []) {
+        const foundMethod = group.payment_methods.find(pm => pm.code === data.paymentMethod.code)
+        if (foundMethod) {
+          // For now, use a simple mapping - you may need to adjust based on your backend
+          // Since your API example shows payment_method: 1 for Bank Transfer (VA)
+          paymentMethodId = data.paymentMethod.type === 'bank_transfer' ? 1 : 1
+          break
+        }
+      }
+
+      // Create order with backend API
+      const orderRequest: OrderCreateRequest = {
+        items: data.ticketItems,
+        payment_method_id: paymentMethodId
+      }
+
+      const response = await orderApi.createOrder(orderRequest)
+      
+      if (response.success) {
+        setOrderResponse(response)
+        setShowPaymentMethodSelection(false)
+        setShowPaymentForm(true)
+        toast({
+          title: "Order Created",
+          description: "Please complete your payment",
+        })
+      } else {
+        toast({
+          title: "Failed to Create Order",
+          description: response.message || "An error occurred",
+          variant: "destructive"
+        })
+      }
+    } catch (err) {
+      console.error("Error creating order:", err)
+      toast({
+        title: "Error",
+        description: "Failed to create order. Please try again.",
+        variant: "destructive"
+      })
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  const handlePaymentMethodSelectionCancel = () => {
+    setShowPaymentMethodSelection(false)
+    setCustomerFormData(null)
   }
 
   const handlePaymentSuccess = (result: any) => {
@@ -206,29 +279,6 @@ export default function TicketPurchasePage() {
       description: error,
       variant: "destructive"
     })
-  }
-
-  const prepareCustomerDetails = (): CustomerDetails => {
-    const formData = form.getValues()
-    const nameParts = formData.customer_name.split(' ')
-    
-    return {
-      first_name: nameParts[0] || '',
-      last_name: nameParts.slice(1).join(' ') || nameParts[0] || '',
-      email: formData.customer_email,
-      phone: formData.customer_phone
-    }
-  }
-
-  const prepareItemDetails = (): ItemDetail[] => {
-    return ticketSelections
-      .filter(selection => selection.quantity > 0)
-      .map(selection => ({
-        id: selection.ticketId.toString(),
-        price: selection.price,
-        quantity: selection.quantity,
-        name: selection.name
-      }))
   }
 
   if (loading) {
@@ -495,8 +545,36 @@ export default function TicketPurchasePage() {
               </div>
             </div>
 
+            {/* Payment Method Selection Modal */}
+            {showPaymentMethodSelection && paymentMethods && (
+              <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+                <div className="bg-white p-6 rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+                  <div className="flex items-center justify-between mb-4">
+                    <h2 className="text-xl font-semibold">Select Payment Method</h2>
+                    <Button 
+                      variant="ghost" 
+                      size="sm"
+                      onClick={handlePaymentMethodSelectionCancel}
+                      disabled={submitting}
+                    >
+                      ✕
+                    </Button>
+                  </div>
+                  
+                  <PaymentMethodSelection
+                    paymentMethods={paymentMethods}
+                    ticketItems={getSelectedItems()}
+                    totalAmount={getTotalAmount()}
+                    onMethodSelected={handlePaymentMethodSelected}
+                    onCancel={handlePaymentMethodSelectionCancel}
+                    loading={submitting}
+                  />
+                </div>
+              </div>
+            )}
+
             {/* Payment Form Modal/Section */}
-            {showPaymentForm && orderData && (
+            {showPaymentForm && orderResponse && (
               <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
                 <div className="bg-white p-6 rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
                   <div className="flex items-center justify-between mb-4">
@@ -511,10 +589,8 @@ export default function TicketPurchasePage() {
                   </div>
                   
                   <PaymentForm
-                    orderId={generateOrderId()}
-                    totalAmount={formatAmountForMidtrans(getTotalAmount())}
-                    customerDetails={prepareCustomerDetails()}
-                    itemDetails={prepareItemDetails()}
+                    orderResponse={orderResponse}
+                    paymentMethods={paymentMethods}
                     onPaymentSuccess={handlePaymentSuccess}
                     onPaymentError={handlePaymentError}
                   />

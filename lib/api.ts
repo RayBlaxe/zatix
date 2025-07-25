@@ -30,11 +30,15 @@ import {
   FacilityCreateRequest,
   EventFilters,
   PublicEventFilters,
-  OrderCreateRequest,
-  OrderResponse,
   CustomerTicketResponse,
   QRCodeResponse
 } from "@/types/events"
+import {
+  PaymentMethodsResponse,
+  OrderCreateRequest,
+  OrderCreateResponse,
+  OrderStatusResponse
+} from "@/types/payment"
 
 // Base API URL - use environment variable or fallback for development
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "https://api.zatix.id/api"
@@ -1405,12 +1409,27 @@ export const facilityApi = {
   }
 }
 
-// Ticket Purchase API functions for Iteration 5
-export const orderApi = {
-  // Create new order (purchase tickets)
-  createOrder: (data: OrderCreateRequest): Promise<OrderResponse> => {
+// Payment API functions for Iteration 5
+export const paymentApi = {
+  // Get available payment methods
+  getPaymentMethods: (): Promise<PaymentMethodsResponse> => {
     const token = getToken()
-    return apiRequest<OrderResponse>("/orders", "POST", data, token || undefined)
+    return apiRequest<PaymentMethodsResponse>("/payment-methods", "GET", null, token || undefined)
+  }
+}
+
+// Order API functions for Iteration 5
+export const orderApi = {
+  // Create new order with payment method
+  createOrder: (data: OrderCreateRequest): Promise<OrderCreateResponse> => {
+    const token = getToken()
+    return apiRequest<OrderCreateResponse>("/orders", "POST", data, token || undefined)
+  },
+
+  // Get order status
+  getOrderStatus: (orderId: string): Promise<OrderStatusResponse> => {
+    const token = getToken()
+    return apiRequest<OrderStatusResponse>(`/api/orders/${orderId}/status`, "GET", null, token || undefined)
   },
 
   // Get customer's tickets
