@@ -43,7 +43,8 @@ export function PaymentForm({
         const status = await orderApi.getOrderStatus(orderResponse.data.order_id)
         setOrderStatus(status)
         
-        if (status.success && status.data.payment_status === 'success') {
+        if (status.success && status.data.transactions?.length > 0 && 
+            (status.data.transactions[0].status === 'success' || status.data.transactions[0].status === 'settlement')) {
           onPaymentSuccess(status)
         }
       } catch (err) {
@@ -83,12 +84,14 @@ export function PaymentForm({
       const status = await orderApi.getOrderStatus(orderResponse.data.order_id)
       setOrderStatus(status)
       
-      if (status.success && status.data.payment_status === 'success') {
+      if (status.success && status.data.transactions?.length > 0 && 
+          (status.data.transactions[0].status === 'success' || status.data.transactions[0].status === 'settlement')) {
         onPaymentSuccess(status)
       } else {
+        const currentStatus = status.data.transactions?.[0]?.status || status.data.status
         toast({
           title: "Payment Status",
-          description: `Current status: ${status.data.payment_status}`,
+          description: `Current status: ${currentStatus}`,
         })
       }
     } catch (err) {
@@ -103,7 +106,8 @@ export function PaymentForm({
   }
 
   // Show payment success if order is completed
-  if (orderStatus?.success && orderStatus.data.payment_status === 'success') {
+  if (orderStatus?.success && orderStatus.data.transactions?.length > 0 && 
+      (orderStatus.data.transactions[0].status === 'success' || orderStatus.data.transactions[0].status === 'settlement')) {
     return (
       <Card className={className}>
         <CardHeader>
@@ -177,11 +181,12 @@ export function PaymentForm({
         </Card>
 
         {/* Virtual Account Payment (Bank Transfer) */}
-        {orderResponse.data.payment_type === 'bank_transfer' && orderResponse.data.va_numbers && (
+        {(orderResponse.data.payment_type === 'bank_transfer' || orderResponse.data.payment_type === 'transfer') && 
+         (orderResponse.data.va_numbers || (orderStatus?.data.transactions?.[0]?.payment_detail?.va_number)) && (
           <Card>
             <CardHeader>
               <CardTitle className="text-center text-blue-600">
-                Virtual Account Payment
+                Virtual Account Payment  
               </CardTitle>
               <CardDescription className="text-center">
                 Transfer to the virtual account number below
@@ -192,15 +197,15 @@ export function PaymentForm({
               <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
                 <div className="text-center space-y-2">
                   <div className="font-semibold text-blue-800">
-                    {orderResponse.data.va_numbers[0]?.bank?.toUpperCase()} Virtual Account
+                    {orderResponse.data.va_numbers?.[0]?.bank?.toUpperCase() || 'Bank'} Virtual Account
                   </div>
                   <div className="text-2xl font-mono bg-white px-4 py-2 rounded border">
-                    {orderResponse.data.va_numbers[0]?.va_number}
+                    {orderResponse.data.va_numbers?.[0]?.va_number || orderStatus?.data.transactions?.[0]?.payment_detail?.va_number}
                   </div>
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => copyToClipboard(orderResponse.data.va_numbers?.[0]?.va_number || '')}
+                    onClick={() => copyToClipboard(orderResponse.data.va_numbers?.[0]?.va_number || orderStatus?.data.transactions?.[0]?.payment_detail?.va_number || '')}
                   >
                     <Copy className="size-4 mr-2" />
                     Copy Account Number
@@ -241,7 +246,7 @@ export function PaymentForm({
             </CardTitle>
             <CardDescription>
               {orderStatus ? 
-                `Current status: ${orderStatus.data.payment_status}` : 
+                `Current status: ${orderStatus.data.transactions?.[0]?.status || orderStatus.data.status}` : 
                 'Checking payment status...'}
             </CardDescription>
           </CardHeader>

@@ -12,6 +12,7 @@ import { orderApi } from "@/lib/api"
 import { CustomerTicket } from "@/types/events"
 import { toast } from "@/components/ui/use-toast"
 import { QRCodeModal } from "@/components/qr-code-modal"
+import QRCode from 'qrcode'
 
 export default function MyTicketsPage() {
   const { user } = useAuth()
@@ -35,8 +36,9 @@ export default function MyTicketsPage() {
       console.log("My tickets API response:", response) // Debug log
       
       if (response.success) {
-        // Ensure data is an array, fallback to empty array if null/undefined
-        const ticketsData = Array.isArray(response.data) ? response.data : []
+        // Handle paginated response structure
+        const ticketsData = Array.isArray(response.data?.data) ? response.data.data : 
+                           Array.isArray(response.data) ? response.data : []
         console.log("Setting tickets:", ticketsData) // Debug log
         setTickets(ticketsData)
       } else {
@@ -89,46 +91,50 @@ export default function MyTicketsPage() {
   }
 
   const upcomingTickets = Array.isArray(tickets) ? tickets.filter(ticket => {
-    if (!ticket.order?.event) return false
-    const eventDate = new Date(ticket.order.event.start_date)
-    const today = new Date()
-    return eventDate >= today && ticket.status === "active" && getOrderStatus(ticket.order) === "confirmed"
+    // For now, since we don't have event date info in the API response,
+    // we'll show all active tickets as upcoming
+    const ticketStatus = ticket.status || 'active'
+    return ticketStatus === "active" && !ticket.checked_in_at
   }) : []
 
   const pastTickets = Array.isArray(tickets) ? tickets.filter(ticket => {
-    if (!ticket.order?.event) return false
-    const eventDate = new Date(ticket.order.event.start_date)
-    const today = new Date()
-    return eventDate < today
+    // Show tickets that have been checked in as past events
+    return ticket.checked_in_at !== null
   }) : []
 
   const pendingTickets = Array.isArray(tickets) ? tickets.filter(ticket => {
-    return getOrderStatus(ticket.order) === "pending"
+    // Since we don't have order status in the current API response,
+    // we'll use a different logic or show empty for now
+    return false // No pending tickets for now
   }) : []
 
   const handleViewQR = async (ticket: CustomerTicket) => {
     try {
-      const response = await orderApi.getTicketQR(ticket.ticket_code)
-      if (response.success) {
-        setSelectedTicket(ticket)
-        setQrCodeData(response.data.qr_code)
-        setShowQRModal(true)
-        toast({
-          title: "QR Code Loaded",
-          description: "Your e-ticket QR code is ready"
-        })
-      } else {
-        toast({
-          title: "Error",
-          description: response.message || "Failed to load QR code",
-          variant: "destructive"
-        })
-      }
+      // Generate QR code directly from ticket code
+      const qrCodeDataURL = await QRCode.toDataURL(ticket.ticket_code, {
+        width: 300,
+        margin: 2,
+        errorCorrectionLevel: 'M',
+        type: 'image/png',
+        quality: 0.92,
+        color: {
+          dark: '#000000',
+          light: '#FFFFFF'
+        }
+      })
+      
+      setSelectedTicket(ticket)
+      setQrCodeData(qrCodeDataURL)
+      setShowQRModal(true)
+      toast({
+        title: "QR Code Generated",
+        description: "Your e-ticket QR code is ready"
+      })
     } catch (err) {
-      console.error("Error fetching QR code:", err)
+      console.error("Error generating QR code:", err)
       toast({
         title: "Error",
-        description: "An error occurred while loading QR code",
+        description: "Failed to generate QR code",
         variant: "destructive"
       })
     }
@@ -140,22 +146,237 @@ export default function MyTicketsPage() {
     setQrCodeData(null)
   }
 
+  const handleDownloadTicket = async (ticket: CustomerTicket) => {
+    try {
+      // Generate QR code for the ticket
+      const qrCodeDataURL = await QRCode.toDataURL(ticket.ticket_code, {
+        width: 200,
+        margin: 2,
+        errorCorrectionLevel: 'M',
+        type: 'image/png',
+        quality: 0.92,
+        color: {
+          dark: '#000000',
+          light: '#FFFFFF'
+        }
+      })
+      
+      // Generate ticket HTML with QR code
+      const ticketHTML = generateTicketHTML(ticket, qrCodeDataURL)
+      
+      // Create a blob and download it
+      const blob = new Blob([ticketHTML], { type: 'text/html' })
+      const url = URL.createObjectURL(blob)
+      const link = document.createElement('a')
+      link.href = url
+      link.download = `ticket-${ticket.ticket_code}.html`
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+      URL.revokeObjectURL(url)
+      
+      toast({
+        title: "Ticket Downloaded",
+        description: "Your ticket has been downloaded successfully"
+      })
+    } catch (err) {
+      console.error("Error downloading ticket:", err)
+      toast({
+        title: "Error",
+        description: "Failed to download ticket",
+        variant: "destructive"
+      })
+    }
+  }
+
+  const generateTicketHTML = (ticket: CustomerTicket, qrCodeDataURL?: string) => {
+    const event = ticket.ticket?.event
+    return `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>E-Ticket - ${ticket.ticket_code}</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .ticket {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            border: 2px dashed #e5e5e5;
+        }
+        .header {
+            text-align: center;
+            border-bottom: 2px solid #3b82f6;
+            padding-bottom: 20px;
+            margin-bottom: 20px;
+        }
+        .logo {
+            font-size: 28px;
+            font-weight: bold;
+            color: #3b82f6;
+            margin-bottom: 10px;
+        }
+        .event-name {
+            font-size: 24px;
+            font-weight: bold;
+            color: #1f2937;
+            margin-bottom: 10px;
+        }
+        .ticket-code {
+            font-size: 18px;
+            color: #6b7280;
+            font-family: monospace;
+            background: #f3f4f6;
+            padding: 8px 16px;
+            border-radius: 6px;
+            display: inline-block;
+        }
+        .details {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin: 20px 0;
+        }
+        .detail-item {
+            padding: 15px;
+            background: #f8fafc;
+            border-radius: 8px;
+            border-left: 4px solid #3b82f6;
+        }
+        .detail-label {
+            font-weight: bold;
+            color: #374151;
+            margin-bottom: 5px;
+        }
+        .detail-value {
+            color: #6b7280;
+            font-size: 16px;
+        }
+        .qr-section {
+            text-align: center;
+            margin: 30px 0;
+            padding: 20px;
+            background: #f8fafc;
+            border-radius: 8px;
+        }
+        .instructions {
+            margin-top: 30px;
+            padding: 20px;
+            background: #fef3c7;
+            border-radius: 8px;
+            border-left: 4px solid #f59e0b;
+        }
+        .instructions h3 {
+            color: #92400e;
+            margin-bottom: 10px;
+        }
+        .instructions ul {
+            color: #92400e;
+            padding-left: 20px;
+        }
+        .instructions li {
+            margin-bottom: 5px;
+        }
+        @media print {
+            body { background-color: white; }
+            .ticket { box-shadow: none; }
+        }
+    </style>
+</head>
+<body>
+    <div class="ticket">
+        <div class="header">
+            <div class="logo">🎫 ZaTix</div>
+            <div class="event-name">${event?.name || 'Event Ticket'}</div>
+            <div class="ticket-code">${ticket.ticket_code}</div>
+        </div>
+        
+        <div class="details">
+            <div class="detail-item">
+                <div class="detail-label">Attendee Name</div>
+                <div class="detail-value">${ticket.attendee_name}</div>
+            </div>
+            <div class="detail-item">
+                <div class="detail-label">Ticket Type</div>
+                <div class="detail-value">${ticket.ticket?.name || 'N/A'}</div>
+            </div>
+            ${event ? `
+            <div class="detail-item">
+                <div class="detail-label">Event Date</div>
+                <div class="detail-value">${formatDate(event.start_date)}</div>
+            </div>
+            <div class="detail-item">
+                <div class="detail-label">Event Time</div>
+                <div class="detail-value">${event.start_time} - ${event.end_time} WIB</div>
+            </div>
+            <div class="detail-item">
+                <div class="detail-label">Location</div>
+                <div class="detail-value">${event.location}</div>
+            </div>
+            ` : ''}
+            <div class="detail-item">
+                <div class="detail-label">Check-in Status</div>
+                <div class="detail-value">${ticket.checked_in_at ? 'Checked In' : 'Not Checked In'}</div>
+            </div>
+        </div>
+        
+        <div class="qr-section">
+            <p><strong>QR Code:</strong></p>
+            ${qrCodeDataURL ? `<img src="${qrCodeDataURL}" alt="QR Code for ${ticket.ticket_code}" style="margin: 10px auto; display: block; max-width: 200px; height: auto;" />` : ''}
+            <p>Please present this QR code at the event entrance</p>
+            <p>Ticket Code: <strong>${ticket.ticket_code}</strong></p>
+        </div>
+        
+        <div class="instructions">
+            <h3>🎯 Instructions</h3>
+            <ul>
+                <li>Bring this ticket (printed or digital) to the event</li>
+                <li>Present your ticket code at the entrance for scanning</li>
+                <li>Arrive 30 minutes before the event starts</li>
+                <li>This ticket is non-transferable and valid for single entry only</li>
+                <li>Keep this ticket safe - lost tickets cannot be replaced</li>
+            </ul>
+        </div>
+        
+        <div style="text-align: center; margin-top: 30px; color: #6b7280; font-size: 14px;">
+            <p>Generated on ${new Date().toLocaleDateString('id-ID')} • ZaTix Event Management</p>
+            <p>🔒 This is a secure e-ticket • Do not share this ticket code</p>
+        </div>
+    </div>
+</body>
+</html>
+    `
+  }
+
   const renderTicketCard = (ticket: CustomerTicket) => {
-    const event = ticket.order?.event
-    const orderStatus = getOrderStatus(ticket.order)
+    const event = ticket.ticket?.event
+    const ticketStatus = ticket.status || 'active'
     
-    if (!event) return null
-    
+    // For now, since we don't have event data in the ticket response, 
+    // we'll display the available ticket information
     return (
       <Card key={ticket.id} className="hover:shadow-md transition-shadow">
         <CardHeader>
           <div className="flex justify-between items-start">
             <div className="flex-1">
-              <CardTitle className="text-lg">{event.name}</CardTitle>
-              <CardDescription>Ticket Code: {ticket.ticket_code}</CardDescription>
+              <CardTitle className="text-lg">
+                {event?.name || `${ticket.ticket?.name || 'Event'} Ticket`}
+              </CardTitle>
+              <CardDescription>
+                Ticket Code: {ticket.ticket_code} • Attendee: {ticket.attendee_name}
+              </CardDescription>
             </div>
-            <Badge variant={getStatusColor(ticket.status)}>
-              {ticket.status.charAt(0).toUpperCase() + ticket.status.slice(1)}
+            <Badge variant={getStatusColor(ticketStatus)}>
+              {ticketStatus.charAt(0).toUpperCase() + ticketStatus.slice(1)}
             </Badge>
           </div>
         </CardHeader>
@@ -163,20 +384,29 @@ export default function MyTicketsPage() {
         <CardContent className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <div className="flex items-center text-sm text-muted-foreground">
-                <Calendar className="mr-2 size-4" />
-                {formatDate(event.start_date)}
-              </div>
-              
-              <div className="flex items-center text-sm text-muted-foreground">
-                <Clock className="mr-2 size-4" />
-                {event.start_time} - {event.end_time} WIB
-              </div>
-              
-              <div className="flex items-center text-sm text-muted-foreground">
-                <MapPin className="mr-2 size-4" />
-                {event.location}
-              </div>
+              {event && (
+                <>
+                  <div className="flex items-center text-sm text-muted-foreground">
+                    <Calendar className="mr-2 size-4" />
+                    {formatDate(event.start_date)}
+                  </div>
+                  
+                  <div className="flex items-center text-sm text-muted-foreground">
+                    <Clock className="mr-2 size-4" />
+                    {event.start_time} - {event.end_time} WIB
+                  </div>
+                  
+                  <div className="flex items-center text-sm text-muted-foreground">
+                    <MapPin className="mr-2 size-4" />
+                    {event.location}
+                  </div>
+                </>
+              )}
+              {!event && (
+                <div className="text-sm text-muted-foreground">
+                  Event details not available
+                </div>
+              )}
             </div>
             
             <div className="space-y-2">
@@ -184,17 +414,27 @@ export default function MyTicketsPage() {
                 <span className="font-medium">Ticket Type:</span> {ticket.ticket?.name || 'N/A'}
               </div>
               <div className="text-sm">
-                <span className="font-medium">Order:</span> {ticket.order?.order_number}
+                <span className="font-medium">Check-in Status:</span> {
+                  ticket.checked_in_at ? 'Checked In' : 'Not Checked In'
+                }
               </div>
-              <div className="text-sm">
-                <span className="font-medium">Total:</span> {formatPrice(ticket.order?.total_amount || 0)}
-              </div>
+              {ticket.checked_in_at && (
+                <div className="text-sm">
+                  <span className="font-medium">Checked In:</span> {
+                    new Date(ticket.checked_in_at).toLocaleDateString('id-ID')
+                  }
+                </div>
+              )}
             </div>
           </div>
           
-          {orderStatus === "confirmed" && ticket.status === "active" && (
+          {ticketStatus === "active" && (
             <div className="flex flex-wrap gap-2 pt-4">
-              <Button size="sm" variant="outline">
+              <Button 
+                size="sm" 
+                variant="outline"
+                onClick={() => handleDownloadTicket(ticket)}
+              >
                 <Download className="mr-2 size-4" />
                 Download Ticket
               </Button>
@@ -209,11 +449,11 @@ export default function MyTicketsPage() {
             </div>
           )}
           
-          {orderStatus === "pending" && (
+          {!ticket.checked_in_at && ticketStatus === "active" && (
             <div className="flex items-center gap-2 pt-4">
-              <RefreshCw className="size-4 text-muted-foreground" />
-              <span className="text-sm text-muted-foreground">
-                Payment confirmation pending
+              <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+              <span className="text-sm text-green-600 font-medium">
+                Ready for event
               </span>
             </div>
           )}

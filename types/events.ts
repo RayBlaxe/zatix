@@ -257,20 +257,43 @@ export interface OrderResponse {
 
 export interface CustomerTicket {
   id: number
-  order_id: number
-  ticket_id: number
   ticket_code: string
-  status: 'active' | 'used' | 'expired'
-  qr_code?: string
-  created_at: string
+  attendee_name: string
+  ticket_id: number
+  checked_in_at: string | null
+  ticket?: {
+    id: number
+    name: string
+    event?: Event | null
+  }
   order?: Order
-  ticket?: Ticket
+  status?: 'active' | 'used' | 'expired'
+  qr_code?: string
+  created_at?: string
 }
 
 export interface CustomerTicketResponse {
   success: boolean
   message: string
-  data: CustomerTicket[]
+  data: {
+    current_page: number
+    data: CustomerTicket[]
+    first_page_url: string
+    from: number
+    last_page: number
+    last_page_url: string
+    links: Array<{
+      url: string | null
+      label: string
+      active: boolean
+    }>
+    next_page_url: string | null
+    path: string
+    per_page: number
+    prev_page_url: string | null
+    to: number
+    total: number
+  }
 }
 
 export interface QRCodeResponse {

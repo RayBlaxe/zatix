@@ -20,7 +20,7 @@ export function QRCodeModal({ ticket, qrCodeData, isOpen, onClose }: QRCodeModal
 
   if (!ticket || !qrCodeData) return null
 
-  const event = ticket.order?.event
+  const event = ticket.ticket?.event || ticket.order?.event
   const formatDate = (date: string) => {
     return new Date(date).toLocaleDateString('id-ID', {
       weekday: 'long',
@@ -98,8 +98,8 @@ export function QRCodeModal({ ticket, qrCodeData, isOpen, onClose }: QRCodeModal
           <div className="text-center space-y-2">
             <div className="flex items-center justify-center gap-2">
               <Badge variant="outline">{ticket.ticket?.name || 'Ticket'}</Badge>
-              <Badge variant={ticket.status === 'active' ? 'default' : 'secondary'}>
-                {ticket.status.charAt(0).toUpperCase() + ticket.status.slice(1)}
+              <Badge variant={(ticket.status || 'active') === 'active' ? 'default' : 'secondary'}>
+                {(ticket.status || 'active').charAt(0).toUpperCase() + (ticket.status || 'active').slice(1)}
               </Badge>
             </div>
             <p className="text-sm text-gray-600">Ticket Code: {ticket.ticket_code}</p>

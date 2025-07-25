@@ -30,8 +30,7 @@ import {
   FacilityCreateRequest,
   EventFilters,
   PublicEventFilters,
-  CustomerTicketResponse,
-  QRCodeResponse
+  CustomerTicketResponse
 } from "@/types/events"
 import {
   PaymentMethodsResponse,
@@ -1429,7 +1428,7 @@ export const orderApi = {
   // Get order status
   getOrderStatus: (orderId: string): Promise<OrderStatusResponse> => {
     const token = getToken()
-    return apiRequest<OrderStatusResponse>(`/api/orders/${orderId}/status`, "GET", null, token || undefined)
+    return apiRequest<OrderStatusResponse>(`/orders/${orderId}`, "GET", null, token || undefined)
   },
 
   // Get customer's tickets
@@ -1444,9 +1443,6 @@ export const orderApi = {
     return apiRequest<CustomerTicketResponse>(`/my-tickets/${ticketCode}`, "GET", null, token || undefined)
   },
 
-  // Get QR code for e-ticket
-  getTicketQR: (ticketCode: string): Promise<QRCodeResponse> => {
-    const token = getToken()
-    return apiRequest<QRCodeResponse>(`/e-tickets/${ticketCode}/qr`, "GET", null, token || undefined)
-  }
+  // Note: QR code generation is now handled client-side using the qrcode library
+  // getTicketQR function removed - QR codes are generated directly from ticket_code
 }
