@@ -83,3 +83,39 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* Mobile-specific improvements */
+@layer utilities {
+  /* Better touch targets */
+  .touch-target {
+    min-height: 44px;
+    min-width: 44px;
+  }
+  
+  /* Smooth scrolling for mobile */
+  html {
+    scroll-behavior: smooth;
+    -webkit-text-size-adjust: 100%;
+    -webkit-tap-highlight-color: transparent;
+  }
+  
+  /* Improve carousel touch experience */
+  .carousel-container {
+    -webkit-overflow-scrolling: touch;
+    scroll-snap-type: x mandatory;
+  }
+  
+  .carousel-slide {
+    scroll-snap-align: start;
+  }
+  
+  /* Better mobile typography */
+  @media (max-width: 640px) {
+    .line-clamp-2 {
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+  }
+}

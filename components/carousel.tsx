@@ -58,7 +58,7 @@ export function Carousel() {
   if (loading) {
     return (
       <div className="relative overflow-hidden rounded-xl">
-        <div className="aspect-[21/9] w-full flex items-center justify-center bg-muted">
+        <div className="aspect-[16/9] sm:aspect-[21/9] w-full flex items-center justify-center bg-muted">
           <div className="text-center">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-2"></div>
             <p className="text-sm text-muted-foreground">Loading carousel...</p>
@@ -71,7 +71,7 @@ export function Carousel() {
   if (error || slides.length === 0) {
     return (
       <div className="relative overflow-hidden rounded-xl">
-        <div className="aspect-[21/9] w-full flex items-center justify-center bg-muted">
+        <div className="aspect-[16/9] sm:aspect-[21/9] w-full flex items-center justify-center bg-muted">
           <div className="text-center">
             <p className="text-sm text-muted-foreground">
               {error || "No carousel data available"}
@@ -90,7 +90,7 @@ export function Carousel() {
       >
         {slides.map((slide) => (
           <div key={slide.id} className="relative min-w-full">
-            <div className="aspect-[21/9] w-full overflow-hidden rounded-xl">
+            <div className="aspect-[16/9] sm:aspect-[21/9] w-full overflow-hidden rounded-xl">
               <img 
                 src={slide.image_url || "/placeholder.svg"} 
                 alt={slide.title} 
@@ -98,12 +98,12 @@ export function Carousel() {
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
             </div>
-            <div className="absolute bottom-0 left-0 right-0 p-6 md:p-10 text-white">
-              <h2 className="text-2xl md:text-4xl font-bold mb-2">{slide.title}</h2>
-              <p className="text-sm md:text-lg mb-4 max-w-xl">{slide.caption}</p>
+            <div className="absolute bottom-0 left-0 right-0 p-4 sm:p-6 md:p-10 text-white">
+              <h2 className="text-lg sm:text-2xl md:text-4xl font-bold mb-1 sm:mb-2">{slide.title}</h2>
+              <p className="text-xs sm:text-sm md:text-lg mb-2 sm:mb-4 max-w-xl line-clamp-2 sm:line-clamp-none">{slide.caption}</p>
               {slide.link_url && (
                 <Link href={slide.link_url} target={slide.link_target}>
-                  <Button variant="default" size="lg">
+                  <Button variant="default" size="sm" className="sm:size-lg">
                     Learn More
                   </Button>
                 </Link>
@@ -118,28 +118,28 @@ export function Carousel() {
           <Button
             variant="outline"
             size="icon"
-            className="absolute left-4 top-1/2 -translate-y-1/2 bg-background/80 hover:bg-background"
+            className="absolute left-2 sm:left-4 top-1/2 -translate-y-1/2 bg-background/80 hover:bg-background h-8 w-8 sm:h-10 sm:w-10"
             onClick={prevSlide}
           >
-            <ChevronLeft className="h-4 w-4" />
+            <ChevronLeft className="h-3 w-3 sm:h-4 sm:w-4" />
             <span className="sr-only">Previous slide</span>
           </Button>
 
           <Button
             variant="outline"
             size="icon"
-            className="absolute right-4 top-1/2 -translate-y-1/2 bg-background/80 hover:bg-background"
+            className="absolute right-2 sm:right-4 top-1/2 -translate-y-1/2 bg-background/80 hover:bg-background h-8 w-8 sm:h-10 sm:w-10"
             onClick={nextSlide}
           >
-            <ChevronRight className="h-4 w-4" />
+            <ChevronRight className="h-3 w-3 sm:h-4 sm:w-4" />
             <span className="sr-only">Next slide</span>
           </Button>
 
-          <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2">
+          <div className="absolute bottom-2 sm:bottom-4 left-1/2 -translate-x-1/2 flex gap-1 sm:gap-2">
             {slides.map((_, index) => (
               <button
                 key={index}
-                className={`h-2 w-2 rounded-full ${currentSlide === index ? "bg-primary" : "bg-primary/30"}`}
+                className={`h-1.5 w-1.5 sm:h-2 sm:w-2 rounded-full transition-colors ${currentSlide === index ? "bg-primary" : "bg-primary/30"}`}
                 onClick={() => setCurrentSlide(index)}
               >
                 <span className="sr-only">Go to slide {index + 1}</span>
