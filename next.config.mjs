@@ -4,7 +4,7 @@ const nextConfig = {
   images: {
     // Remove unoptimized: true to enable Next.js image optimization
     // unoptimized: true,
-    domains: ['zatix.zamanweb.com'], // Add your domain for external images
+    domains: ['api.zatix.id'], // Add your domain for external images
   },
   // Enable strict mode for better development experience
   reactStrictMode: true,
