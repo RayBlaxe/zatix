@@ -76,7 +76,7 @@ export function Header() {
               alt="ZaTix Logo" 
               width={80} 
               height={80}
-              className="h-8 w-auto sm:h-10 md:h-12"
+              className="h-16 w-auto sm:h-18 md:h-20"
             />
           </Link>
         </div>
