@@ -11,8 +11,18 @@ import { CashFlow } from "./components/cash-flow"
 import { BudgetAnalysis } from "./components/budget-analysis"
 import { TaxSummary } from "./components/tax-summary"
 import { ExportButton } from "./components/export-button"
+import { SuperAdminFinance } from "./components/super-admin-finance"
+import { useAuth } from "@/hooks/use-auth"
 
 export default function FinancePage() {
+  const { hasRole } = useAuth()
+
+  // If user is super-admin, show the super-admin finance dashboard
+  if (hasRole("super-admin")) {
+    return <SuperAdminFinance />
+  }
+
+  // Regular finance dashboard for event organizers
   return (
 
     <div className="flex-1 space-y-4 p-8 pt-6">

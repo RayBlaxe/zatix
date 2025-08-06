@@ -51,12 +51,15 @@ export function DashboardSidebar({ onNavigate }: DashboardSidebarProps = {}) {
       href: "/dashboard",
       active: pathname === "/dashboard",
     },
-    {
-      label: "Events",
-      icon: CalendarDays,
-      href: "/dashboard/events",
-      active: pathname === "/dashboard/events" || pathname.startsWith("/dashboard/events/"),
-    },
+    // Events route - exclude for super-admin
+    ...(hasRole("super-admin") ? [] : [
+      {
+        label: "Events",
+        icon: CalendarDays,
+        href: "/dashboard/events",
+        active: pathname === "/dashboard/events" || pathname.startsWith("/dashboard/events/"),
+      },
+    ]),
     {
       label: "Finance",
       icon: BarChart3,
@@ -108,21 +111,7 @@ export function DashboardSidebar({ onNavigate }: DashboardSidebarProps = {}) {
       icon: Home,
       href: "/dashboard/content/home",
       active: pathname === "/dashboard/content/home",
-    },
-    {
-      label: "Pricing",
-      icon: DollarSign,
-      href: "/dashboard/content/pricing",
-      active: pathname === "/dashboard/content/pricing",
-    },
-    {
-      label: "Articles",
-      icon: FileText,
-      href: "/dashboard/content/articles",
-      active:
-        pathname === "/dashboard/content/articles" ||
-        pathname.startsWith("/dashboard/content/articles/"),
-    },
+    }
   ];
   
 

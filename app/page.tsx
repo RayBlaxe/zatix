@@ -34,8 +34,22 @@ export default function HomePage() {
   return (
     <div className="flex min-h-screen flex-col">
       <Header />
+
       <main className="flex-1">
-        <section className="py-6 sm:py-8">
+        <section className="pt-4 sm:pt-8">
+          <div className="container px-4 sm:px-6">
+            <div className="text-center mb-2 sm:mb-3">
+              <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold mb-3 sm:mb-4" style={{ color: '#002547' }}>
+                Hi, what event do you want to join?
+              </h1>
+              <p className="text-lg sm:text-xl max-w-2xl mx-auto" style={{ color: '#002547' }}>
+                ZaTix - Providing all your ticketing needs
+              </p>
+            </div>
+          </div>
+        </section>
+
+        <section className="py-4 sm:py-8">
           <div className="container px-4 sm:px-6">
             <Carousel />
           </div>
@@ -152,13 +166,13 @@ export default function HomePage() {
             © 2025 ZaTix. All rights reserved.
           </p>
           <div className="flex items-center gap-4 text-xs sm:text-sm text-muted-foreground">
-            <Link href="#" className="hover:underline">
+            <Link href="/terms" className="hover:underline">
               Terms
             </Link>
-            <Link href="#" className="hover:underline">
+            <Link href="/privacy" className="hover:underline">
               Privacy
             </Link>
-            <Link href="#" className="hover:underline">
+            <Link href="/contact" className="hover:underline">
               Contact
             </Link>
           </div>
