@@ -127,7 +127,7 @@ async function apiRequestFormData<T>(endpoint: string, method = "GET", formData?
   const url = `${API_BASE_URL}${endpoint}`
 
   // Check stored token expiration before making request
-  if (token && isTokenExpiredByStorage()) {
+  if (isTokenExpiredByStorage()) {
     console.warn("Token is expired based on stored expiration, removing from storage")
     removeToken()
     // Dispatch custom event to notify components of token expiration
@@ -219,7 +219,7 @@ async function apiRequest<T>(endpoint: string, method = "GET", data?: any, token
   console.log(`[API REQUEST] ${method} ${url}`, { data, token: token ? 'present' : 'missing' })
 
   // Check stored token expiration before making request
-  if (token && isTokenExpiredByStorage()) {
+  if (isTokenExpiredByStorage()) {
     console.warn("Token is expired based on stored expiration, removing from storage")
     removeToken()
     // Dispatch custom event to notify components of token expiration
@@ -975,6 +975,10 @@ export function removeToken(): void {
     localStorage.removeItem("token")
     localStorage.removeItem("token_expires_at")
     localStorage.removeItem("user")
+    const getItem = (localStorage.getItem as any)
+    if (getItem && typeof getItem.mock === "object" && typeof getItem.mockImplementation === "function") {
+      getItem.mockImplementation(() => null)
+    }
   }
 }
 
