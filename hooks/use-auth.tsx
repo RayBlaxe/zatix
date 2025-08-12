@@ -3,9 +3,61 @@
 import type React from "react";
 
 import { createContext, useContext, useEffect, useState, useCallback } from "react";
-import { authApi, getToken, removeToken, setToken, isCurrentTokenExpired, getStoredTokenExpiration, getTokenTimeRemaining, getTokenRaw, validateTokenWithAPI } from "@/lib/api";
+import { authApi, validateTokenWithAPI } from "@/lib/api";
 import { RegisterResponse } from "@/types/auth/register";
 import { AuthUser, UserRole, AuthContextType } from "@/types/auth";
+
+function getTokenExpiration(): Date | null {
+  if (typeof window !== "undefined") {
+    const expirationStr = localStorage.getItem("token_expires_at");
+    if (expirationStr) {
+      return new Date(expirationStr);
+    }
+  }
+  return null;
+}
+
+function isTokenExpired(): boolean {
+  const expiration = getTokenExpiration();
+  if (!expiration) return false;
+  return new Date() >= expiration;
+}
+
+function getStoredToken(): string | null {
+  if (typeof window !== "undefined") {
+    const token = localStorage.getItem("token");
+    if (token && isTokenExpired()) {
+      removeStoredToken();
+      return null;
+    }
+    return token;
+  }
+  return null;
+}
+
+function getRawToken(): string | null {
+  if (typeof window !== "undefined") {
+    return localStorage.getItem("token");
+  }
+  return null;
+}
+
+function storeToken(token: string, expiresInMinutes?: number): void {
+  if (typeof window !== "undefined") {
+    localStorage.setItem("token", token);
+    if (expiresInMinutes) {
+      const expiration = new Date(Date.now() + expiresInMinutes * 60 * 1000);
+      localStorage.setItem("token_expires_at", expiration.toISOString());
+    }
+  }
+}
+
+function removeStoredToken(): void {
+  if (typeof window !== "undefined") {
+    localStorage.removeItem("token");
+    localStorage.removeItem("token_expires_at");
+  }
+}
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
@@ -19,7 +71,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const logout = useCallback(async () => {
     setIsLoading(true);
     try {
-      const token = getTokenRaw(); // Use raw token to avoid expiration check
+      const token = getRawToken();
       if (token) {
         await authApi.logout(token);
       }
@@ -29,7 +81,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       // Clear user state and tokens regardless of API call success
       setUser(null);
       setTokenExpiration(null);
-      removeToken();
+      removeStoredToken();
       localStorage.removeItem("user");
       setIsLoading(false);
     }
@@ -37,7 +89,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   // Check token expiration and logout if expired
   const checkTokenExpiration = useCallback(() => {
-    if (isCurrentTokenExpired()) {
+    if (isTokenExpired()) {
       console.warn("Token expired, logging out user");
       logout();
       return true;
@@ -48,7 +100,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // Initialize user from localStorage on app start
   useEffect(() => {
     const initializeAuth = () => {
-      const token = getToken(); // This already validates expiration
+      const token = getStoredToken();
       const savedUser = localStorage.getItem("user");
       
       if (token && savedUser) {
@@ -64,12 +116,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           setUser(parsedUser);
           
           // Set token expiration info
-          const expiration = getStoredTokenExpiration();
+          const expiration = getTokenExpiration();
           setTokenExpiration(expiration);
           
         } catch (error) {
           console.error("Failed to parse saved user:", error);
-          removeToken();
+          removeStoredToken();
           localStorage.removeItem("user");
         }
       }
@@ -84,7 +136,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (!user) return;
 
     const interval = setInterval(async () => {
-      const token = getTokenRaw();
+      const token = getRawToken();
       if (token) {
         try {
           const validation = await validateTokenWithAPI(token);
@@ -139,7 +191,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
 
       // Store token with expiration info from Laravel Sanctum response
-      setToken(data.access_token, data.expires_in);
+      storeToken(data.access_token, data.expires_in);
 
       // Map roles from string array to UserRole array
       const userRoles = (data.user.roles as string[]).filter(role => 
@@ -169,7 +221,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       localStorage.setItem("user", JSON.stringify(newUser));
       
       // Set token expiration info
-      const expiration = getStoredTokenExpiration();
+      const expiration = getTokenExpiration();
       setTokenExpiration(expiration);
     } catch (error) {
       throw error;
@@ -220,7 +272,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const response = await authApi.verifyOtp(email, otp_code);
       const { token, user } = response.data;
 
-      setToken(token);
+      storeToken(token);
 
       // Map roles from string array to UserRole array
       const userRoles = (user.roles as string[]).filter(role => 
@@ -246,7 +298,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       localStorage.setItem("user", JSON.stringify(newUser));
       
       // Set token expiration info
-      const expiration = getStoredTokenExpiration();
+      const expiration = getTokenExpiration();
       setTokenExpiration(expiration);
 
       setPendingVerificationEmail(null);
@@ -305,7 +357,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         resendOtp,
         forgotPassword,
         logout,
-        isAuthenticated: !!user && !!getToken(),
+        isAuthenticated: !!user,
         switchRole,
         updateEODetails,
         pendingVerificationEmail,
