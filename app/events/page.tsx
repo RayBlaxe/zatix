@@ -27,7 +27,6 @@ export default function EventsPage() {
   const [totalPages, setTotalPages] = useState(1)
   const [filters, setFilters] = useState<PublicEventFilters>({})
   const [searchTerm, setSearchTerm] = useState("")
-  const [selectedCategory, setSelectedCategory] = useState("all")
 
   useEffect(() => {
     fetchEvents()
@@ -38,10 +37,7 @@ export default function EventsPage() {
       setLoading(true)
       setError(null)
       
-      const response = await eventApi.getPublicEvents(currentPage, {
-        ...filters,
-        search: searchTerm || undefined
-      })
+      const response = await eventApi.getPublicEvents(currentPage, filters)
       
       if (response.success) {
         setEvents(response.data.data)
@@ -59,7 +55,7 @@ export default function EventsPage() {
 
   const handleSearch = () => {
     setCurrentPage(1)
-    fetchEvents()
+    setFilters(prev => ({ ...prev, search: searchTerm || undefined }))
   }
 
   const handleFilterChange = (key: keyof PublicEventFilters, value: any) => {
@@ -70,7 +66,6 @@ export default function EventsPage() {
   const clearFilters = () => {
     setFilters({})
     setSearchTerm("")
-    setSelectedCategory("all")
     setCurrentPage(1)
   }
 
@@ -124,8 +119,6 @@ export default function EventsPage() {
     const totalStock = tickets.reduce((sum, ticket) => sum + parseInt(ticket.stock), 0)
     return totalStock
   }
-
-  const categories = ["all", "Technology", "Music", "Food & Drink", "Sports", "Arts & Culture", "Business", "Entertainment"]
 
   if (loading) {
     return (
@@ -211,19 +204,6 @@ export default function EventsPage() {
                     onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
                   />
                 </div>
-                
-                <div className="flex flex-wrap gap-2 justify-center">
-                  {categories.map((category) => (
-                    <Button
-                      key={category}
-                      variant={selectedCategory === category ? "default" : "outline"}
-                      size="sm"
-                      onClick={() => setSelectedCategory(category)}
-                    >
-                      {category === "all" ? "All Categories" : category}
-                    </Button>
-                  ))}
-                </div>
 
                 <div className="flex justify-center gap-2">
                   <Select 
@@ -246,7 +226,7 @@ export default function EventsPage() {
                     Search
                   </Button>
 
-                  {(Object.keys(filters).length > 0 || searchTerm || selectedCategory !== "all") && (
+                  {(Object.keys(filters).length > 0 || searchTerm) && (
                     <Button variant="outline" onClick={clearFilters}>
                       Clear Filters
                     </Button>
@@ -268,11 +248,11 @@ export default function EventsPage() {
                   <Calendar className="size-24 text-muted-foreground mx-auto mb-4" />
                   <h3 className="text-xl font-semibold mb-2">No events found</h3>
                   <p className="text-muted-foreground mb-6">
-                    {searchTerm || Object.keys(filters).length > 0 || selectedCategory !== "all"
+                    {searchTerm || Object.keys(filters).length > 0
                       ? "Try adjusting your search or filters" 
                       : "Check back later for upcoming events"}
                   </p>
-                  {(searchTerm || Object.keys(filters).length > 0 || selectedCategory !== "all") && (
+                  {(searchTerm || Object.keys(filters).length > 0) && (
                     <Button onClick={clearFilters} variant="outline">
                       Clear Filters
                     </Button>
