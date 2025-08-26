@@ -58,7 +58,7 @@ export function Carousel() {
   if (loading) {
     return (
       <div className="relative overflow-hidden rounded-xl">
-        <div className="aspect-[16/9] sm:aspect-[21/9] w-full flex items-center justify-center bg-muted">
+        <div className="aspect-[3/1] sm:aspect-[4/1] w-full flex items-center justify-center bg-muted">
           <div className="text-center">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-2"></div>
             <p className="text-sm text-muted-foreground">Loading carousel...</p>
@@ -71,7 +71,7 @@ export function Carousel() {
   if (error || slides.length === 0) {
     return (
       <div className="relative overflow-hidden rounded-xl">
-        <div className="aspect-[16/9] sm:aspect-[21/9] w-full flex items-center justify-center bg-muted">
+        <div className="aspect-[3/1] sm:aspect-[4/1] w-full flex items-center justify-center bg-muted">
           <div className="text-center">
             <p className="text-sm text-muted-foreground">
               {error || "No carousel data available"}
@@ -90,7 +90,7 @@ export function Carousel() {
       >
         {slides.map((slide) => (
           <div key={slide.id} className="relative min-w-full">
-            <div className="aspect-[16/9] sm:aspect-[21/9] w-full overflow-hidden rounded-xl">
+            <div className="aspect-[3/1] sm:aspect-[4/1] w-full overflow-hidden rounded-xl">
               <img 
                 src={slide.image_url || "/placeholder.svg"} 
                 alt={slide.title} 

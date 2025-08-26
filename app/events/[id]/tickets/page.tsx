@@ -144,6 +144,16 @@ export default function TicketPurchasePage() {
     }))
   }
 
+  const setTicketQuantity = (ticketId: number, quantity: number) => {
+    setTicketSelections(prev => prev.map(selection => {
+      if (selection.ticketId === ticketId) {
+        const newQuantity = Math.max(0, Math.min(selection.maxLimit, selection.stock, quantity))
+        return { ...selection, quantity: newQuantity }
+      }
+      return selection
+    }))
+  }
+
   const getTotalAmount = () => {
     return ticketSelections.reduce((total, selection) => {
       return total + (selection.quantity * selection.price)
@@ -410,9 +420,17 @@ export default function TicketPurchasePage() {
                                 <Minus className="size-4" />
                               </Button>
                               
-                              <span className="w-8 text-center font-medium">
-                                {selection.quantity}
-                              </span>
+                              <Input
+                                type="number"
+                                min="0"
+                                max={Math.min(selection.maxLimit, selection.stock)}
+                                value={selection.quantity}
+                                onChange={(e) => {
+                                  const value = parseInt(e.target.value) || 0
+                                  setTicketQuantity(selection.ticketId, value)
+                                }}
+                                className="w-16 text-center"
+                              />
                               
                               <Button
                                 variant="outline"

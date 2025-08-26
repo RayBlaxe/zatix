@@ -36,13 +36,13 @@ export default function HomePage() {
       <Header />
 
       <main className="flex-1">
-        <section className="pt-4 sm:pt-8">
+        <section className="pt-4 sm:pt-6">
           <div className="container px-4 sm:px-6">
-            <div className="text-center mb-2 sm:mb-3">
-              <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold mb-3 sm:mb-4" style={{ color: '#002547' }}>
+            <div className="text-center mb-4 sm:mb-6">
+              <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold mb-2 sm:mb-3" style={{ color: '#002547' }}>
                 Hi, what event do you want to join?
               </h1>
-              <p className="text-lg sm:text-xl max-w-2xl mx-auto" style={{ color: '#002547' }}>
+              <p className="text-base sm:text-lg max-w-2xl mx-auto" style={{ color: '#002547' }}>
                 ZaTix - Providing all your ticketing needs
               </p>
             </div>
@@ -51,7 +51,9 @@ export default function HomePage() {
 
         <section className="py-4 sm:py-8">
           <div className="container px-4 sm:px-6">
-            <Carousel />
+            <div className="max-w-4xl mx-auto">
+              <Carousel />
+            </div>
           </div>
         </section>
 
