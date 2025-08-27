@@ -38,9 +38,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               <Image
                 src="/zatix-logo.png"
                 alt="ZaTix Logo"
-                width={80}
-                height={80}
-                className="h-30 w-30"
+                width={0}
+                height={0}
+                sizes="100vw"
+                className="h-6 w-auto"
               />
             </Link>
           </div>

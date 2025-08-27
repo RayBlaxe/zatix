@@ -13,6 +13,7 @@ import { CustomerTicket } from "@/types/events"
 import { toast } from "@/components/ui/use-toast"
 import { QRCodeModal } from "@/components/qr-code-modal"
 import QRCode from 'qrcode'
+import jsPDF from 'jspdf'
 
 export default function MyTicketsPage() {
   const { user } = useAuth()
@@ -116,7 +117,6 @@ export default function MyTicketsPage() {
         margin: 2,
         errorCorrectionLevel: 'M',
         type: 'image/png',
-        quality: 0.92,
         color: {
           dark: '#000000',
           light: '#FFFFFF'
@@ -148,36 +148,177 @@ export default function MyTicketsPage() {
 
   const handleDownloadTicket = async (ticket: CustomerTicket) => {
     try {
-      // Generate QR code for the ticket
-      const qrCodeDataURL = await QRCode.toDataURL(ticket.ticket_code, {
-        width: 200,
-        margin: 2,
-        errorCorrectionLevel: 'M',
-        type: 'image/png',
-        quality: 0.92,
-        color: {
-          dark: '#000000',
-          light: '#FFFFFF'
-        }
+      const pdf = new jsPDF('portrait', 'mm', 'a4')
+      const pageWidth = pdf.internal.pageSize.getWidth()
+      const pageHeight = pdf.internal.pageSize.getHeight()
+      
+      // Colors
+      const primaryColor = '#2563eb' // Blue
+      const grayColor = '#6b7280'
+      const lightGrayColor = '#f3f4f6'
+      
+      // Add Zatix logo
+      try {
+        const logoImg = new Image()
+        logoImg.crossOrigin = 'anonymous'
+        logoImg.src = '/zatix-logo.png'
+        
+        await new Promise((resolve, reject) => {
+          logoImg.onload = resolve
+          logoImg.onerror = reject
+          // Add timeout to prevent hanging
+          setTimeout(reject, 3000)
+        })
+        
+        // Add logo (top left)
+        pdf.addImage(logoImg, 'PNG', 20, 15, 40, 15)
+      } catch (error) {
+        console.warn('Could not load logo, continuing without it:', error)
+        // Add text logo as fallback
+        pdf.setFontSize(16)
+        pdf.setTextColor(primaryColor)
+        pdf.text('ZATIX', 20, 25)
+      }
+      
+      // Header - E-Ticket
+      pdf.setFontSize(24)
+      pdf.setTextColor(primaryColor)
+      pdf.text('E-TICKET', pageWidth - 20, 25, { align: 'right' })
+      
+      // Ticket code
+      pdf.setFontSize(12)
+      pdf.setTextColor(grayColor)
+      pdf.text(`Ticket Code: ${ticket.ticket_code}`, pageWidth - 20, 32, { align: 'right' })
+      
+      // Draw separator line
+      pdf.setDrawColor(lightGrayColor)
+      pdf.setLineWidth(0.5)
+      pdf.line(20, 45, pageWidth - 20, 45)
+      
+      // Event Information Section
+      let yPos = 60
+      const event = ticket.ticket?.event
+      
+      if (event) {
+        pdf.setFontSize(18)
+        pdf.setTextColor(0, 0, 0)
+        pdf.text('EVENT INFORMATION', 20, yPos)
+        yPos += 15
+        
+        // Event name
+        pdf.setFontSize(16)
+        pdf.setTextColor(primaryColor)
+        const eventName = pdf.splitTextToSize(event.name, pageWidth - 40)
+        pdf.text(eventName, 20, yPos)
+        yPos += (eventName.length * 7) + 10
+        
+        // Event details
+        pdf.setFontSize(11)
+        pdf.setTextColor(0, 0, 0)
+        
+        // Date
+        pdf.text('📅 Date:', 20, yPos)
+        pdf.text(formatDate(event.start_date), 50, yPos)
+        yPos += 8
+        
+        // Time
+        pdf.text('🕐 Time:', 20, yPos)
+        pdf.text(`${event.start_time} - ${event.end_time} WIB`, 50, yPos)
+        yPos += 8
+        
+        // Location
+        pdf.text('📍 Location:', 20, yPos)
+        const locationText = pdf.splitTextToSize(event.location, pageWidth - 60)
+        pdf.text(locationText, 50, yPos)
+        yPos += (locationText.length * 6) + 15
+      }
+      
+      // Ticket Information Section
+      pdf.setFontSize(18)
+      pdf.setTextColor(0, 0, 0)
+      pdf.text('TICKET INFORMATION', 20, yPos)
+      yPos += 15
+      
+      pdf.setFontSize(11)
+      pdf.text('Attendee Name:', 20, yPos)
+      pdf.text(ticket.attendee_name, 60, yPos)
+      yPos += 8
+      
+      pdf.text('Ticket Type:', 20, yPos)
+      pdf.text(ticket.ticket?.name || 'Standard Ticket', 60, yPos)
+      yPos += 8
+      
+      pdf.text('Status:', 20, yPos)
+      pdf.setTextColor(ticket.status === 'active' ? '#059669' : '#dc2626')
+      pdf.text((ticket.status || 'active').toUpperCase(), 60, yPos)
+      yPos += 20
+      
+      // QR Code Section
+      pdf.setTextColor(0, 0, 0)
+      pdf.setFontSize(18)
+      pdf.text('QR CODE', 20, yPos)
+      yPos += 10
+      
+      // Generate and add QR code
+      try {
+        const qrCodeDataURL = await QRCode.toDataURL(ticket.ticket_code, {
+          width: 300,
+          margin: 2,
+          errorCorrectionLevel: 'M',
+          type: 'image/png',
+          color: {
+            dark: '#000000',
+            light: '#FFFFFF'
+          }
+        })
+        
+        const qrSize = 60
+        const qrX = (pageWidth - qrSize) / 2
+        pdf.addImage(qrCodeDataURL, 'PNG', qrX, yPos, qrSize, qrSize)
+        yPos += qrSize + 15
+      } catch (error) {
+        console.warn('Could not generate QR code for PDF')
+        yPos += 15
+      }
+      
+      // Instructions
+      pdf.setFontSize(14)
+      pdf.setTextColor(primaryColor)
+      pdf.text('INSTRUCTIONS', 20, yPos)
+      yPos += 10
+      
+      pdf.setFontSize(10)
+      pdf.setTextColor(0, 0, 0)
+      const instructions = [
+        '• Show this QR code to event staff at the entrance',
+        '• Make sure the QR code is clearly visible and not damaged',
+        '• Keep this ticket available during the event',
+        '• One scan per entry - do not share this QR code',
+        '• This ticket is non-transferable and valid for single use only'
+      ]
+      
+      instructions.forEach(instruction => {
+        pdf.text(instruction, 25, yPos)
+        yPos += 6
       })
       
-      // Generate ticket HTML with QR code
-      const ticketHTML = generateTicketHTML(ticket, qrCodeDataURL)
+      // Footer
+      yPos = pageHeight - 30
+      pdf.setDrawColor(lightGrayColor)
+      pdf.line(20, yPos, pageWidth - 20, yPos)
+      yPos += 8
       
-      // Create a blob and download it
-      const blob = new Blob([ticketHTML], { type: 'text/html' })
-      const url = URL.createObjectURL(blob)
-      const link = document.createElement('a')
-      link.href = url
-      link.download = `ticket-${ticket.ticket_code}.html`
-      document.body.appendChild(link)
-      link.click()
-      document.body.removeChild(link)
-      URL.revokeObjectURL(url)
+      pdf.setFontSize(9)
+      pdf.setTextColor(grayColor)
+      pdf.text('🔒 This ticket is unique and cannot be transferred', 20, yPos)
+      pdf.text('Generated by Zatix Event Management', pageWidth - 20, yPos, { align: 'right' })
+      
+      // Download the PDF
+      pdf.save(`zatix-ticket-${ticket.ticket_code}.pdf`)
       
       toast({
         title: "Ticket Downloaded",
-        description: "Your ticket has been downloaded successfully"
+        description: "Your PDF ticket has been downloaded successfully"
       })
     } catch (err) {
       console.error("Error downloading ticket:", err)
@@ -187,174 +328,6 @@ export default function MyTicketsPage() {
         variant: "destructive"
       })
     }
-  }
-
-  const generateTicketHTML = (ticket: CustomerTicket, qrCodeDataURL?: string) => {
-    const event = ticket.ticket?.event
-    return `
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>E-Ticket - ${ticket.ticket_code}</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 20px;
-            background-color: #f5f5f5;
-        }
-        .ticket {
-            background: white;
-            border-radius: 12px;
-            padding: 30px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
-            border: 2px dashed #e5e5e5;
-        }
-        .header {
-            text-align: center;
-            border-bottom: 2px solid #3b82f6;
-            padding-bottom: 20px;
-            margin-bottom: 20px;
-        }
-        .logo {
-            font-size: 28px;
-            font-weight: bold;
-            color: #3b82f6;
-            margin-bottom: 10px;
-        }
-        .event-name {
-            font-size: 24px;
-            font-weight: bold;
-            color: #1f2937;
-            margin-bottom: 10px;
-        }
-        .ticket-code {
-            font-size: 18px;
-            color: #6b7280;
-            font-family: monospace;
-            background: #f3f4f6;
-            padding: 8px 16px;
-            border-radius: 6px;
-            display: inline-block;
-        }
-        .details {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 20px;
-            margin: 20px 0;
-        }
-        .detail-item {
-            padding: 15px;
-            background: #f8fafc;
-            border-radius: 8px;
-            border-left: 4px solid #3b82f6;
-        }
-        .detail-label {
-            font-weight: bold;
-            color: #374151;
-            margin-bottom: 5px;
-        }
-        .detail-value {
-            color: #6b7280;
-            font-size: 16px;
-        }
-        .qr-section {
-            text-align: center;
-            margin: 30px 0;
-            padding: 20px;
-            background: #f8fafc;
-            border-radius: 8px;
-        }
-        .instructions {
-            margin-top: 30px;
-            padding: 20px;
-            background: #fef3c7;
-            border-radius: 8px;
-            border-left: 4px solid #f59e0b;
-        }
-        .instructions h3 {
-            color: #92400e;
-            margin-bottom: 10px;
-        }
-        .instructions ul {
-            color: #92400e;
-            padding-left: 20px;
-        }
-        .instructions li {
-            margin-bottom: 5px;
-        }
-        @media print {
-            body { background-color: white; }
-            .ticket { box-shadow: none; }
-        }
-    </style>
-</head>
-<body>
-    <div class="ticket">
-        <div class="header">
-            <div class="logo">🎫 ZaTix</div>
-            <div class="event-name">${event?.name || 'Event Ticket'}</div>
-            <div class="ticket-code">${ticket.ticket_code}</div>
-        </div>
-        
-        <div class="details">
-            <div class="detail-item">
-                <div class="detail-label">Attendee Name</div>
-                <div class="detail-value">${ticket.attendee_name}</div>
-            </div>
-            <div class="detail-item">
-                <div class="detail-label">Ticket Type</div>
-                <div class="detail-value">${ticket.ticket?.name || 'N/A'}</div>
-            </div>
-            ${event ? `
-            <div class="detail-item">
-                <div class="detail-label">Event Date</div>
-                <div class="detail-value">${formatDate(event.start_date)}</div>
-            </div>
-            <div class="detail-item">
-                <div class="detail-label">Event Time</div>
-                <div class="detail-value">${event.start_time} - ${event.end_time} WIB</div>
-            </div>
-            <div class="detail-item">
-                <div class="detail-label">Location</div>
-                <div class="detail-value">${event.location}</div>
-            </div>
-            ` : ''}
-            <div class="detail-item">
-                <div class="detail-label">Check-in Status</div>
-                <div class="detail-value">${ticket.checked_in_at ? 'Checked In' : 'Not Checked In'}</div>
-            </div>
-        </div>
-        
-        <div class="qr-section">
-            <p><strong>QR Code:</strong></p>
-            ${qrCodeDataURL ? `<img src="${qrCodeDataURL}" alt="QR Code for ${ticket.ticket_code}" style="margin: 10px auto; display: block; max-width: 200px; height: auto;" />` : ''}
-            <p>Please present this QR code at the event entrance</p>
-            <p>Ticket Code: <strong>${ticket.ticket_code}</strong></p>
-        </div>
-        
-        <div class="instructions">
-            <h3>🎯 Instructions</h3>
-            <ul>
-                <li>Bring this ticket (printed or digital) to the event</li>
-                <li>Present your ticket code at the entrance for scanning</li>
-                <li>Arrive 30 minutes before the event starts</li>
-                <li>This ticket is non-transferable and valid for single entry only</li>
-                <li>Keep this ticket safe - lost tickets cannot be replaced</li>
-            </ul>
-        </div>
-        
-        <div style="text-align: center; margin-top: 30px; color: #6b7280; font-size: 14px;">
-            <p>Generated on ${new Date().toLocaleDateString('id-ID')} • ZaTix Event Management</p>
-            <p>🔒 This is a secure e-ticket • Do not share this ticket code</p>
-        </div>
-    </div>
-</body>
-</html>
-    `
   }
 
   const renderTicketCard = (ticket: CustomerTicket) => {
