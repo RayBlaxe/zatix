@@ -19,6 +19,8 @@ import {
   Shield,
   UserCheck,
   CheckCircle,
+  CreditCard,
+  Receipt,
 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { useRouter } from "next/navigation";
@@ -37,6 +39,9 @@ export function DashboardSidebar({ onNavigate }: DashboardSidebarProps = {}) {
   const router = useRouter();
   const [contentManagementOpen, setContentManagementOpen] = useState(
     pathname.startsWith("/dashboard/content")
+  );
+  const [financeOpen, setFinanceOpen] = useState(
+    pathname.startsWith("/dashboard/finance")
   );
 
   const handleLogout = () => {
@@ -60,12 +65,6 @@ export function DashboardSidebar({ onNavigate }: DashboardSidebarProps = {}) {
         active: pathname === "/dashboard/events" || pathname.startsWith("/dashboard/events/"),
       },
     ]),
-    {
-      label: "Finance",
-      icon: BarChart3,
-      href: "/dashboard/finance",
-      active: pathname === "/dashboard/finance",
-    },
   ];
 
   const eoRoutes = [
@@ -98,6 +97,22 @@ export function DashboardSidebar({ onNavigate }: DashboardSidebarProps = {}) {
     },
   ];
 
+  // Finance routes - available for finance staff, EO owners, and super-admin
+  const financeRoutes = [
+    {
+      label: "Overview",
+      icon: BarChart3,
+      href: "/dashboard/finance",
+      active: pathname === "/dashboard/finance" && !pathname.includes("/transactions"),
+    },
+    {
+      label: "Transactions",
+      icon: Receipt,
+      href: "/dashboard/finance/transactions",
+      active: pathname === "/dashboard/finance/transactions",
+    },
+  ];
+
   // Filter routes based on user role
   const routes = [
     ...baseRoutes,
@@ -113,7 +128,9 @@ export function DashboardSidebar({ onNavigate }: DashboardSidebarProps = {}) {
       active: pathname === "/dashboard/content/home",
     }
   ];
-  
+
+  // Show finance section for finance staff, EO owners, and super-admin
+  const showFinance = hasRole("finance") || hasRole("eo-owner") || hasRole("super-admin");
 
   return (
     <div className="flex h-full flex-col border-r" style={{ backgroundColor: '#002547' }}>
@@ -144,6 +161,46 @@ export function DashboardSidebar({ onNavigate }: DashboardSidebarProps = {}) {
               {route.label}
             </Link>
           ))}
+
+          {/* Finance Management - for finance staff, EO owners, and super-admin */}
+          {showFinance && (
+            <Collapsible open={financeOpen} onOpenChange={setFinanceOpen}>
+              <CollapsibleTrigger asChild>
+                <button
+                  className={cn(
+                    "flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm font-medium text-white hover:bg-white/10 hover:text-white",
+                    pathname.startsWith("/dashboard/finance")
+                      ? "bg-white/20 text-white"
+                      : "transparent"
+                  )}
+                >
+                  <DollarSign className="size-4" />
+                  Finance
+                  {financeOpen ? (
+                    <ChevronDown className="ml-auto size-4" />
+                  ) : (
+                    <ChevronRight className="ml-auto size-4" />
+                  )}
+                </button>
+              </CollapsibleTrigger>
+              <CollapsibleContent className="space-y-1">
+                {financeRoutes.map((route) => (
+                  <Link
+                    key={route.href}
+                    href={route.href}
+                    onClick={onNavigate}
+                    className={cn(
+                      "flex items-center gap-3 rounded-md px-3 py-2 ml-4 text-sm font-medium text-white/90 hover:bg-white/10 hover:text-white",
+                      route.active ? "bg-white/20 text-white" : "transparent"
+                    )}
+                  >
+                    <route.icon className="size-3" />
+                    {route.label}
+                  </Link>
+                ))}
+              </CollapsibleContent>
+            </Collapsible>
+          )}
 
           {/* Content Management - Only for super-admin */}
           {hasRole("super-admin") && (
@@ -199,7 +256,15 @@ export function DashboardSidebar({ onNavigate }: DashboardSidebarProps = {}) {
                 ? "Event Organizer"
                 : user?.currentRole === "super-admin"
                   ? "Super Admin"
-                  : "Customer"}
+                  : user?.currentRole === "event-pic"
+                    ? "Event PIC"
+                    : user?.currentRole === "crew"
+                      ? "Crew"
+                      : user?.currentRole === "finance"
+                        ? "Finance"
+                        : user?.currentRole === "cashier"
+                          ? "Cashier"
+                          : "Customer"}
             </p>
           </div>
         </div>

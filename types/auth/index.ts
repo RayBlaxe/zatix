@@ -1,7 +1,7 @@
 export * from './login';
 export * from './register';
 
-export type UserRole = "customer" | "eo-owner" | "super-admin";
+export type UserRole = "customer" | "eo-owner" | "super-admin" | "event-pic" | "crew" | "finance" | "cashier";
 
 export type AuthUser = {
   id: string;

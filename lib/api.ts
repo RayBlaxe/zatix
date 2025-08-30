@@ -38,6 +38,16 @@ import {
   OrderCreateResponse,
   OrderStatusResponse
 } from "@/types/payment"
+import {
+  TicketLimitCheckRequest,
+  TicketLimitCheckResponse,
+  BulkLimitCheckRequest,
+  BulkLimitCheckResponse,
+  UserTicketPurchaseHistory,
+  TicketLimitSettings,
+  EventLimitOverview,
+  TicketLimitRule
+} from "@/types/ticket-limits"
 
 // Base API URL - use environment variable or fallback for development
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "https://api.zatix.id/api"
@@ -692,6 +702,490 @@ function handleMockResponse<T>(endpoint: string, method: string, data?: any): T 
     } as unknown as T
   }
 
+  // Event Staff API mock responses - NEW: Event-scoped staff management
+  if (endpoint.includes("/events/") && endpoint.includes("/staffs") && method === "GET") {
+    const eventId = endpoint.split("/")[2]
+    return {
+      success: true,
+      message: "Staff for event retrieved successfully.",
+      data: {
+        current_page: 1,
+        data: [
+          {
+            id: 4,
+            created_by: 2,
+            name: "Event PIC",
+            email: "pic@zatix.com",
+            email_verified_at: "2024-12-31T17:00:00.000000Z",
+            two_factor_secret: null,
+            two_factor_recovery_codes: null,
+            two_factor_confirmed_at: null,
+            created_at: "2025-08-27T16:04:48.000000Z",
+            updated_at: "2025-08-27T16:05:13.000000Z",
+            roles: [
+              {
+                id: 3,
+                name: "crew",
+                guard_name: "api",
+                created_at: "2025-08-27T16:04:49.000000Z",
+                updated_at: "2025-08-27T16:04:49.000000Z",
+                pivot: {
+                  model_type: "App\\Models\\User",
+                  model_id: 4,
+                  role_id: 3
+                }
+              },
+              {
+                id: 7,
+                name: "event-pic",
+                guard_name: "api",
+                created_at: "2025-08-27T16:04:50.000000Z",
+                updated_at: "2025-08-27T16:04:50.000000Z",
+                pivot: {
+                  model_type: "App\\Models\\User",
+                  model_id: 4,
+                  role_id: 7
+                }
+              }
+            ],
+            pivot: {
+              event_id: parseInt(eventId),
+              user_id: 4
+            }
+          },
+          {
+            id: 5,
+            created_by: 4,
+            name: "Crew",
+            email: "crew@zatix.com",
+            email_verified_at: "2024-12-31T17:00:00.000000Z",
+            two_factor_secret: null,
+            two_factor_recovery_codes: null,
+            two_factor_confirmed_at: null,
+            created_at: "2025-08-27T16:04:49.000000Z",
+            updated_at: "2025-08-27T16:05:13.000000Z",
+            roles: [
+              {
+                id: 3,
+                name: "crew",
+                guard_name: "api",
+                created_at: "2025-08-27T16:04:49.000000Z",
+                updated_at: "2025-08-27T16:04:49.000000Z",
+                pivot: {
+                  model_type: "App\\Models\\User",
+                  model_id: 5,
+                  role_id: 3
+                }
+              }
+            ],
+            pivot: {
+              event_id: parseInt(eventId),
+              user_id: 5
+            }
+          },
+          {
+            id: 6,
+            created_by: 4,
+            name: "Finance",
+            email: "finance@zatix.com",
+            email_verified_at: "2024-12-31T17:00:00.000000Z",
+            two_factor_secret: null,
+            two_factor_recovery_codes: null,
+            two_factor_confirmed_at: null,
+            created_at: "2025-08-27T16:04:49.000000Z",
+            updated_at: "2025-08-27T16:05:13.000000Z",
+            roles: [
+              {
+                id: 4,
+                name: "finance",
+                guard_name: "api",
+                created_at: "2025-08-27T16:04:49.000000Z",
+                updated_at: "2025-08-27T16:04:49.000000Z",
+                pivot: {
+                  model_type: "App\\Models\\User",
+                  model_id: 6,
+                  role_id: 4
+                }
+              }
+            ],
+            pivot: {
+              event_id: parseInt(eventId),
+              user_id: 6
+            }
+          },
+          {
+            id: 7,
+            created_by: 4,
+            name: "Cashier",
+            email: "cashier@zatix.com",
+            email_verified_at: "2024-12-31T17:00:00.000000Z",
+            two_factor_secret: null,
+            two_factor_recovery_codes: null,
+            two_factor_confirmed_at: null,
+            created_at: "2025-08-27T16:04:49.000000Z",
+            updated_at: "2025-08-27T16:05:13.000000Z",
+            roles: [
+              {
+                id: 5,
+                name: "cashier",
+                guard_name: "api",
+                created_at: "2025-08-27T16:04:50.000000Z",
+                updated_at: "2025-08-27T16:04:50.000000Z",
+                pivot: {
+                  model_type: "App\\Models\\User",
+                  model_id: 7,
+                  role_id: 5
+                }
+              }
+            ],
+            pivot: {
+              event_id: parseInt(eventId),
+              user_id: 7
+            }
+          }
+        ],
+        first_page_url: `http://zatix-backend.test/api/events/${eventId}/staffs?page=1`,
+        from: 1,
+        last_page: 1,
+        last_page_url: `http://zatix-backend.test/api/events/${eventId}/staffs?page=1`,
+        links: [
+          {
+            url: null,
+            label: "&laquo; Previous",
+            active: false
+          },
+          {
+            url: `http://zatix-backend.test/api/events/${eventId}/staffs?page=1`,
+            label: "1",
+            active: true
+          },
+          {
+            url: null,
+            label: "Next &raquo;",
+            active: false
+          }
+        ],
+        next_page_url: null,
+        path: `http://zatix-backend.test/api/events/${eventId}/staffs`,
+        per_page: 15,
+        prev_page_url: null,
+        to: 4,
+        total: 4
+      }
+    } as unknown as T
+  }
+
+  if (endpoint === "/staffs/create" && method === "POST") {
+    return {
+      success: true,
+      message: "Staff member created and assigned to event successfully.",
+      data: {
+        name: data?.name || "New Staff",
+        email: data?.email || "newstaff@zatix.com",
+        role: data?.role || "crew",
+        assigned_to_event: "Sample Event"
+      }
+    } as unknown as T
+  }
+
+  if (endpoint.includes("/events/") && endpoint.includes("/staffs/") && method === "DELETE") {
+    return {
+      success: true,
+      message: "Staff successfully unassigned from the event.",
+      data: []
+    } as unknown as T
+  }
+
+  // Financial API mock responses
+  if (endpoint.includes("/reports/events/") && method === "GET") {
+    const eventId = endpoint.split("/")[3]
+    return {
+      success: true,
+      message: "Event financial report retrieved successfully.",
+      data: {
+        event: {
+          id: parseInt(eventId),
+          name: "Workshop Fotografi: Teknik Dasar"
+        },
+        summary: {
+          total_income: 900000,
+          total_expenses: 150000,
+          net_profit: 750000,
+          tickets_sold: 18,
+          ticket_sales: 900000,
+          other_income: 0
+        }
+      }
+    } as unknown as T
+  }
+
+  if (endpoint.includes("/reports/eos/") && method === "GET") {
+    const eoId = endpoint.split("/")[3]
+    return {
+      success: true,
+      message: "EO financial report retrieved successfully.",
+      data: {
+        event_organizer: {
+          id: parseInt(eoId),
+          name: "EO Owner Organizer"
+        },
+        summary: {
+          total_income: 2450000,
+          total_expenses: 480000,
+          net_profit: 1970000,
+          tickets_sold: 67,
+          ticket_sales: 2450000,
+          other_income: 0
+        },
+        event_breakdowns: [
+          {
+            id: 1,
+            name: "Workshop Fotografi: Teknik Dasar",
+            total_income: 900000,
+            total_expenses: 150000,
+            net_profit: 750000,
+            tickets_sold: 18
+          },
+          {
+            id: 2,
+            name: "Seminar Digital Marketing",
+            total_income: 800000,
+            total_expenses: 180000,
+            net_profit: 620000,
+            tickets_sold: 24
+          },
+          {
+            id: 3,
+            name: "Music Concert Night",
+            total_income: 750000,
+            total_expenses: 150000,
+            net_profit: 600000,
+            tickets_sold: 25
+          }
+        ]
+      }
+    } as unknown as T
+  }
+
+  if (endpoint === "/reports/global" && method === "GET") {
+    return {
+      success: true,
+      message: "Global financial report retrieved successfully.",
+      data: {
+        summary: {
+          total_income: 8950000,
+          total_expenses: 1650000,
+          net_profit: 7300000,
+          tickets_sold: 234,
+          ticket_sales: 8950000,
+          other_income: 0
+        },
+        eo_breakdowns: [
+          {
+            id: 1,
+            name: "EO Owner Organizer",
+            total_events: 6,
+            subtotal_net_profit: 2970000,
+            subtotal_tickets_sold: 67,
+            subtotal_income: 2450000
+          },
+          {
+            id: 2,
+            name: "Creative Events Co",
+            total_events: 8,
+            subtotal_net_profit: 2180000,
+            subtotal_tickets_sold: 89,
+            subtotal_income: 3200000
+          },
+          {
+            id: 3,
+            name: "Premium Event Solutions",
+            total_events: 4,
+            subtotal_net_profit: 2150000,
+            subtotal_tickets_sold: 78,
+            subtotal_income: 3300000
+          }
+        ]
+      }
+    } as unknown as T
+  }
+
+  if (endpoint === "/transactions" && method === "GET") {
+    return {
+      success: true,
+      message: "Transactions retrieved successfully.",
+      data: {
+        current_page: 1,
+        data: [
+          {
+            id: 1,
+            order_id: "9f77df4a-e02b-4fe9-b727-fddab3bec01b",
+            user_id: 8,
+            version_of_payment: 1,
+            grand_discount: 0,
+            grand_amount: 150000,
+            type: "transfer",
+            status: "success",
+            created_at: "2025-08-30T15:46:02.000000Z",
+            updated_at: "2025-08-30T15:50:15.000000Z",
+            user: {
+              id: 8,
+              name: "John Doe",
+              email: "john@example.com"
+            },
+            event: {
+              id: 1,
+              name: "Workshop Fotografi: Teknik Dasar"
+            },
+            ticket_details: [
+              {
+                id: 1,
+                ticket_name: "Regular Ticket",
+                quantity: 1,
+                price: 150000,
+                subtotal: 150000
+              }
+            ]
+          },
+          {
+            id: 2,
+            order_id: "8a4cdf5f-3dc7-44c2-81cf-9a216f4f31e0",
+            user_id: 9,
+            version_of_payment: 1,
+            grand_discount: 25000,
+            grand_amount: 225000,
+            type: "credit_card",
+            status: "pending",
+            created_at: "2025-08-30T14:30:12.000000Z",
+            updated_at: "2025-08-30T14:30:12.000000Z",
+            user: {
+              id: 9,
+              name: "Jane Smith",
+              email: "jane@example.com"
+            },
+            event: {
+              id: 2,
+              name: "Seminar Digital Marketing"
+            },
+            ticket_details: [
+              {
+                id: 2,
+                ticket_name: "VIP Ticket",
+                quantity: 1,
+                price: 250000,
+                subtotal: 250000
+              }
+            ]
+          },
+          {
+            id: 3,
+            order_id: "7b3caf9e-2dc6-33c1-70cf-8a105f3f20d9",
+            user_id: 10,
+            version_of_payment: 1,
+            grand_discount: 0,
+            grand_amount: 300000,
+            type: "ewallet",
+            status: "failed",
+            created_at: "2025-08-30T13:15:45.000000Z",
+            updated_at: "2025-08-30T13:20:30.000000Z",
+            user: {
+              id: 10,
+              name: "Bob Wilson",
+              email: "bob@example.com"
+            },
+            event: {
+              id: 3,
+              name: "Music Concert Night"
+            },
+            ticket_details: [
+              {
+                id: 3,
+                ticket_name: "Premium Ticket",
+                quantity: 2,
+                price: 150000,
+                subtotal: 300000
+              }
+            ]
+          }
+        ],
+        first_page_url: "https://api.zatix.id/api/transactions?page=1",
+        from: 1,
+        last_page: 1,
+        last_page_url: "https://api.zatix.id/api/transactions?page=1",
+        next_page_url: null,
+        path: "https://api.zatix.id/api/transactions",
+        per_page: 15,
+        prev_page_url: null,
+        to: 3,
+        total: 3
+      }
+    } as unknown as T
+  }
+
+  if (endpoint.includes("/transactions/") && endpoint.includes("/payment-details") && method === "GET") {
+    return {
+      success: true,
+      message: "Payment details retrieved successfully.",
+      data: {
+        status_code: "200",
+        status_message: "Success, transaction found",
+        transaction_id: "8a4cdf5f-3dc7-44c2-81cf-9a216f4f31e0",
+        order_id: "9f77caf9-1597-4fcb-9ef7-3bd61d36a2db",
+        merchant_id: "G555603538",
+        gross_amount: "150000.00",
+        currency: "IDR",
+        payment_type: "bank_transfer",
+        transaction_time: "2025-08-30 21:49:12",
+        transaction_status: "settlement",
+        fraud_status: "accept",
+        va_numbers: [
+          {
+            bank: "bca",
+            va_number: "03538014923860627657259"
+          }
+        ],
+        expiry_time: "2025-08-31 21:49:12"
+      }
+    } as unknown as T
+  }
+
+  if (endpoint === "/financial/metrics" && method === "GET") {
+    return {
+      success: true,
+      message: "Financial metrics retrieved successfully.",
+      data: {
+        totalRevenue: 8950000,
+        totalTransactions: 234,
+        successfulTransactions: 187,
+        pendingTransactions: 32,
+        failedTransactions: 15,
+        averageTransactionValue: 38248,
+        topEvents: [
+          {
+            eventId: 1,
+            eventName: "Workshop Fotografi: Teknik Dasar",
+            revenue: 900000,
+            ticketsSold: 18
+          },
+          {
+            eventId: 2,
+            eventName: "Seminar Digital Marketing",
+            revenue: 800000,
+            ticketsSold: 24
+          },
+          {
+            eventId: 3,
+            eventName: "Music Concert Night",
+            revenue: 750000,
+            ticketsSold: 25
+          }
+        ],
+        revenueGrowth: 23.5,
+        transactionGrowth: 18.2
+      }
+    } as unknown as T
+  }
+
   if (endpoint === "/staff/create" && method === "POST") {
     return {
       success: true,
@@ -883,6 +1377,256 @@ function handleMockResponse<T>(endpoint: string, method: string, data?: any): T 
     } as unknown as T
   }
 
+  // Ticket Limits API mock responses
+  if (endpoint === "/ticket-limits/check" && method === "POST") {
+    const { ticket_id, user_id, requested_quantity } = data || {}
+    const isValid = requested_quantity <= 5 // Simple validation: max 5 tickets per person
+    return {
+      success: true,
+      data: {
+        ticket_id: ticket_id,
+        requested_quantity: requested_quantity,
+        available_quantity: isValid ? requested_quantity : 5,
+        limit_type: "per_order",
+        limit_value: 5,
+        user_purchased: Math.floor(Math.random() * 3),
+        is_valid: isValid,
+        error_message: isValid ? undefined : "Exceeded maximum ticket limit per person"
+      },
+      message: isValid ? "Ticket limit validation passed" : "Ticket limit validation failed"
+    } as unknown as T
+  }
+
+  if (endpoint === "/ticket-limits/bulk-check" && method === "POST") {
+    const { user_id, items } = data || {}
+    const validations = (items || []).map((item: any) => ({
+      ticket_id: item.ticket_id,
+      requested_quantity: item.quantity,
+      available_quantity: Math.min(item.quantity, 5),
+      limit_type: "per_order",
+      limit_value: 5,
+      user_purchased: Math.floor(Math.random() * 3),
+      is_valid: item.quantity <= 5,
+      error_message: item.quantity > 5 ? "Exceeded maximum ticket limit per person" : undefined
+    }))
+    const totalViolations = validations.filter((v: any) => !v.is_valid).length
+    return {
+      success: true,
+      data: {
+        valid: totalViolations === 0,
+        validations: validations,
+        total_violations: totalViolations
+      },
+      message: totalViolations === 0 ? "All ticket limits validated successfully" : "Some ticket limits violated"
+    } as unknown as T
+  }
+
+  if (endpoint.startsWith("/ticket-limits/history/") && method === "GET") {
+    const pathParts = endpoint.split("/")
+    const userId = parseInt(pathParts[3])
+    const ticketId = parseInt(pathParts[4])
+    return {
+      success: true,
+      data: {
+        user_id: userId,
+        ticket_id: ticketId,
+        total_purchased: Math.floor(Math.random() * 10) + 1,
+        daily_purchased: Math.floor(Math.random() * 3) + 1,
+        last_purchase_date: new Date(Date.now() - Math.random() * 7 * 24 * 60 * 60 * 1000).toISOString(),
+        orders: [
+          {
+            order_id: 1001,
+            quantity: 2,
+            purchase_date: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
+            status: "success"
+          },
+          {
+            order_id: 1002,
+            quantity: 1,
+            purchase_date: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
+            status: "success"
+          }
+        ]
+      },
+      message: "User purchase history retrieved successfully"
+    } as unknown as T
+  }
+
+  if (endpoint.startsWith("/ticket-limits/settings/") && method === "GET") {
+    const eventId = parseInt(endpoint.split("/")[3])
+    return {
+      success: true,
+      data: {
+        id: 1,
+        event_id: eventId,
+        enable_per_order_limits: true,
+        enable_cumulative_limits: false,
+        enable_daily_limits: false,
+        default_per_order_limit: 5,
+        default_cumulative_limit: 10,
+        default_daily_limit: 3,
+        grace_period_minutes: 15,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      },
+      message: "Event limit settings retrieved successfully"
+    } as unknown as T
+  }
+
+  if (endpoint.startsWith("/ticket-limits/settings/") && method === "PUT") {
+    const eventId = parseInt(endpoint.split("/")[3])
+    return {
+      success: true,
+      data: {
+        id: 1,
+        event_id: eventId,
+        ...data,
+        updated_at: new Date().toISOString()
+      },
+      message: "Event limit settings updated successfully"
+    } as unknown as T
+  }
+
+  if (endpoint.startsWith("/ticket-limits/rules/") && method === "GET") {
+    const ticketId = parseInt(endpoint.split("/")[3])
+    return {
+      success: true,
+      data: [
+        {
+          id: 1,
+          ticket_id: ticketId,
+          limit_type: "per_order",
+          limit_value: 5,
+          is_active: true,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        },
+        {
+          id: 2,
+          ticket_id: ticketId,
+          limit_type: "cumulative",
+          limit_value: 10,
+          is_active: false,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        }
+      ],
+      message: "Ticket limit rules retrieved successfully"
+    } as unknown as T
+  }
+
+  if (endpoint.startsWith("/ticket-limits/rules/") && method === "POST") {
+    const ticketId = parseInt(endpoint.split("/")[3])
+    const { rules } = data || {}
+    return {
+      success: true,
+      data: (rules || []).map((rule: any, index: number) => ({
+        id: index + 1,
+        ticket_id: ticketId,
+        ...rule,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      })),
+      message: "Ticket limit rules updated successfully"
+    } as unknown as T
+  }
+
+  if (endpoint.startsWith("/ticket-limits/analytics/") && method === "GET") {
+    const eventId = parseInt(endpoint.split("/")[3])
+    return {
+      success: true,
+      data: {
+        event_id: eventId,
+        event_name: "Sample Event",
+        total_tickets: 4,
+        tickets_with_limits: 3,
+        total_limit_violations: 7,
+        most_limited_ticket: {
+          name: "VIP Ticket",
+          limit_value: 2,
+          usage_percentage: 85.5
+        },
+        limit_analytics: [
+          {
+            ticket_id: 1,
+            ticket_name: "Regular Ticket",
+            limit_type: "per_order",
+            limit_value: 5,
+            current_usage: 67,
+            usage_percentage: 67.0,
+            violations_count: 3,
+            top_violators: [
+              {
+                user_id: 1,
+                user_name: "John Doe",
+                attempted_quantity: 8,
+                violation_date: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()
+              }
+            ]
+          },
+          {
+            ticket_id: 2,
+            ticket_name: "VIP Ticket",
+            limit_type: "per_order",
+            limit_value: 2,
+            current_usage: 45,
+            usage_percentage: 85.5,
+            violations_count: 4,
+            top_violators: [
+              {
+                user_id: 2,
+                user_name: "Jane Smith",
+                attempted_quantity: 5,
+                violation_date: new Date(Date.now() - 12 * 60 * 60 * 1000).toISOString()
+              }
+            ]
+          }
+        ]
+      },
+      message: "Event limit analytics retrieved successfully"
+    } as unknown as T
+  }
+
+  if (endpoint === "/ticket-limits/violations" && method === "GET") {
+    return {
+      success: true,
+      data: {
+        data: [
+          {
+            id: 1,
+            user_id: 1,
+            user_name: "John Doe",
+            ticket_id: 1,
+            ticket_name: "VIP Ticket",
+            event_name: "Music Concert",
+            attempted_quantity: 8,
+            limit_value: 5,
+            limit_type: "per_order",
+            violation_date: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
+            ip_address: "192.168.1.100"
+          },
+          {
+            id: 2,
+            user_id: 2,
+            user_name: "Jane Smith",
+            ticket_id: 2,
+            ticket_name: "Regular Ticket",
+            event_name: "Tech Conference",
+            attempted_quantity: 12,
+            limit_value: 10,
+            limit_type: "cumulative",
+            violation_date: new Date(Date.now() - 12 * 60 * 60 * 1000).toISOString(),
+            ip_address: "192.168.1.101"
+          }
+        ],
+        total: 25,
+        per_page: 10,
+        current_page: 1
+      },
+      message: "Limit violations retrieved successfully"
+    } as unknown as T
+  }
+
   // Default mock response
   return {} as T
 }
@@ -1052,6 +1796,45 @@ export const staffApi = {
   getPermissions: (): Promise<string[]> => {
     const token = getToken()
     return apiRequest<string[]>("/permissions", "GET", null, token || undefined)
+  }
+}
+
+// Event Staff API functions - NEW: Event-scoped staff management 
+export const eventStaffApi = {
+  // Get staff assigned to specific event
+  getEventStaff: (eventId: number, page?: number): Promise<any> => {
+    const token = getToken()
+    const url = page ? `/events/${eventId}/staffs?page=${page}` : `/events/${eventId}/staffs`
+    return apiRequest<any>(url, "GET", null, token || undefined)
+  },
+
+  // Create and assign staff to event
+  createEventStaff: (data: { name: string; email: string; role: 'event-pic' | 'crew' | 'finance' | 'cashier'; event_id: number }): Promise<any> => {
+    const token = getToken()
+    return apiRequest<any>("/staffs/create", "POST", data, token || undefined)
+  },
+
+  // Update event staff
+  updateEventStaff: (eventId: number, staffId: number, data: { name?: string; role?: 'event-pic' | 'crew' | 'finance' | 'cashier' }): Promise<any> => {
+    const token = getToken()
+    const formData = new FormData()
+    
+    formData.append('_method', 'PUT')
+    if (data.name) formData.append('name', data.name)
+    if (data.role) formData.append('role', data.role)
+    
+    return apiRequestFormData<any>(`/events/${eventId}/staffs/${staffId}`, "POST", formData, token || undefined)
+  },
+
+  // Remove staff from event (unassign)
+  deleteEventStaff: (eventId: number, staffId: number): Promise<any> => {
+    const token = getToken()
+    return apiRequest<any>(`/events/${eventId}/staffs/${staffId}`, "DELETE", null, token || undefined)
+  },
+
+  // Get available roles for event staff
+  getEventStaffRoles: (): Promise<string[]> => {
+    return Promise.resolve(['event-pic', 'crew', 'finance', 'cashier'])
   }
 }
 
@@ -1449,4 +2232,262 @@ export const orderApi = {
 
   // Note: QR code generation is now handled client-side using the qrcode library
   // getTicketQR function removed - QR codes are generated directly from ticket_code
+}
+
+// Financial API for three-tier reporting system
+export const financialApi = {
+  // Event-level financial reports
+  getEventReport: (eventId: number, params?: { start_date?: string; end_date?: string }) => {
+    const queryParams = params ? `?${new URLSearchParams(params).toString()}` : ""
+    return apiRequest<{
+      event: { id: number; name: string }
+      summary: {
+        total_income: number
+        total_expenses: number
+        net_profit: number
+        tickets_sold: number
+        ticket_sales: number
+        other_income: number
+      }
+    }>(`/reports/events/${eventId}${queryParams}`, "GET")
+  },
+
+  // EO-level financial reports
+  getEOReport: (eoId: number, params?: { start_date?: string; end_date?: string }) => {
+    const queryParams = params ? `?${new URLSearchParams(params).toString()}` : ""
+    return apiRequest<{
+      event_organizer: { id: number; name: string }
+      summary: {
+        total_income: number
+        total_expenses: number
+        net_profit: number
+        tickets_sold: number
+        ticket_sales: number
+        other_income: number
+      }
+      event_breakdowns: Array<{
+        id: number
+        name: string
+        total_income: number
+        total_expenses: number
+        net_profit: number
+        tickets_sold: number
+      }>
+    }>(`/reports/eos/${eoId}${queryParams}`, "GET")
+  },
+
+  // Global financial reports (super-admin only)
+  getGlobalReport: (params?: { start_date?: string; end_date?: string }) => {
+    const queryParams = params ? `?${new URLSearchParams(params).toString()}` : ""
+    return apiRequest<{
+      summary: {
+        total_income: number
+        total_expenses: number
+        net_profit: number
+        tickets_sold: number
+        ticket_sales: number
+        other_income: number
+      }
+      eo_breakdowns: Array<{
+        id: number
+        name: string
+        total_events: number
+        subtotal_net_profit: number
+        subtotal_tickets_sold: number
+        subtotal_income: number
+      }>
+    }>(`/reports/global${queryParams}`, "GET")
+  },
+
+  // Transaction tracking
+  getTransactions: (params?: {
+    page?: number
+    per_page?: number
+    event_id?: number
+    status?: string
+    type?: string
+    start_date?: string
+    end_date?: string
+  }) => {
+    const queryParams = params ? `?${new URLSearchParams(Object.entries(params).filter(([_, v]) => v !== undefined).map(([k, v]) => [k, String(v)])).toString()}` : ""
+    return apiRequest<{
+      current_page: number
+      data: Array<{
+        id: number
+        order_id: string
+        user_id: number
+        version_of_payment: number
+        grand_discount: number
+        grand_amount: number
+        type: string
+        status: string
+        created_at: string
+        updated_at: string
+        user?: { id: number; name: string; email: string }
+        event?: { id: number; name: string }
+        ticket_details?: Array<{
+          id: number
+          ticket_name: string
+          quantity: number
+          price: number
+          subtotal: number
+        }>
+      }>
+      first_page_url: string
+      from: number
+      last_page: number
+      last_page_url: string
+      next_page_url: string | null
+      path: string
+      per_page: number
+      prev_page_url: string | null
+      to: number
+      total: number
+    }>(`/transactions${queryParams}`, "GET")
+  },
+
+  // Get payment details for a transaction
+  getPaymentDetails: (orderId: string) => {
+    return apiRequest<{
+      status_code: string
+      status_message: string
+      transaction_id: string
+      order_id: string
+      merchant_id: string
+      gross_amount: string
+      currency: string
+      payment_type: string
+      transaction_time: string
+      transaction_status: string
+      fraud_status: string
+      va_numbers?: Array<{
+        bank: string
+        va_number: string
+      }>
+      expiry_time?: string
+    }>(`/transactions/${orderId}/payment-details`, "GET")
+  },
+
+  // Get financial metrics/dashboard data
+  getFinancialMetrics: (params?: {
+    event_id?: number
+    eo_id?: number
+    start_date?: string
+    end_date?: string
+  }) => {
+    const queryParams = params ? `?${new URLSearchParams(Object.entries(params).filter(([_, v]) => v !== undefined).map(([k, v]) => [k, String(v)])).toString()}` : ""
+    return apiRequest<{
+      totalRevenue: number
+      totalTransactions: number
+      successfulTransactions: number
+      pendingTransactions: number
+      failedTransactions: number
+      averageTransactionValue: number
+      topEvents: Array<{
+        eventId: number
+        eventName: string
+        revenue: number
+        ticketsSold: number
+      }>
+      revenueGrowth: number
+      transactionGrowth: number
+    }>(`/financial/metrics${queryParams}`, "GET")
+  }
+}
+
+// Ticket Limits API for order limit management
+export const ticketLimitsApi = {
+  // Check if user can purchase specific quantity of tickets
+  checkTicketLimit: (request: TicketLimitCheckRequest) => {
+    return apiRequest<TicketLimitCheckResponse>("/ticket-limits/check", "POST", request)
+  },
+
+  // Bulk check multiple ticket purchases in one request
+  bulkCheckLimits: (request: BulkLimitCheckRequest) => {
+    return apiRequest<BulkLimitCheckResponse>("/ticket-limits/bulk-check", "POST", request)
+  },
+
+  // Get user's purchase history for a specific ticket
+  getUserPurchaseHistory: (userId: number, ticketId: number) => {
+    return apiRequest<{
+      success: boolean
+      data: UserTicketPurchaseHistory
+      message: string
+    }>(`/ticket-limits/history/${userId}/${ticketId}`, "GET")
+  },
+
+  // Get event's limit settings
+  getEventLimitSettings: (eventId: number) => {
+    return apiRequest<{
+      success: boolean
+      data: TicketLimitSettings
+      message: string
+    }>(`/ticket-limits/settings/${eventId}`, "GET")
+  },
+
+  // Update event's limit settings
+  updateEventLimitSettings: (eventId: number, settings: Partial<TicketLimitSettings>) => {
+    return apiRequest<{
+      success: boolean
+      data: TicketLimitSettings
+      message: string
+    }>(`/ticket-limits/settings/${eventId}`, "PUT", settings)
+  },
+
+  // Get ticket-specific limit rules
+  getTicketLimitRules: (ticketId: number) => {
+    return apiRequest<{
+      success: boolean
+      data: TicketLimitRule[]
+      message: string
+    }>(`/ticket-limits/rules/${ticketId}`, "GET")
+  },
+
+  // Create or update ticket limit rules
+  setTicketLimitRules: (ticketId: number, rules: Omit<TicketLimitRule, 'id' | 'created_at' | 'updated_at'>[]) => {
+    return apiRequest<{
+      success: boolean
+      data: TicketLimitRule[]
+      message: string
+    }>(`/ticket-limits/rules/${ticketId}`, "POST", { rules })
+  },
+
+  // Get limit analytics for an event
+  getEventLimitOverview: (eventId: number) => {
+    return apiRequest<{
+      success: boolean
+      data: EventLimitOverview
+      message: string
+    }>(`/ticket-limits/analytics/${eventId}`, "GET")
+  },
+
+  // Get limit violations (for admin monitoring)
+  getLimitViolations: (params?: {
+    event_id?: number
+    ticket_id?: number
+    user_id?: number
+    date_from?: string
+    date_to?: string
+    page?: number
+    per_page?: number
+  }) => {
+    const queryParams = params ? `?${new URLSearchParams(
+      Object.entries(params).reduce((acc, [key, value]) => {
+        if (value !== undefined && value !== null && value !== "") {
+          acc[key] = String(value)
+        }
+        return acc
+      }, {} as Record<string, string>)
+    ).toString()}` : ""
+    return apiRequest<{
+      success: boolean
+      data: {
+        data: any[]
+        total: number
+        per_page: number
+        current_page: number
+      }
+      message: string
+    }>(`/ticket-limits/violations${queryParams}`, "GET")
+  }
 }
