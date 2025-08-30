@@ -67,7 +67,7 @@ export default function SetPasswordPage() {
     setError("")
 
     try {
-      // Try the resetPassword endpoint first
+      // Use the correct /reset-password endpoint
       const response = await authApi.resetPassword(token, decodedEmail, password, passwordConfirmation)
       
       if (response.success) {
@@ -80,15 +80,7 @@ export default function SetPasswordPage() {
       }
     } catch (error) {
       console.error("Set password error:", error)
-      
-      // If the endpoint doesn't exist, provide helpful guidance
-      if (error instanceof Error && error.message.includes("404")) {
-        setError(
-          "Password reset endpoint not found. Please contact your administrator or try using the forgot password feature instead."
-        )
-      } else {
-        setError("An error occurred while setting your password. Please try again or use the forgot password feature.")
-      }
+      setError("An error occurred while setting your password. Please try again.")
     } finally {
       setIsLoading(false)
     }

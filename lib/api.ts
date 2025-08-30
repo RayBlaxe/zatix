@@ -479,8 +479,8 @@ function handleMockResponse<T>(endpoint: string, method: string, data?: any): T 
     } as unknown as T
   }
 
-  // Reset password (standard Laravel password reset flow) mock response
-  if (endpoint === "/password/reset" && method === "POST") {
+  // Reset password endpoint (for password reset with token) mock response
+  if (endpoint === "/reset-password" && method === "POST") {
     const { token, email, password, password_confirmation } = data || {}
 
     // Validate token (mock validation)
@@ -518,44 +518,6 @@ function handleMockResponse<T>(endpoint: string, method: string, data?: any): T 
 
     // Simulate successful password reset
     console.log(`Mock: Password reset successfully for ${email}`)
-
-    return {
-      success: true,
-      message: "Password reset successfully. You can now log in with your new password.",
-    } as unknown as T
-  }
-
-  // Alternative Laravel password reset endpoints
-  if ((endpoint === "/api/password/reset" || endpoint === "/auth/password/reset") && method === "POST") {
-    const { token, email, password, password_confirmation } = data || {}
-
-    if (!token || !email || !password || !password_confirmation) {
-      return {
-        success: false,
-        message: "Missing required fields.",
-      } as unknown as T
-    }
-
-    if (password !== password_confirmation) {
-      return {
-        success: false,
-        message: "Passwords do not match.",
-      } as unknown as T
-    }
-
-    if (password.length < 6) {
-      return {
-        success: false,
-        message: "Password must be at least 6 characters long.",
-      } as unknown as T
-    }
-
-    if (token.length < 32) {
-      return {
-        success: false,
-        message: "Invalid or expired token.",
-      } as unknown as T
-    }
 
     return {
       success: true,
@@ -1829,31 +1791,13 @@ export const authApi = {
   },
 
   resetPassword: async (token: string, email: string, password: string, password_confirmation: string) => {
-    // Try common Laravel password reset endpoints
-    const endpoints = ["/password/reset", "/api/password/reset", "/auth/password/reset"]
-    
-    for (const endpoint of endpoints) {
-      try {
-        const response = await apiRequest<{ message: string }>(endpoint, "POST", { 
-          token, 
-          email, 
-          password, 
-          password_confirmation 
-        })
-        
-        // If successful, return the response
-        if (response.success) {
-          return response
-        }
-      } catch (error) {
-        // Continue to next endpoint if this one fails
-        console.log(`Endpoint ${endpoint} failed, trying next...`)
-        continue
-      }
-    }
-    
-    // If all endpoints fail, return error
-    throw new Error("Password reset failed. Please check your token and try again.")
+    // Use the correct endpoint: /reset-password
+    return apiRequest<{ message: string }>("/reset-password", "POST", { 
+      token, 
+      email, 
+      password, 
+      password_confirmation 
+    })
   },
 
   logout: (token: string) => {
