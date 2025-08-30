@@ -76,7 +76,9 @@ export function EventStaffManagement({
     try {
       setLoading(true)
       const response = await eventStaffApi.getEventStaff(eventId)
-      setEventStaff(response.data)
+      // Handle paginated response structure
+      const staffData = response.data?.data || response.data || []
+      setEventStaff(Array.isArray(staffData) ? staffData : [])
     } catch (error) {
       toast({
         title: "Error",
@@ -158,19 +160,19 @@ export function EventStaffManagement({
   }
 
   const getEventPIC = () => {
-    return eventStaff.find(staff => 
+    return Array.isArray(eventStaff) ? eventStaff.find(staff => 
       staff.roles.some(role => role.name === "event-pic")
-    )
+    ) : null
   }
 
-  const filteredStaff = eventStaff.filter(staff => {
+  const filteredStaff = Array.isArray(eventStaff) ? eventStaff.filter(staff => {
     const matchesSearch = staff.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          staff.email.toLowerCase().includes(searchTerm.toLowerCase())
     
     if (roleFilter === "all") return matchesSearch
     
     return matchesSearch && staff.roles.some(role => role.name === roleFilter)
-  })
+  }) : []
 
   const eventPIC = getEventPIC()
 

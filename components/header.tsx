@@ -89,9 +89,14 @@ export function Header() {
             
             {/* Event Organizer Role Navigation */}
             {isAuthenticated && (currentRole === "eo-owner" || currentRole === "super-admin") && (
-              <Link href="/dashboard" className="text-sm font-medium">
-                Dashboard
-              </Link>
+              <>
+                <Link href="/dashboard" className="text-sm font-medium">
+                  Dashboard
+                </Link>
+                <Link href="/test/event-pic" className="text-sm font-medium text-orange-600">
+                  Test Event PIC
+                </Link>
+              </>
             )}
             
             {/* Customer Navigation */}

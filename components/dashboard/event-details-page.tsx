@@ -31,7 +31,7 @@ import {
 import { EventStaffManagement } from "@/components/dashboard/event-staff-management"
 import { Event } from "@/types/events"
 import { useAuth } from "@/hooks/use-auth"
-import { eventApi } from "@/lib/api"
+import { eventApi, getEventPosterUrl } from "@/lib/api"
 import { useToast } from "@/hooks/use-toast"
 import Image from "next/image"
 
@@ -199,7 +199,7 @@ export function EventDetailsPage({ eventId }: EventDetailsPageProps) {
             <CardContent className="p-6">
               <div className="aspect-video relative mb-4 rounded-lg overflow-hidden">
                 <Image
-                  src={event.poster || "/placeholder.jpg"}
+                  src={getEventPosterUrl(event.poster)}
                   alt={event.name}
                   fill
                   className="object-cover"

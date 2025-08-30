@@ -1,10 +1,17 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // Enable image optimization for better performance
+    // Enable image optimization for better performance
   images: {
     // Remove unoptimized: true to enable Next.js image optimization
     // unoptimized: true,
-    domains: ['api.zatix.id'], // Add your domain for external images
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'api.zatix.id',
+        port: '',
+        pathname: '/storage/**',
+      },
+    ],
   },
   // Enable strict mode for better development experience
   reactStrictMode: true,

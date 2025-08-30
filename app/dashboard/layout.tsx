@@ -13,7 +13,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const [sidebarOpen, setSidebarOpen] = useState(false);
   
   return (
-    <ProtectedRoute requiredRoles={["eo-owner", "super-admin"]}>
+    <ProtectedRoute requiredRoles={["eo-owner", "super-admin", "event-pic", "crew", "finance", "cashier"]}>
       <div className="flex min-h-screen"> {/* Changed from h-screen overflow-hidden */}
         {/* Desktop Sidebar */}
         <div className="hidden md:flex md:w-64 md:flex-col md:fixed md:h-screen">

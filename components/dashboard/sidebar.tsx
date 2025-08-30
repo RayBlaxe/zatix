@@ -84,6 +84,16 @@ export function DashboardSidebar({ onNavigate }: DashboardSidebarProps = {}) {
     },
   ];
 
+  // Staff routes - for event-pic, crew, finance, cashier
+  const staffRoutes = [
+    {
+      label: "Profile",
+      icon: UserCheck,
+      href: "/dashboard/profile",
+      active: pathname === "/dashboard/profile" || pathname.startsWith("/dashboard/profile/"),
+    },
+  ];
+
   const adminRoutes = [
     {
       label: "Document Verification",
@@ -125,6 +135,7 @@ export function DashboardSidebar({ onNavigate }: DashboardSidebarProps = {}) {
   const routes = [
     ...baseRoutes,
     ...(hasRole("eo-owner") ? eoRoutes : []),
+    ...(hasRole("event-pic") || hasRole("crew") || hasRole("finance") || hasRole("cashier") ? staffRoutes : []),
     ...(hasRole("super-admin") ? adminRoutes : []),
   ];
 

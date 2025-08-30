@@ -195,15 +195,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       // Map roles from string array to UserRole array
       const userRoles = (data.user.roles as string[]).filter(role => 
-        ["customer", "eo-owner", "super-admin"].includes(role)
+        ["customer", "eo-owner", "super-admin", "event-pic", "crew", "finance", "cashier"].includes(role)
       ) as UserRole[];
 
-      // Default to customer if user has customer role, otherwise pick first available role
-      const defaultRole: UserRole = userRoles.includes("customer") 
-        ? "customer" 
-        : userRoles.length > 0 
-          ? userRoles[0] 
-          : "customer";
+      // Default to primary role if available, otherwise customer
+      const defaultRole: UserRole = userRoles.includes("event-pic") 
+        ? "event-pic"
+        : userRoles.includes("eo-owner")
+        ? "eo-owner"
+        : userRoles.includes("super-admin")
+        ? "super-admin"
+        : userRoles.includes("crew")
+        ? "crew"
+        : userRoles.includes("finance")
+        ? "finance"
+        : userRoles.includes("cashier")
+        ? "cashier"
+        : "customer";
 
       const newUser: AuthUser = {
         id: data.user.id.toString(),
@@ -276,11 +284,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       // Map roles from string array to UserRole array
       const userRoles = (user.roles as string[]).filter(role => 
-        ["customer", "eo-owner", "super-admin"].includes(role)
+        ["customer", "eo-owner", "super-admin", "event-pic", "crew", "finance", "cashier"].includes(role)
       ) as UserRole[];
 
-      // Default to customer role
-      const defaultRole: UserRole = "customer";
+      // Default to primary role if available, otherwise customer
+      const defaultRole: UserRole = userRoles.includes("event-pic") 
+        ? "event-pic"
+        : userRoles.includes("eo-owner")
+        ? "eo-owner"
+        : userRoles.includes("super-admin")
+        ? "super-admin"
+        : userRoles.includes("crew")
+        ? "crew"
+        : userRoles.includes("finance")
+        ? "finance"
+        : userRoles.includes("cashier")
+        ? "cashier"
+        : "customer";
 
       const newUser: AuthUser = {
         id: user.id?.toString() || Math.random().toString(36).substring(2, 9),
