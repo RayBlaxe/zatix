@@ -343,7 +343,10 @@ function handleMockResponse<T>(endpoint: string, method: string, data?: any): T 
       { email: "superadmin@zatix.com", password: "admin123", roles: ["super-admin", "eo-owner", "customer"] },
       { email: "eoowner@zatix.com", password: "eoowner123", roles: ["eo-owner", "customer"] },
       { email: "customer@zatix.com", password: "customer123", roles: ["customer"] },
-      { email: "test@test.com", password: "test123", roles: ["customer"] }
+      { email: "test@test.com", password: "test123", roles: ["customer"] },
+      // Event PIC test accounts (for testing set-password flow)
+      { email: "saidabdulrahim95@gmail.com", password: "eventpic123", roles: ["event-pic", "customer"] },
+      { email: "eventpic@zatix.com", password: "eventpic123", roles: ["event-pic", "customer"] },
     ]
     
     const credential = validCredentials.find(
@@ -426,6 +429,137 @@ function handleMockResponse<T>(endpoint: string, method: string, data?: any): T 
     return {
       success: true,
       message: "Password reset instructions sent to your email.",
+    } as unknown as T
+  }
+
+  // Set password (for Event PIC initial password setup) mock response
+  if (endpoint === "/set-password" && method === "POST") {
+    const { token, email, password, password_confirmation } = data || {}
+
+    // Validate token (mock validation)
+    if (!token || !email || !password || !password_confirmation) {
+      return {
+        success: false,
+        message: "Missing required fields.",
+      } as unknown as T
+    }
+
+    // Check password confirmation
+    if (password !== password_confirmation) {
+      return {
+        success: false,
+        message: "Passwords do not match.",
+      } as unknown as T
+    }
+
+    // Check password strength
+    if (password.length < 6) {
+      return {
+        success: false,
+        message: "Password must be at least 6 characters long.",
+      } as unknown as T
+    }
+
+    // In a real app, you'd validate the token against the database
+    // For mock, we'll just check if it looks like a valid token
+    if (token.length < 32) {
+      return {
+        success: false,
+        message: "Invalid or expired token.",
+      } as unknown as T
+    }
+
+    // Simulate successful password setup
+    // In a real app, this would update the user's password in the database
+    console.log(`Mock: Password set successfully for ${email}`)
+
+    return {
+      success: true,
+      message: "Password set successfully. You can now log in with your new password.",
+    } as unknown as T
+  }
+
+  // Reset password (standard Laravel password reset flow) mock response
+  if (endpoint === "/password/reset" && method === "POST") {
+    const { token, email, password, password_confirmation } = data || {}
+
+    // Validate token (mock validation)
+    if (!token || !email || !password || !password_confirmation) {
+      return {
+        success: false,
+        message: "Missing required fields.",
+      } as unknown as T
+    }
+
+    // Check password confirmation
+    if (password !== password_confirmation) {
+      return {
+        success: false,
+        message: "Passwords do not match.",
+      } as unknown as T
+    }
+
+    // Check password strength
+    if (password.length < 6) {
+      return {
+        success: false,
+        message: "Password must be at least 6 characters long.",
+      } as unknown as T
+    }
+
+    // In a real app, you'd validate the token against the database
+    // For mock, we'll just check if it looks like a valid token
+    if (token.length < 32) {
+      return {
+        success: false,
+        message: "Invalid or expired token.",
+      } as unknown as T
+    }
+
+    // Simulate successful password reset
+    console.log(`Mock: Password reset successfully for ${email}`)
+
+    return {
+      success: true,
+      message: "Password reset successfully. You can now log in with your new password.",
+    } as unknown as T
+  }
+
+  // Alternative Laravel password reset endpoints
+  if ((endpoint === "/api/password/reset" || endpoint === "/auth/password/reset") && method === "POST") {
+    const { token, email, password, password_confirmation } = data || {}
+
+    if (!token || !email || !password || !password_confirmation) {
+      return {
+        success: false,
+        message: "Missing required fields.",
+      } as unknown as T
+    }
+
+    if (password !== password_confirmation) {
+      return {
+        success: false,
+        message: "Passwords do not match.",
+      } as unknown as T
+    }
+
+    if (password.length < 6) {
+      return {
+        success: false,
+        message: "Password must be at least 6 characters long.",
+      } as unknown as T
+    }
+
+    if (token.length < 32) {
+      return {
+        success: false,
+        message: "Invalid or expired token.",
+      } as unknown as T
+    }
+
+    return {
+      success: true,
+      message: "Password reset successfully. You can now log in with your new password.",
     } as unknown as T
   }
 
@@ -1683,6 +1817,43 @@ export const authApi = {
 
   forgotPassword: (email: string) => {
     return apiRequest<{ message: string }>("/forgot-password", "POST", { email })
+  },
+
+  setPassword: (token: string, email: string, password: string, password_confirmation: string) => {
+    return apiRequest<{ message: string }>("/set-password", "POST", { 
+      token, 
+      email, 
+      password, 
+      password_confirmation 
+    })
+  },
+
+  resetPassword: async (token: string, email: string, password: string, password_confirmation: string) => {
+    // Try common Laravel password reset endpoints
+    const endpoints = ["/password/reset", "/api/password/reset", "/auth/password/reset"]
+    
+    for (const endpoint of endpoints) {
+      try {
+        const response = await apiRequest<{ message: string }>(endpoint, "POST", { 
+          token, 
+          email, 
+          password, 
+          password_confirmation 
+        })
+        
+        // If successful, return the response
+        if (response.success) {
+          return response
+        }
+      } catch (error) {
+        // Continue to next endpoint if this one fails
+        console.log(`Endpoint ${endpoint} failed, trying next...`)
+        continue
+      }
+    }
+    
+    // If all endpoints fail, return error
+    throw new Error("Password reset failed. Please check your token and try again.")
   },
 
   logout: (token: string) => {
