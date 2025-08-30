@@ -48,6 +48,18 @@ import {
   EventLimitOverview,
   TicketLimitRule
 } from "@/types/ticket-limits"
+import {
+  EventCategory,
+  CategoryHierarchy,
+  CategoryFilters,
+  CategoryEventResponse,
+  CategoryCreateRequest,
+  CategoryUpdateRequest,
+  CategoryStatsResponse,
+  UserCategoryPreferences,
+  CategoryRecommendationRequest,
+  CategoryRecommendationResponse
+} from "@/types/category"
 
 // Base API URL - use environment variable or fallback for development
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "https://api.zatix.id/api"
@@ -2489,5 +2501,362 @@ export const ticketLimitsApi = {
       }
       message: string
     }>(`/ticket-limits/violations${queryParams}`, "GET")
+  }
+}
+
+// Category API endpoints
+export const categoryApi = {
+  // Get all categories with optional filters
+  getCategories: async (filters?: Partial<{ 
+    active_only?: boolean
+    include_children?: boolean
+    parent_id?: number
+  }>): Promise<CategoryEventResponse> => {
+    await new Promise(resolve => setTimeout(resolve, 800))
+    
+    const mockCategories: EventCategory[] = [
+      {
+        id: 1,
+        name: 'Music & Entertainment',
+        slug: 'music-entertainment',
+        description: 'Live music, concerts, and entertainment events',
+        icon: 'Music',
+        color: '#FF6B6B',
+        parent_id: undefined,
+        is_active: true,
+        event_count: 45,
+        created_at: '2024-01-15T08:00:00Z',
+        updated_at: '2024-01-15T08:00:00Z'
+      },
+      {
+        id: 2,
+        name: 'Business & Professional',
+        slug: 'business-professional',
+        description: 'Conferences, workshops, and networking events',
+        icon: 'Briefcase',
+        color: '#4ECDC4',
+        parent_id: undefined,
+        is_active: true,
+        event_count: 32,
+        created_at: '2024-01-15T08:00:00Z',
+        updated_at: '2024-01-15T08:00:00Z'
+      },
+      {
+        id: 3,
+        name: 'Sports & Fitness',
+        slug: 'sports-fitness',
+        description: 'Sporting events, fitness classes, and competitions',
+        icon: 'Trophy',
+        color: '#45B7D1',
+        parent_id: undefined,
+        is_active: true,
+        event_count: 28,
+        created_at: '2024-01-15T08:00:00Z',
+        updated_at: '2024-01-15T08:00:00Z'
+      },
+      {
+        id: 4,
+        name: 'Arts & Culture',
+        slug: 'arts-culture',
+        description: 'Art exhibitions, cultural events, and performances',
+        icon: 'Palette',
+        color: '#96CEB4',
+        parent_id: undefined,
+        is_active: true,
+        event_count: 21,
+        created_at: '2024-01-15T08:00:00Z',
+        updated_at: '2024-01-15T08:00:00Z'
+      },
+      {
+        id: 5,
+        name: 'Technology',
+        slug: 'technology',
+        description: 'Tech meetups, hackathons, and innovation events',
+        icon: 'Laptop',
+        color: '#FFEAA7',
+        parent_id: undefined,
+        is_active: true,
+        event_count: 19,
+        created_at: '2024-01-15T08:00:00Z',
+        updated_at: '2024-01-15T08:00:00Z'
+      },
+      {
+        id: 6,
+        name: 'Food & Drink',
+        slug: 'food-drink',
+        description: 'Food festivals, wine tastings, and culinary events',
+        icon: 'UtensilsCrossed',
+        color: '#DDA0DD',
+        parent_id: undefined,
+        is_active: true,
+        event_count: 16,
+        created_at: '2024-01-15T08:00:00Z',
+        updated_at: '2024-01-15T08:00:00Z'
+      }
+    ]
+
+    return {
+      success: true,
+      data: {
+        events: [], // Events will be loaded separately
+        categories: mockCategories,
+        filters: {},
+        meta: {
+          total: mockCategories.length,
+          per_page: 20,
+          current_page: 1,
+          last_page: 1,
+          from: 1,
+          to: mockCategories.length
+        }
+      },
+      message: 'Categories retrieved successfully'
+    }
+  },
+
+  // Get events by category with filters
+  getEventsByCategory: async (filters: CategoryFilters): Promise<CategoryEventResponse> => {
+    await new Promise(resolve => setTimeout(resolve, 1000))
+    
+    // Mock filtered events based on category  
+    const mockEvents: any[] = [
+      {
+        id: 1,
+        name: 'Jazz Night at Blue Note',
+        poster: '/placeholder.jpg',
+        description: 'An evening of smooth jazz featuring local and international artists',
+        start_date: '2024-12-15',
+        location: 'Blue Note Cafe, Jakarta',
+        price: '150000',
+        category_id: 1
+      },
+      {
+        id: 2,
+        name: 'Tech Startup Conference 2024',
+        poster: '/placeholder.jpg',
+        description: 'Annual conference for tech entrepreneurs and innovators',
+        start_date: '2024-12-20',
+        location: 'Jakarta Convention Center',
+        price: '500000',
+        category_id: 5
+      }
+    ]
+
+    return {
+      success: true,
+      data: {
+        events: mockEvents,
+        categories: [],
+        filters,
+        meta: {
+          total: mockEvents.length,
+          per_page: filters.per_page || 20,
+          current_page: filters.page || 1,
+          last_page: 1,
+          from: 1,
+          to: mockEvents.length
+        }
+      },
+      message: 'Events retrieved successfully'
+    }
+  },
+
+  // Create new category (Admin only)
+  createCategory: async (data: CategoryCreateRequest): Promise<APIResponse<EventCategory>> => {
+    await new Promise(resolve => setTimeout(resolve, 500))
+    
+    const newCategory = {
+      id: Math.floor(Math.random() * 1000) + 100,
+      slug: data.slug || data.name.toLowerCase().replace(/\s+/g, '-'),
+      is_active: data.is_active ?? true,
+      event_count: 0,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+      ...data
+    }
+
+    return {
+      success: true,
+      data: newCategory,
+      message: 'Category created successfully'
+    }
+  },
+
+  // Update category (Admin only)
+  updateCategory: async (data: CategoryUpdateRequest): Promise<APIResponse<EventCategory>> => {
+    await new Promise(resolve => setTimeout(resolve, 500))
+    
+    const updatedCategory = {
+      id: data.id,
+      name: data.name || 'Updated Category',
+      slug: data.slug || 'updated-category',
+      description: data.description,
+      icon: data.icon,
+      color: data.color,
+      parent_id: data.parent_id,
+      is_active: data.is_active ?? true,
+      event_count: 0,
+      created_at: '2024-01-15T08:00:00Z',
+      updated_at: new Date().toISOString()
+    }
+
+    return {
+      success: true,
+      data: updatedCategory,
+      message: 'Category updated successfully'
+    }
+  },
+
+  // Delete category (Admin only)
+  deleteCategory: async (id: number): Promise<APIResponse<null>> => {
+    await new Promise(resolve => setTimeout(resolve, 500))
+    
+    return {
+      success: true,
+      data: null,
+      message: 'Category deleted successfully'
+    }
+  },
+
+  // Get category statistics
+  getCategoryStats: async (): Promise<CategoryStatsResponse> => {
+    await new Promise(resolve => setTimeout(resolve, 800))
+    
+    return {
+      success: true,
+      data: {
+        total_categories: 6,
+        active_categories: 6,
+        total_events: 161,
+        popular_categories: [
+          {
+            category: {
+              id: 1,
+              name: 'Music & Entertainment',
+              slug: 'music-entertainment',
+              description: 'Live music, concerts, and entertainment events',
+              icon: 'Music',
+              color: '#FF6B6B',
+              parent_id: undefined,
+              is_active: true,
+              event_count: 45,
+              created_at: '2024-01-15T08:00:00Z',
+              updated_at: '2024-01-15T08:00:00Z'
+            },
+            event_count: 45,
+            recent_events: 12
+          },
+          {
+            category: {
+              id: 2,
+              name: 'Business & Professional',
+              slug: 'business-professional',
+              description: 'Conferences, workshops, and networking events',
+              icon: 'Briefcase',
+              color: '#4ECDC4',
+              parent_id: undefined,
+              is_active: true,
+              event_count: 32,
+              created_at: '2024-01-15T08:00:00Z',
+              updated_at: '2024-01-15T08:00:00Z'
+            },
+            event_count: 32,
+            recent_events: 8
+          }
+        ],
+        category_distribution: [
+          { category_name: 'Music & Entertainment', event_count: 45, percentage: 28.0 },
+          { category_name: 'Business & Professional', event_count: 32, percentage: 19.9 },
+          { category_name: 'Sports & Fitness', event_count: 28, percentage: 17.4 },
+          { category_name: 'Arts & Culture', event_count: 21, percentage: 13.0 },
+          { category_name: 'Technology', event_count: 19, percentage: 11.8 },
+          { category_name: 'Food & Drink', event_count: 16, percentage: 9.9 }
+        ]
+      },
+      message: 'Category statistics retrieved successfully'
+    }
+  },
+
+  // Get user category preferences
+  getUserPreferences: async (userId: number): Promise<APIResponse<UserCategoryPreferences>> => {
+    await new Promise(resolve => setTimeout(resolve, 500))
+    
+    return {
+      success: true,
+      data: {
+        user_id: userId,
+        preferred_categories: [1, 2, 5], // Music, Business, Technology
+        blocked_categories: [],
+        updated_at: new Date().toISOString()
+      },
+      message: 'User preferences retrieved successfully'
+    }
+  },
+
+  // Update user category preferences
+  updateUserPreferences: async (
+    userId: number, 
+    preferences: { preferred_categories: number[], blocked_categories: number[] }
+  ): Promise<APIResponse<UserCategoryPreferences>> => {
+    await new Promise(resolve => setTimeout(resolve, 500))
+    
+    return {
+      success: true,
+      data: {
+        user_id: userId,
+        preferred_categories: preferences.preferred_categories,
+        blocked_categories: preferences.blocked_categories,
+        updated_at: new Date().toISOString()
+      },
+      message: 'User preferences updated successfully'
+    }
+  },
+
+  // Get category-based recommendations
+  getRecommendations: async (request: CategoryRecommendationRequest): Promise<CategoryRecommendationResponse> => {
+    await new Promise(resolve => setTimeout(resolve, 1000))
+    
+    const mockRecommendedEvents: any[] = [
+      {
+        id: 3,
+        name: 'React Developer Meetup',
+        poster: '/placeholder.jpg',
+        description: 'Monthly meetup for React developers to share knowledge and network',
+        start_date: '2024-12-18',
+        location: 'Tech Hub Jakarta',
+        price: '0',
+        category_id: 5
+      }
+    ]
+
+    return {
+      success: true,
+      data: {
+        recommended_events: mockRecommendedEvents,
+        recommended_categories: [
+          {
+            id: 5,
+            name: 'Technology',
+            slug: 'technology',
+            description: 'Tech meetups, hackathons, and innovation events',
+            icon: 'Laptop',
+            color: '#FFEAA7',
+            parent_id: undefined,
+            is_active: true,
+            event_count: 19,
+            created_at: '2024-01-15T08:00:00Z',
+            updated_at: '2024-01-15T08:00:00Z'
+          }
+        ],
+        recommendation_reasons: [
+          {
+            event_id: 3,
+            reasons: ['Matches your interest in Technology', 'Popular in your area'],
+            confidence_score: 0.85
+          }
+        ]
+      },
+      message: 'Recommendations retrieved successfully'
+    }
   }
 }

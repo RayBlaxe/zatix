@@ -97,7 +97,7 @@ export function Header() {
             {/* Customer Navigation */}
             {isAuthenticated && currentRole === "customer" && (
               <>
-                <Link href="/events" className="text-sm font-medium">
+                <Link href="/events/browse" className="text-sm font-medium">
                   Explore
                 </Link>
                 <Link href="/about" className="text-sm font-medium">
@@ -109,7 +109,7 @@ export function Header() {
             {/* Non-authenticated Navigation */}
             {!isAuthenticated && (
               <>
-                <Link href="/events" className="text-sm font-medium">
+                <Link href="/events/browse" className="text-sm font-medium">
                   Explore
                 </Link>
                 <Link href="/about" className="text-sm font-medium">

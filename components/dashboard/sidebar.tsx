@@ -19,7 +19,9 @@ import {
   Shield,
   UserCheck,
   CheckCircle,
-  CreditCard,
+  PlusCircle,
+  ShoppingCart,
+  Tag,
   Receipt,
 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
@@ -88,6 +90,12 @@ export function DashboardSidebar({ onNavigate }: DashboardSidebarProps = {}) {
       icon: CheckCircle,
       href: "/dashboard/admin/verification",
       active: pathname === "/dashboard/admin/verification" || pathname.startsWith("/dashboard/admin/verification/"),
+    },
+    {
+      label: "Category Management",
+      icon: Tag,
+      href: "/dashboard/admin/categories",
+      active: pathname === "/dashboard/admin/categories",
     },
     {
       label: "Terms & Conditions",
