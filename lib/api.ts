@@ -1813,6 +1813,13 @@ export const staffApi = {
 
 // Event Staff API functions - NEW: Event-scoped staff management 
 export const eventStaffApi = {
+  // Get events assigned to current user as Event PIC
+  getMyAssignedEvents: (page?: number): Promise<any> => {
+    const token = getToken()
+    const url = page ? `/staff/my-assigned-events?page=${page}` : `/staff/my-assigned-events`
+    return apiRequest<any>(url, "GET", null, token || undefined)
+  },
+
   // Get staff assigned to specific event
   getEventStaff: (eventId: number, page?: number): Promise<any> => {
     const token = getToken()

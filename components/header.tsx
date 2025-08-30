@@ -35,7 +35,7 @@ export function Header() {
     // Redirect based on role
     if (newRole === "customer") {
       router.push("/")
-    } else if (newRole === "eo-owner" || newRole === "super-admin") {
+    } else if (newRole === "eo-owner" || newRole === "super-admin" || newRole === "event-pic" || newRole === "crew" || newRole === "finance" || newRole === "cashier") {
       router.push("/dashboard")
     }
   }
@@ -48,6 +48,14 @@ export function Header() {
         return <Store className="mr-2 size-4" />
       case "super-admin":
         return <Crown className="mr-2 size-4" />
+      case "event-pic":
+        return <Settings className="mr-2 size-4" />
+      case "crew":
+        return <User className="mr-2 size-4" />
+      case "finance":
+        return <PlusCircle className="mr-2 size-4" />
+      case "cashier":
+        return <ShoppingCart className="mr-2 size-4" />
       default:
         return <User className="mr-2 size-4" />
     }
@@ -61,6 +69,14 @@ export function Header() {
         return "Event Organizer"
       case "super-admin":
         return "Super Admin"
+      case "event-pic":
+        return "Event PIC"
+      case "crew":
+        return "Crew"
+      case "finance":
+        return "Finance"
+      case "cashier":
+        return "Cashier"
       default:
         return role
     }
@@ -87,15 +103,17 @@ export function Header() {
               Home
             </Link>
             
-            {/* Event Organizer Role Navigation */}
-            {isAuthenticated && (currentRole === "eo-owner" || currentRole === "super-admin") && (
+            {/* Staff Role Navigation */}
+            {isAuthenticated && (currentRole === "eo-owner" || currentRole === "super-admin" || currentRole === "event-pic" || currentRole === "crew" || currentRole === "finance" || currentRole === "cashier") && (
               <>
                 <Link href="/dashboard" className="text-sm font-medium">
                   Dashboard
                 </Link>
-                <Link href="/test/event-pic" className="text-sm font-medium text-orange-600">
-                  Test Event PIC
-                </Link>
+                {(currentRole === "eo-owner" || currentRole === "super-admin") && (
+                  <Link href="/test/event-pic" className="text-sm font-medium text-orange-600">
+                    Test Event PIC
+                  </Link>
+                )}
               </>
             )}
             

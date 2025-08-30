@@ -6,9 +6,24 @@ import { useAuth } from "@/hooks/use-auth"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import Link from "next/link"
+import { useEffect } from "react"
+import { useRouter } from "next/navigation"
 
 export default function DashboardPage() {
-  const { hasRole } = useAuth()
+  const { hasRole, user } = useAuth()
+  const router = useRouter()
+
+  // Redirect Event PICs to their specific workflow
+  useEffect(() => {
+    if (user?.currentRole === "event-pic") {
+      router.push("/dashboard/events/assigned")
+      return
+    }
+    if (user?.currentRole === "crew" || user?.currentRole === "finance" || user?.currentRole === "cashier") {
+      router.push("/dashboard/tasks")
+      return
+    }
+  }, [user?.currentRole, router])
 
   // Super Admin Dashboard
   if (hasRole("super-admin")) {

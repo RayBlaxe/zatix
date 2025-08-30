@@ -84,8 +84,42 @@ export function DashboardSidebar({ onNavigate }: DashboardSidebarProps = {}) {
     },
   ];
 
-  // Staff routes - for event-pic, crew, finance, cashier
+  // Event PIC specific routes - focused on assigned event management
+  const eventPICRoutes = [
+    {
+      label: "My Assigned Events",
+      icon: CalendarDays,
+      href: "/dashboard/events/assigned",
+      active: pathname === "/dashboard/events/assigned" || pathname.startsWith("/dashboard/events/assigned/"),
+    },
+    {
+      label: "Event Staff",
+      icon: Users,
+      href: "/dashboard/staff",
+      active: pathname === "/dashboard/staff",
+    },
+    {
+      label: "Event Finance",
+      icon: DollarSign,
+      href: "/dashboard/finance/event",
+      active: pathname === "/dashboard/finance/event",
+    },
+    {
+      label: "Profile",
+      icon: UserCheck,
+      href: "/dashboard/profile",
+      active: pathname === "/dashboard/profile" || pathname.startsWith("/dashboard/profile/"),
+    },
+  ];
+
+  // Staff routes - for crew, finance, cashier (more limited access)
   const staffRoutes = [
+    {
+      label: "My Tasks",
+      icon: CalendarDays,
+      href: "/dashboard/tasks",
+      active: pathname === "/dashboard/tasks",
+    },
     {
       label: "Profile",
       icon: UserCheck,
@@ -135,7 +169,8 @@ export function DashboardSidebar({ onNavigate }: DashboardSidebarProps = {}) {
   const routes = [
     ...baseRoutes,
     ...(hasRole("eo-owner") ? eoRoutes : []),
-    ...(hasRole("event-pic") || hasRole("crew") || hasRole("finance") || hasRole("cashier") ? staffRoutes : []),
+    ...(hasRole("event-pic") ? eventPICRoutes : []),
+    ...(hasRole("crew") || hasRole("finance") || hasRole("cashier") ? staffRoutes : []),
     ...(hasRole("super-admin") ? adminRoutes : []),
   ];
 
@@ -148,8 +183,8 @@ export function DashboardSidebar({ onNavigate }: DashboardSidebarProps = {}) {
     }
   ];
 
-  // Show finance section for finance staff, EO owners, and super-admin
-  const showFinance = hasRole("finance") || hasRole("eo-owner") || hasRole("super-admin");
+  // Show finance section for finance staff, Event PICs (for their events), EO owners, and super-admin
+  const showFinance = hasRole("finance") || hasRole("event-pic") || hasRole("eo-owner") || hasRole("super-admin");
 
   return (
     <div className="flex h-full flex-col border-r" style={{ backgroundColor: '#002547' }}>
