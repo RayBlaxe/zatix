@@ -35,6 +35,8 @@ export default function LoginPage() {
     
     if (messageParam === "password_set") {
       setSuccessMessage("Your password has been set successfully! You can now log in.")
+    } else if (messageParam === "password_reset") {
+      setSuccessMessage("Your password has been reset successfully! You can now log in.")
     }
   }, [searchParams])
 
