@@ -456,7 +456,7 @@ function handleMockResponse<T>(endpoint: string, method: string, data?: any): T 
     if (password.length < 6) {
       return {
         success: false,
-        message: "Password must be at least 6 characters long.",
+        message: "Password must be at least 8 characters long.",
       } as unknown as T
     }
 
@@ -503,7 +503,7 @@ function handleMockResponse<T>(endpoint: string, method: string, data?: any): T 
     if (password.length < 6) {
       return {
         success: false,
-        message: "Password must be at least 6 characters long.",
+        message: "Password must be at least 8 characters long.",
       } as unknown as T
     }
 

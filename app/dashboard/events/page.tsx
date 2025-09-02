@@ -355,12 +355,6 @@ export default function EventsPage() {
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
-                      <DropdownMenuItem asChild>
-                        <Link href={`/dashboard/events/${event.id}`}>
-                          <Eye className="mr-2 h-4 w-4" />
-                          View Details
-                        </Link>
-                      </DropdownMenuItem>
                       {event.status === 'draft' ? (
                         <DropdownMenuItem asChild>
                           <Link href={`/dashboard/events/${event.id}/edit`}>
@@ -466,6 +460,15 @@ export default function EventsPage() {
                   {event.description}
                 </p>
               </CardContent>
+              
+              <CardFooter className="pt-0">
+                <Button asChild className="w-full">
+                  <Link href={`/dashboard/events/${event.id}`}>
+                    <Eye className="mr-2 h-4 w-4" />
+                    View Details
+                  </Link>
+                </Button>
+              </CardFooter>
             </Card>
           ))}
         </div>
