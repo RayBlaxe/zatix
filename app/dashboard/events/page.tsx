@@ -38,6 +38,8 @@ export default function EventsPage() {
   const [showTNCModal, setShowTNCModal] = useState(false)
 
   useEffect(() => {
+    console.log("User:", user) // Debug log
+    console.log("Token:", getToken()) // Debug log
     fetchEvents()
   }, [currentPage, filters])
 
@@ -51,15 +53,22 @@ export default function EventsPage() {
         search: searchTerm || undefined
       })
       
-      if (response.success) {
+      console.log("API Response:", response) // Debug log
+      
+      if (response.success && response.data && response.data.data) {
         setEvents(response.data.data)
         setTotalPages(response.data.last_page)
       } else {
-        setError(response.message || "Failed to fetch events")
+        setEvents([]) // Ensure events is always an array
+        const errorMessage = response.message || "Failed to fetch events"
+        setError(errorMessage)
+        console.error("API Error:", errorMessage, response) // Debug log
       }
     } catch (err) {
-      setError("An error occurred while fetching events")
-      console.error("Error fetching events:", err)
+      setEvents([]) // Ensure events is always an array even on error
+      const errorMessage = "An error occurred while fetching events"
+      setError(errorMessage)
+      console.error("Fetch Error:", err) // Debug log
     } finally {
       setLoading(false)
     }
@@ -319,7 +328,7 @@ export default function EventsPage() {
             </Card>
           ))}
         </div>
-      ) : events.length === 0 ? (
+      ) : (!events || events.length === 0) ? (
         <Card className="flex flex-col justify-center items-center h-64">
           <CardContent className="text-center">
             <Calendar className="size-16 text-muted-foreground mx-auto mb-4" />
@@ -337,7 +346,7 @@ export default function EventsPage() {
         </Card>
       ) : (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {events.map((event) => (
+          {events && events.map((event) => (
             <Card key={event.id} className="hover:shadow-lg transition-shadow">
               <CardHeader className="pb-3">
                 <div className="flex items-start justify-between">

@@ -43,7 +43,11 @@ export function ThreeTierFinancialDashboard({ eventId, eoId }: ThreeTierFinancia
   const { user, hasRole } = useAuth()
   const { toast } = useToast()
   
+  // Development flag - set to true to use mock data when backend is not ready
+  const USE_MOCK_DATA = true // Always use mock data since backend endpoints don't exist yet
+  
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
   const [reportData, setReportData] = useState<any>(null)
   const [transactions, setTransactions] = useState<any[]>([])
   const [metrics, setMetrics] = useState<any>(null)
@@ -58,19 +62,153 @@ export function ThreeTierFinancialDashboard({ eventId, eoId }: ThreeTierFinancia
   })
 
   // Determine dashboard level based on props and user role
-  const dashboardLevel = eventId ? "event" : eoId ? "eo" : hasRole("super-admin") ? "global" : "eo"
+  const getDashboardLevel = () => {
+    // If specific event or EO is provided, use that level
+    if (eventId) return "event"
+    if (eoId) return "eo"
+    
+    // Otherwise, determine based on user role
+    if (hasRole("super-admin")) return "global" // Super admin sees global by default
+    if (hasRole("finance")) return "global" // Finance sees global by default
+    if (hasRole("eo-owner")) return "eo" // EO owner sees their own EO data
+    
+    // Default to EO level for other roles
+    return "eo"
+  }
+  
+  const dashboardLevel = getDashboardLevel()
+
+  // Check if user has permission to access financial data
+  const canAccessFinancialData = () => {
+    if (!user || !user.roles || !Array.isArray(user.roles)) {
+      console.warn("Financial Dashboard: User or roles not available", { user, roles: user?.roles })
+      return false
+    }
+    
+    // Allow access for these roles
+    const allowedRoles = ["super-admin", "finance", "eo-owner"]
+    const hasAccess = allowedRoles.some(role => hasRole(role as any))
+    
+    console.log("Financial Dashboard Access Check:", {
+      userRoles: user.roles,
+      allowedRoles,
+      hasAccess,
+      dashboardLevel
+    })
+    
+    return hasAccess
+  }
 
   useEffect(() => {
-    loadFinancialData()
+    // Only load data if user has permission
+    if (canAccessFinancialData()) {
+      loadFinancialData()
+    } else {
+      setLoading(false)
+    }
   }, [eventId, eoId, dateRange, dashboardLevel])
 
   useEffect(() => {
-    loadTransactions()
+    // Only load transactions if user has permission
+    if (canAccessFinancialData()) {
+      loadTransactions()
+    }
   }, [transactionFilter, eventId])
 
+  // Mock data generator for development/fallback
+  const generateMockData = (level: string) => {
+    const baseMetrics = {
+      totalRevenue: 2450000,
+      totalTransactions: 67,
+      successfulTransactions: 61,
+      pendingTransactions: 4,
+      failedTransactions: 2,
+      averageTransactionValue: 36567,
+      revenueGrowth: 15.5,
+      transactionGrowth: 8.2,
+      topEvents: [
+        { eventId: 1, eventName: "Workshop Fotografi", revenue: 900000, ticketsSold: 18 },
+        { eventId: 2, eventName: "Seminar Digital Marketing", revenue: 800000, ticketsSold: 24 },
+        { eventId: 3, eventName: "Music Concert Night", revenue: 750000, ticketsSold: 25 }
+      ]
+    }
+
+    const baseReport = {
+      summary: {
+        total_income: 2450000,
+        total_expenses: 480000,
+        net_profit: 1970000,
+        tickets_sold: 67,
+        ticket_sales: 2450000,
+        other_income: 0
+      }
+    }
+
+    switch (level) {
+      case "global":
+        return {
+          report: {
+            ...baseReport,
+            eo_breakdowns: [
+              { id: 1, name: "EventCorp Indonesia", total_events: 15, subtotal_net_profit: 1500000, subtotal_tickets_sold: 120, subtotal_income: 2000000 },
+              { id: 2, name: "Jakarta Music Festival", total_events: 8, subtotal_net_profit: 1200000, subtotal_tickets_sold: 85, subtotal_income: 1600000 },
+              { id: 3, name: "Bali Creative Events", total_events: 12, subtotal_net_profit: 800000, subtotal_tickets_sold: 95, subtotal_income: 1100000 }
+            ]
+          },
+          metrics: baseMetrics
+        }
+      case "eo":
+        return {
+          report: {
+            ...baseReport,
+            event_organizer: { id: eoId || parseInt(user?.id || "1"), name: user?.eoDetails?.name || "Your Organization" },
+            event_breakdowns: [
+              { id: 1, name: "Workshop Fotografi: Teknik Dasar", total_income: 900000, total_expenses: 150000, net_profit: 750000, tickets_sold: 18 },
+              { id: 2, name: "Seminar Digital Marketing", total_income: 800000, total_expenses: 180000, net_profit: 620000, tickets_sold: 24 },
+              { id: 3, name: "Music Concert Night", total_income: 750000, total_expenses: 150000, net_profit: 600000, tickets_sold: 25 }
+            ]
+          },
+          metrics: baseMetrics
+        }
+      case "event":
+        return {
+          report: {
+            event: { id: eventId || 1, name: "Sample Event" },
+            summary: baseReport.summary
+          },
+          metrics: baseMetrics
+        }
+      default:
+        return { report: baseReport, metrics: baseMetrics }
+    }
+  }
+
   const loadFinancialData = async () => {
+    // Check permissions before making API calls
+    if (!canAccessFinancialData()) {
+      setError("You don't have permission to access financial data")
+      setLoading(false)
+      return
+    }
+
     try {
       setLoading(true)
+      setError(null) // Clear any previous errors
+      
+      // Skip API calls and use mock data directly since backend endpoints are not properly configured
+      console.log("Using mock data - backend financial endpoints are not configured for authentication")
+      const mockData = generateMockData(dashboardLevel)
+      setReportData(mockData.report)
+      setMetrics(mockData.metrics)
+      
+      toast({
+        title: "Demo Financial Dashboard",
+        description: "Showing demo data. Backend financial API is not configured yet.",
+        variant: "default",
+      })
+
+      // Uncomment below when backend financial endpoints are properly configured
+      /*
       let reportResponse
       let metricsResponse
 
@@ -79,33 +217,78 @@ export function ThreeTierFinancialDashboard({ eventId, eoId }: ThreeTierFinancia
       switch (dashboardLevel) {
         case "event":
           if (eventId) {
-            reportResponse = await financialApi.getEventReport(eventId, params)
-            metricsResponse = await financialApi.getFinancialMetrics({ event_id: eventId, ...params })
+            try {
+              reportResponse = await financialApi.getEventReport(eventId, params)
+              metricsResponse = await financialApi.getFinancialMetrics({ event_id: eventId, ...params })
+            } catch (error: any) {
+              console.error("Error loading event financial data:", error)
+              setError("Event financial data is not available. This feature may not be implemented yet.")
+            }
           }
           break
         case "eo":
-          const currentEoId = eoId || user?.eoDetails?.id || 1
-          reportResponse = await financialApi.getEOReport(currentEoId, params)
-          metricsResponse = await financialApi.getFinancialMetrics({ eo_id: currentEoId, ...params })
+          // For EO level, use provided eoId or default to user's primary EO (could be user ID or 1)
+          const currentEoId = eoId || parseInt(user?.id || "1")
+          
+          // Only allow EO owners to access their own data, or super-admin/finance to access any EO
+          if (hasRole("eo-owner") && !hasRole("super-admin") && !hasRole("finance")) {
+            // EO owners can only see their own data
+            try {
+              reportResponse = await financialApi.getEOReport(currentEoId, params)
+              metricsResponse = await financialApi.getFinancialMetrics({ eo_id: currentEoId, ...params })
+            } catch (error: any) {
+              console.error("Error loading EO financial data:", error)
+              setError("EO financial data is not available. Please contact support if you believe this is an error.")
+            }
+          } else if (hasRole("super-admin") || hasRole("finance")) {
+            // Super admin and finance can access any EO data
+            try {
+              reportResponse = await financialApi.getEOReport(currentEoId, params)
+              metricsResponse = await financialApi.getFinancialMetrics({ eo_id: currentEoId, ...params })
+            } catch (error: any) {
+              console.error("Error loading EO financial data:", error)
+              setError("EO financial data is not available. This feature may not be implemented yet.")
+            }
+          }
           break
         case "global":
-          reportResponse = await financialApi.getGlobalReport(params)
-          metricsResponse = await financialApi.getFinancialMetrics(params)
+          // Only super-admin and finance can access global reports
+          if (hasRole("super-admin") || hasRole("finance")) {
+            try {
+              reportResponse = await financialApi.getGlobalReport(params)
+              metricsResponse = await financialApi.getFinancialMetrics(params)
+            } catch (error: any) {
+              console.error("Error loading global financial data:", error)
+              setError("Global financial data is not available. This feature may not be implemented yet.")
+            }
+          } else {
+            setError("You don't have permission to access global financial reports")
+            setLoading(false)
+            return
+          }
           break
       }
 
-      if (reportResponse) {
+      if (reportResponse && reportResponse.success) {
         setReportData(reportResponse.data)
       }
-      if (metricsResponse) {
+      if (metricsResponse && metricsResponse.success) {
         setMetrics(metricsResponse.data)
       }
+      */
 
-    } catch (error) {
+    } catch (error: any) {
+      console.error("Error loading financial data:", error)
+      
+      // Use mock data as fallback for any error
+      const mockData = generateMockData(dashboardLevel)
+      setReportData(mockData.report)
+      setMetrics(mockData.metrics)
+      
       toast({
-        title: "Error",
-        description: "Failed to load financial data",
-        variant: "destructive",
+        title: "Using Demo Data",
+        description: "Financial API authentication not configured. Showing demo data.",
+        variant: "default",
       })
     } finally {
       setLoading(false)
@@ -113,6 +296,39 @@ export function ThreeTierFinancialDashboard({ eventId, eoId }: ThreeTierFinancia
   }
 
   const loadTransactions = async () => {
+    // Check permissions before making API calls
+    if (!canAccessFinancialData()) {
+      return
+    }
+
+    // Skip API calls and use mock transaction data directly
+    // since backend financial/transaction endpoints are not properly configured
+    const mockTransactions = [
+      { id: 1, event_name: "Workshop Fotografi", amount: 50000, status: "success", created_at: "2025-08-01T10:00:00Z", user_name: "John Doe" },
+      { id: 2, event_name: "Seminar Digital Marketing", amount: 75000, status: "success", created_at: "2025-08-02T14:30:00Z", user_name: "Jane Smith" },
+      { id: 3, event_name: "Music Concert Night", amount: 120000, status: "pending", created_at: "2025-08-03T16:45:00Z", user_name: "Bob Wilson" },
+      { id: 4, event_name: "Workshop Fotografi", amount: 50000, status: "failed", created_at: "2025-08-04T09:15:00Z", user_name: "Alice Brown" },
+      { id: 5, event_name: "Business Conference", amount: 200000, status: "success", created_at: "2025-08-05T11:20:00Z", user_name: "Mike Johnson" },
+      { id: 6, event_name: "Art Exhibition", amount: 85000, status: "success", created_at: "2025-08-06T13:00:00Z", user_name: "Sarah Davis" },
+      { id: 7, event_name: "Tech Meetup", amount: 35000, status: "pending", created_at: "2025-08-07T18:30:00Z", user_name: "Chris Lee" }
+    ]
+    
+    // Filter based on transaction filter settings
+    let filteredTransactions = mockTransactions
+    
+    if (transactionFilter.status !== "all") {
+      filteredTransactions = filteredTransactions.filter(t => t.status === transactionFilter.status)
+    }
+    
+    // Simple pagination simulation
+    const startIndex = (transactionFilter.page - 1) * 10
+    const endIndex = startIndex + 10
+    filteredTransactions = filteredTransactions.slice(startIndex, endIndex)
+    
+    setTransactions(filteredTransactions)
+
+    // Uncomment below when backend transaction endpoints are properly configured
+    /*
     try {
       const params: any = {
         page: transactionFilter.page,
@@ -124,10 +340,19 @@ export function ThreeTierFinancialDashboard({ eventId, eoId }: ThreeTierFinancia
       if (transactionFilter.type !== "all") params.type = transactionFilter.type
 
       const response = await financialApi.getTransactions(params)
-      setTransactions(response.data.data)
-    } catch (error) {
+      
+      // Check if response has the expected structure
+      if (response && response.data && response.data.data) {
+        setTransactions(response.data.data)
+      } else {
+        console.warn("Unexpected transaction response structure:", response)
+        setTransactions([])
+      }
+    } catch (error: any) {
       console.error("Failed to load transactions:", error)
+      setTransactions([])
     }
+    */
   }
 
   const formatCurrency = (amount: number) => {
@@ -164,6 +389,36 @@ export function ThreeTierFinancialDashboard({ eventId, eoId }: ThreeTierFinancia
       title: "Export Started",
       description: "Financial report export will be available for download shortly",
     })
+  }
+
+  // Check if user has access to financial data
+  if (!canAccessFinancialData()) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <Card className="max-w-md">
+          <CardHeader className="text-center">
+            <CardTitle className="text-xl text-red-600">Access Denied</CardTitle>
+            <CardDescription>
+              You don't have permission to access financial data. 
+              {user?.roles && user.roles.length > 0 
+                ? ` Your current roles: ${user.roles.join(', ')}`
+                : " Please ensure you are logged in with the correct account."
+              }
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="text-center">
+            <p className="text-sm text-muted-foreground mb-2">
+              Required roles: Super Admin, Finance, or EO Owner
+            </p>
+            {user?.roles && user.roles.length > 0 && (
+              <p className="text-xs text-gray-500">
+                Debug: Current roles - {user.roles.join(', ')}
+              </p>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+    )
   }
 
   if (loading) {
@@ -203,6 +458,40 @@ export function ThreeTierFinancialDashboard({ eventId, eoId }: ThreeTierFinancia
           </Button>
         </div>
       </div>
+
+      {/* Demo Data Banner */}
+      <Card className="border-blue-200 bg-blue-50">
+        <CardHeader className="pb-3">
+          <CardTitle className="text-blue-800 flex items-center gap-2 text-lg">
+            <BarChart3 className="h-5 w-5" />
+            Demo Financial Dashboard
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="pt-0">
+          <p className="text-blue-700 text-sm mb-2">
+            This dashboard is currently showing demo data. The backend financial API endpoints are not yet configured for authentication.
+          </p>
+          <div className="text-xs text-blue-600">
+            <strong>Current Access Level:</strong> {dashboardLevel === "global" ? "Global (All Organizations)" : dashboardLevel === "eo" ? "Organization Level" : "Event Level"} •
+            <strong> User Role:</strong> {user?.roles?.join(", ") || "Unknown"}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Error Display */}
+      {error && (
+        <Card className="border-red-200 bg-red-50">
+          <CardHeader>
+            <CardTitle className="text-red-800 flex items-center gap-2">
+              <Activity className="h-5 w-5" />
+              Error Loading Financial Data
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-red-700">{error}</p>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Date Range Filter */}
       <Card>

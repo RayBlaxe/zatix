@@ -8,6 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Calendar, MapPin, Clock, Download, QrCode, RefreshCw } from "lucide-react"
 import { useAuth } from "@/hooks/use-auth"
 import { ProtectedRoute } from "@/components/protected-route"
+import { Header } from "@/components/header"
 import { orderApi } from "@/lib/api"
 import { CustomerTicket } from "@/types/events"
 import { toast } from "@/components/ui/use-toast"
@@ -438,25 +439,30 @@ export default function MyTicketsPage() {
   if (isLoading) {
     return (
       <ProtectedRoute requiredRoles={["customer"]}>
-        <div className="container mx-auto py-8">
-          <div className="mb-8">
-            <h1 className="text-3xl font-bold mb-2">My Tickets</h1>
-            <p className="text-muted-foreground">Loading your tickets...</p>
-          </div>
-          <div className="space-y-4">
-            {[...Array(3)].map((_, i) => (
-              <Card key={i} className="animate-pulse">
-                <CardHeader>
-                  <div className="h-4 bg-gray-200 rounded w-3/4"></div>
-                  <div className="h-3 bg-gray-200 rounded w-1/2"></div>
-                </CardHeader>
-                <CardContent>
-                  <div className="h-3 bg-gray-200 rounded w-full mb-2"></div>
-                  <div className="h-3 bg-gray-200 rounded w-2/3"></div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+        <div className="flex min-h-screen flex-col">
+          <Header />
+          <main className="flex-1">
+            <div className="container mx-auto py-8">
+              <div className="mb-8">
+                <h1 className="text-3xl font-bold mb-2">My Tickets</h1>
+                <p className="text-muted-foreground">Loading your tickets...</p>
+              </div>
+              <div className="space-y-4">
+                {[...Array(3)].map((_, i) => (
+                  <Card key={i} className="animate-pulse">
+                    <CardHeader>
+                      <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+                      <div className="h-3 bg-gray-200 rounded w-1/2"></div>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="h-3 bg-gray-200 rounded w-full mb-2"></div>
+                      <div className="h-3 bg-gray-200 rounded w-2/3"></div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            </div>
+          </main>
         </div>
       </ProtectedRoute>
     )
@@ -465,23 +471,28 @@ export default function MyTicketsPage() {
   if (error) {
     return (
       <ProtectedRoute requiredRoles={["customer"]}>
-        <div className="container mx-auto py-8">
-          <div className="mb-8">
-            <h1 className="text-3xl font-bold mb-2">My Tickets</h1>
-          </div>
-          <Card>
-            <CardContent className="p-8 text-center">
-              <div className="text-red-500 mb-4">
-                <RefreshCw className="size-12 mx-auto" />
+        <div className="flex min-h-screen flex-col">
+          <Header />
+          <main className="flex-1">
+            <div className="container mx-auto py-8">
+              <div className="mb-8">
+                <h1 className="text-3xl font-bold mb-2">My Tickets</h1>
               </div>
-              <h3 className="text-lg font-semibold mb-2">Unable to Load Tickets</h3>
-              <p className="text-muted-foreground mb-4">{error}</p>
-              <Button onClick={fetchMyTickets}>
-                <RefreshCw className="mr-2 size-4" />
-                Try Again
-              </Button>
-            </CardContent>
-          </Card>
+              <Card>
+                <CardContent className="p-8 text-center">
+                  <div className="text-red-500 mb-4">
+                    <RefreshCw className="size-12 mx-auto" />
+                  </div>
+                  <h3 className="text-lg font-semibold mb-2">Unable to Load Tickets</h3>
+                  <p className="text-muted-foreground mb-4">{error}</p>
+                  <Button onClick={fetchMyTickets}>
+                    <RefreshCw className="mr-2 size-4" />
+                    Try Again
+                  </Button>
+                </CardContent>
+              </Card>
+            </div>
+          </main>
         </div>
       </ProtectedRoute>
     )
@@ -489,83 +500,88 @@ export default function MyTicketsPage() {
 
   return (
     <ProtectedRoute requiredRoles={["customer"]}>
-      <div className="container mx-auto py-8">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold mb-2">My Tickets</h1>
-          <p className="text-muted-foreground">
-            Manage and view all your event tickets in one place
-          </p>
-        </div>
+      <div className="flex min-h-screen flex-col">
+        <Header />
+        <main className="flex-1">
+          <div className="container mx-auto py-8">
+            <div className="mb-8">
+              <h1 className="text-3xl font-bold mb-2">My Tickets</h1>
+              <p className="text-muted-foreground">
+                Manage and view all your event tickets in one place
+              </p>
+            </div>
 
-        <Tabs defaultValue="upcoming" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="upcoming">
-              Upcoming ({upcomingTickets.length})
-            </TabsTrigger>
-            <TabsTrigger value="pending">
-              Pending ({pendingTickets.length})
-            </TabsTrigger>
-            <TabsTrigger value="past">
-              Past Events ({pastTickets.length})
-            </TabsTrigger>
-          </TabsList>
-          
-          <TabsContent value="upcoming" className="space-y-4">
-            {upcomingTickets.length === 0 ? (
-              <div className="text-center py-12">
-                <h3 className="text-lg font-semibold mb-2">No upcoming events</h3>
-                <p className="text-muted-foreground mb-4">
-                  You don't have any upcoming events. Start exploring events to book your tickets!
-                </p>
-                <Button asChild>
-                  <a href="/events">Browse Events</a>
-                </Button>
-              </div>
-            ) : (
-              <div className="space-y-4">
-                {upcomingTickets.map(renderTicketCard)}
-              </div>
-            )}
-          </TabsContent>
-          
-          <TabsContent value="pending" className="space-y-4">
-            {pendingTickets.length === 0 ? (
-              <div className="text-center py-12">
-                <h3 className="text-lg font-semibold mb-2">No pending tickets</h3>
-                <p className="text-muted-foreground">
-                  All your ticket purchases are confirmed
-                </p>
-              </div>
-            ) : (
-              <div className="space-y-4">
-                {pendingTickets.map(renderTicketCard)}
-              </div>
-            )}
-          </TabsContent>
-          
-          <TabsContent value="past" className="space-y-4">
-            {pastTickets.length === 0 ? (
-              <div className="text-center py-12">
-                <h3 className="text-lg font-semibold mb-2">No past events</h3>
-                <p className="text-muted-foreground">
-                  Your event history will appear here
-                </p>
-              </div>
-            ) : (
-              <div className="space-y-4">
-                {pastTickets.map(renderTicketCard)}
-              </div>
-            )}
-          </TabsContent>
-        </Tabs>
+            <Tabs defaultValue="upcoming" className="space-y-6">
+              <TabsList className="grid w-full grid-cols-3">
+                <TabsTrigger value="upcoming">
+                  Upcoming ({upcomingTickets.length})
+                </TabsTrigger>
+                <TabsTrigger value="pending">
+                  Pending ({pendingTickets.length})
+                </TabsTrigger>
+                <TabsTrigger value="past">
+                  Past Events ({pastTickets.length})
+                </TabsTrigger>
+              </TabsList>
+              
+              <TabsContent value="upcoming" className="space-y-4">
+                {upcomingTickets.length === 0 ? (
+                  <div className="text-center py-12">
+                    <h3 className="text-lg font-semibold mb-2">No upcoming events</h3>
+                    <p className="text-muted-foreground mb-4">
+                      You don't have any upcoming events. Start exploring events to book your tickets!
+                    </p>
+                    <Button asChild>
+                      <a href="/events">Browse Events</a>
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {upcomingTickets.map(renderTicketCard)}
+                  </div>
+                )}
+              </TabsContent>
+              
+              <TabsContent value="pending" className="space-y-4">
+                {pendingTickets.length === 0 ? (
+                  <div className="text-center py-12">
+                    <h3 className="text-lg font-semibold mb-2">No pending tickets</h3>
+                    <p className="text-muted-foreground">
+                      All your ticket purchases are confirmed
+                    </p>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {pendingTickets.map(renderTicketCard)}
+                  </div>
+                )}
+              </TabsContent>
+              
+              <TabsContent value="past" className="space-y-4">
+                {pastTickets.length === 0 ? (
+                  <div className="text-center py-12">
+                    <h3 className="text-lg font-semibold mb-2">No past events</h3>
+                    <p className="text-muted-foreground">
+                      Your event history will appear here
+                    </p>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {pastTickets.map(renderTicketCard)}
+                  </div>
+                )}
+              </TabsContent>
+            </Tabs>
 
-        {/* QR Code Modal */}
-        <QRCodeModal
-          ticket={selectedTicket}
-          qrCodeData={qrCodeData}
-          isOpen={showQRModal}
-          onClose={handleCloseQRModal}
-        />
+            {/* QR Code Modal */}
+            <QRCodeModal
+              ticket={selectedTicket}
+              qrCodeData={qrCodeData}
+              isOpen={showQRModal}
+              onClose={handleCloseQRModal}
+            />
+          </div>
+        </main>
       </div>
     </ProtectedRoute>
   )
