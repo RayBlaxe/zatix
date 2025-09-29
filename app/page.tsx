@@ -51,7 +51,7 @@ export default function HomePage() {
 
         <section className="py-4 sm:py-8">
           <div className="container px-4 sm:px-6">
-            <div className="max-w-4xl mx-auto">
+            <div className="mx-auto">
               <Carousel />
             </div>
           </div>
