@@ -98,7 +98,7 @@ export function Carousel() {
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
             </div>
-            <div className="absolute bottom-0 left-0 right-0 p-4 sm:p-6 md:p-10 text-white">
+            <div className="absolute bottom-0 left-0 right-0 p-4 sm:p-6 md:p-10 pl-12 sm:pl-16 md:pl-20 text-white">
               <h2 className="text-lg sm:text-2xl md:text-4xl font-bold mb-1 sm:mb-2">{slide.title}</h2>
               <p className="text-xs sm:text-sm md:text-lg mb-2 sm:mb-4 max-w-xl line-clamp-2 sm:line-clamp-none">{slide.caption}</p>
               {slide.link_url && (
@@ -116,9 +116,9 @@ export function Carousel() {
       {slides.length > 1 && (
         <>
           <Button
-            variant="outline"
+            variant="ghost"
             size="icon"
-            className="absolute left-2 sm:left-4 top-1/2 -translate-y-1/2 bg-background/80 hover:bg-background h-8 w-8 sm:h-10 sm:w-10"
+            className="absolute left-2 sm:left-4 top-1/2 -translate-y-1/2 bg-black/20 hover:bg-black/40 border-0 h-8 w-8 sm:h-10 sm:w-10 text-white hover:text-white transition-all duration-300 opacity-0 hover:opacity-100"
             onClick={prevSlide}
           >
             <ChevronLeft className="h-3 w-3 sm:h-4 sm:w-4" />
@@ -126,9 +126,9 @@ export function Carousel() {
           </Button>
 
           <Button
-            variant="outline"
+            variant="ghost"
             size="icon"
-            className="absolute right-2 sm:right-4 top-1/2 -translate-y-1/2 bg-background/80 hover:bg-background h-8 w-8 sm:h-10 sm:w-10"
+            className="absolute right-2 sm:right-4 top-1/2 -translate-y-1/2 bg-black/20 hover:bg-black/40 border-0 h-8 w-8 sm:h-10 sm:w-10 text-white hover:text-white transition-all duration-300 opacity-0 hover:opacity-100"
             onClick={nextSlide}
           >
             <ChevronRight className="h-3 w-3 sm:h-4 sm:w-4" />
@@ -139,7 +139,7 @@ export function Carousel() {
             {slides.map((_, index) => (
               <button
                 key={index}
-                className={`h-1.5 w-1.5 sm:h-2 sm:w-2 rounded-full transition-colors ${currentSlide === index ? "bg-primary" : "bg-primary/30"}`}
+                className={`h-1.5 w-1.5 sm:h-2 sm:w-2 rounded-full transition-colors ${currentSlide === index ? "bg-white" : "bg-white/40"}`}
                 onClick={() => setCurrentSlide(index)}
               >
                 <span className="sr-only">Go to slide {index + 1}</span>

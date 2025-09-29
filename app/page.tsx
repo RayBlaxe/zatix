@@ -66,10 +66,10 @@ export default function HomePage() {
               </p>
             </div>
 
-            <div className="grid gap-4 sm:gap-6 md:grid-cols-2 lg:grid-cols-3">
+            <div className="grid gap-4 sm:gap-6 md:grid-cols-2 lg:grid-cols-4">
               {loading ? (
                 // Loading skeleton
-                Array.from({ length: 3 }, (_, i) => (
+                Array.from({ length: 4 }, (_, i) => (
                   <div key={i} className="group relative overflow-hidden rounded-lg border bg-white p-2">
                     <div className="aspect-video overflow-hidden rounded-md bg-gray-200 animate-pulse">
                     </div>
