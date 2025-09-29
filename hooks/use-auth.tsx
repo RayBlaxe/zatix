@@ -64,8 +64,20 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [pendingVerificationEmail, setPendingVerificationEmail] = useState<string | null>(null);
+  const [pendingVerificationEmail, setPendingVerificationEmailState] = useState<string | null>(null);
   const [tokenExpiration, setTokenExpiration] = useState<Date | null>(null);
+
+  // Helper function to set pending verification email and persist it
+  const setPendingVerificationEmail = (email: string | null) => {
+    setPendingVerificationEmailState(email);
+    if (typeof window !== "undefined") {
+      if (email) {
+        localStorage.setItem("pendingVerificationEmail", email);
+      } else {
+        localStorage.removeItem("pendingVerificationEmail");
+      }
+    }
+  };
 
   // Logout function (defined early to avoid circular dependency)
   const logout = useCallback(async () => {
@@ -83,6 +95,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setTokenExpiration(null);
       removeStoredToken();
       localStorage.removeItem("user");
+      setPendingVerificationEmail(null); // Clear pending verification email
       setIsLoading(false);
     }
   }, []);
@@ -102,6 +115,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const initializeAuth = () => {
       const token = getStoredToken();
       const savedUser = localStorage.getItem("user");
+      const savedPendingEmail = localStorage.getItem("pendingVerificationEmail");
+      
+      // Initialize pending verification email from localStorage
+      if (savedPendingEmail) {
+        setPendingVerificationEmailState(savedPendingEmail);
+      }
       
       if (token && savedUser) {
         try {
@@ -270,7 +289,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } finally {
       setIsLoading(false);
     }
-    // display console log for the sent value
    
   };
 
@@ -321,6 +339,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const expiration = getTokenExpiration();
       setTokenExpiration(expiration);
 
+      // Clear pending verification email after successful verification
       setPendingVerificationEmail(null);
     } finally {
       setIsLoading(false);
