@@ -139,8 +139,8 @@ export default function EventsPage() {
           </section>
           <section className="py-12">
             <div className="container">
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {[...Array(6)].map((_, i) => (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                {[...Array(8)].map((_, i) => (
                   <Card key={i} className="animate-pulse">
                     <CardHeader>
                       <div className="h-32 bg-gray-200 rounded mb-4"></div>
@@ -260,7 +260,7 @@ export default function EventsPage() {
                 </div>
               </BlurFade>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                 {events.map((event, index) => {
                   const status = getEventStatus(event)
                   const availableSeats = getAvailableSeats(event.tickets)

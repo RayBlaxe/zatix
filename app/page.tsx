@@ -57,12 +57,53 @@ export default function HomePage() {
           </div>
         </section>
 
+        {/* Categories Section */}
+        <section className="py-8 sm:py-12 bg-gray-50">
+          <div className="container px-4 sm:px-6">
+            <div className="text-center mb-8">
+              <h2 className="text-2xl sm:text-3xl font-bold tracking-tight mb-2" style={{ color: '#002547' }}>
+                Browse by Category
+              </h2>
+              <p className="text-gray-600 max-w-2xl mx-auto text-sm sm:text-base">
+                Find events that match your interests
+              </p>
+            </div>
+
+            <div className="grid gap-4 sm:gap-6 grid-cols-2 md:grid-cols-3 lg:grid-cols-6">
+              {[
+                { name: 'Music', icon: '🎵', count: 45, color: 'bg-red-100 text-red-700' },
+                { name: 'Business', icon: '💼', count: 32, color: 'bg-blue-100 text-blue-700' },
+                { name: 'Sports', icon: '🏆', count: 28, color: 'bg-green-100 text-green-700' },
+                { name: 'Arts', icon: '🎨', count: 21, color: 'bg-purple-100 text-purple-700' },
+                { name: 'Tech', icon: '💻', count: 19, color: 'bg-yellow-100 text-yellow-700' },
+                { name: 'Food', icon: '🍽️', count: 16, color: 'bg-pink-100 text-pink-700' }
+              ].map((category) => (
+                <Link key={category.name} href={`/events?category=${category.name.toLowerCase()}`}>
+                  <div className="group p-4 rounded-lg bg-white border hover:shadow-md transition-all cursor-pointer">
+                    <div className={`w-12 h-12 rounded-full ${category.color} flex items-center justify-center mx-auto mb-3`}>
+                      <span className="text-2xl">{category.icon}</span>
+                    </div>
+                    <div className="text-center">
+                      <h3 className="font-semibold text-gray-900 text-sm">{category.name}</h3>
+                      <p className="text-xs text-gray-500 mt-1">{category.count} events</p>
+                    </div>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* Hot Events Section */}
         <section className="py-8 sm:py-12" style={{ backgroundColor: '#002547' }}>
           <div className="container px-4 sm:px-6">
             <div className="text-center mb-8 sm:mb-10">
-              <h2 className="text-2xl sm:text-3xl font-bold tracking-tight mb-2 text-white">Upcoming Events</h2>
+              <div className="inline-flex items-center gap-2 bg-red-500 text-white px-3 py-1 rounded-full text-sm font-medium mb-4">
+                🔥 Hot Events
+              </div>
+              <h2 className="text-2xl sm:text-3xl font-bold tracking-tight mb-2 text-white">Trending Now</h2>
               <p className="text-white/80 max-w-2xl mx-auto text-sm sm:text-base">
-                Discover and join our upcoming events. From workshops to conferences, we have something for everyone.
+                Don't miss out on these popular events that everyone's talking about
               </p>
             </div>
 
@@ -85,22 +126,21 @@ export default function HomePage() {
                   </div>
                 ))
               ) : events.length > 0 ? (
-                events.map((event) => (
+                events.slice(0, 4).map((event) => (
                   <div key={event.id} className="group relative overflow-hidden rounded-lg border bg-white p-2">
+                    <div className="absolute top-4 left-4 z-10">
+                      <span className="bg-red-500 text-white px-2 py-1 rounded-full text-xs font-medium">
+                        🔥 Trending
+                      </span>
+                    </div>
                     <div className="aspect-video overflow-hidden rounded-md bg-gray-100">
-                      {event.poster ? (
-                        <Image
-                          src={getEventPosterUrl(event.poster)}
-                          alt={event.name}
-                          width={500}
-                          height={300}
-                          className="object-cover w-full h-full transition-transform group-hover:scale-105"
-                        />
-                      ) : (
-                        <div className="w-full h-full bg-gray-200 flex items-center justify-center">
-                          <span className="text-gray-500 text-sm">No Image</span>
-                        </div>
-                      )}
+                      <Image
+                        src={getEventPosterUrl(event.poster)}
+                        alt={event.name}
+                        width={500}
+                        height={300}
+                        className="object-cover w-full h-full transition-transform group-hover:scale-105"
+                      />
                     </div>
                     <div className="p-3 sm:p-4">
                       <h3 className="text-lg sm:text-xl font-semibold text-gray-900 line-clamp-1">{event.name}</h3>
@@ -128,17 +168,92 @@ export default function HomePage() {
                 ))
               ) : (
                 <div className="col-span-full text-center py-8 sm:py-12">
-                  <p className="text-white/80 text-base sm:text-lg">No upcoming events available at the moment.</p>
+                  <p className="text-white/80 text-base sm:text-lg">No trending events available at the moment.</p>
                   <p className="text-white/60 text-xs sm:text-sm mt-2">Check back later for new events!</p>
                 </div>
               )}
             </div>
+          </div>
+        </section>
 
-            <div className="mt-8 sm:mt-10 text-center">
+        {/* Featured Events Section */}
+        <section className="py-8 sm:py-12 bg-white">
+          <div className="container px-4 sm:px-6">
+            <div className="text-center mb-8 sm:mb-10">
+              <div className="inline-flex items-center gap-2 bg-yellow-500 text-white px-3 py-1 rounded-full text-sm font-medium mb-4">
+                ⭐ Featured
+              </div>
+              <h2 className="text-2xl sm:text-3xl font-bold tracking-tight mb-2" style={{ color: '#002547' }}>
+                Featured Events
+              </h2>
+              <p className="text-gray-600 max-w-2xl mx-auto text-sm sm:text-base">
+                Handpicked events that we think you'll love
+              </p>
+            </div>
+
+            <div className="grid gap-6 lg:grid-cols-2">
+              {loading ? (
+                // Loading skeleton
+                Array.from({ length: 2 }, (_, i) => (
+                  <div key={i} className="flex flex-col sm:flex-row gap-4 p-4 border rounded-lg">
+                    <div className="w-full sm:w-48 h-32 bg-gray-200 rounded-md animate-pulse"></div>
+                    <div className="flex-1">
+                      <div className="h-6 bg-gray-200 rounded animate-pulse mb-2"></div>
+                      <div className="h-4 bg-gray-200 rounded animate-pulse mb-2"></div>
+                      <div className="h-4 bg-gray-200 rounded animate-pulse mb-4"></div>
+                      <div className="h-8 w-24 bg-gray-200 rounded animate-pulse"></div>
+                    </div>
+                  </div>
+                ))
+              ) : events.length > 0 ? (
+                events.slice(3, 5).map((event) => (
+                  <div key={event.id} className="group flex flex-col sm:flex-row gap-4 p-4 border rounded-lg hover:shadow-md transition-shadow">
+                    <div className="w-full sm:w-48 h-32 sm:h-24 overflow-hidden rounded-md bg-gray-100">
+                      <Image
+                        src={getEventPosterUrl(event.poster)}
+                        alt={event.name}
+                        width={200}
+                        height={120}
+                        className="object-cover w-full h-full transition-transform group-hover:scale-105"
+                      />
+                    </div>
+                    <div className="flex-1">
+                      <h3 className="text-lg font-semibold text-gray-900 mb-2">{event.name}</h3>
+                      <p className="text-sm text-gray-600 mb-2">
+                        {format(new Date(event.start_date), 'MMM dd, yyyy')} • {event.location}
+                      </p>
+                      <p className="text-sm text-gray-700 line-clamp-2 mb-4">
+                        {event.description}
+                      </p>
+                      <div className="flex items-center justify-between">
+                        <Link href={`/events/${event.id}`}>
+                          <Button size="sm" className="bg-[#002547] hover:bg-[#002547]/90">
+                            Learn More
+                          </Button>
+                        </Link>
+                        <span className="text-sm font-medium text-gray-900">
+                          {event.tickets.length > 0 && Number(event.tickets[0].price) > 0 
+                            ? `Rp ${Number(event.tickets[0].price).toLocaleString()}`
+                            : 'Free'
+                          }
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <div className="col-span-full text-center py-8 sm:py-12">
+                  <p className="text-gray-600 text-base sm:text-lg">No featured events available at the moment.</p>
+                  <p className="text-gray-500 text-xs sm:text-sm mt-2">Check back later for new events!</p>
+                </div>
+              )}
+            </div>
+
+            <div className="mt-8 text-center">
               <Link href="/events">
                 <Button 
                   size="lg" 
-                  className="bg-white text-[#002547] border-2 border-white hover:bg-white/90 hover:text-[#002547] font-semibold w-full sm:w-auto"
+                  className="bg-[#002547] hover:bg-[#002547]/90 font-semibold w-full sm:w-auto"
                 >
                   View All Events
                 </Button>

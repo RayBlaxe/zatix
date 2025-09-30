@@ -227,8 +227,10 @@ async function apiRequestFormData<T>(endpoint: string, method = "GET", formData?
       throw error
     }
     
-    // Use mock responses only when explicitly enabled
-    if (process.env.NEXT_PUBLIC_USE_MOCKS === "true") {
+    // Use mock responses when explicitly enabled OR when backend is unavailable
+    const USE_MOCK_DATA = process.env.NEXT_PUBLIC_USE_MOCKS !== 'false'
+    if (USE_MOCK_DATA) {
+      console.log("[API] Using mock response for:", endpoint)
       return handleMockResponse<T>(endpoint, method, formData)
     }
     throw error
@@ -1732,6 +1734,220 @@ function handleMockResponse<T>(endpoint: string, method: string, data?: any): T 
         current_page: 1
       },
       message: "Limit violations retrieved successfully"
+    } as unknown as T
+  }
+
+  // Single public event mock response (must come before general /events handler)
+  if (endpoint.includes("/events/") && !endpoint.includes("/staffs") && method === "GET") {
+    const eventId = parseInt(endpoint.split("/events/")[1])
+    
+    // Create detailed mock events based on the ID
+    const mockEvents = {
+      1: {
+        id: 1,
+        name: "Indonesia Music Festival 2025",
+        description: "The biggest music festival in Southeast Asia featuring international and local artists. Experience three days of non-stop entertainment with multiple stages, food courts, and interactive experiences. This year's lineup includes world-renowned DJs, indie bands, traditional Indonesian music groups, and surprise guest performances. Join thousands of music lovers for an unforgettable weekend of rhythm, beats, and cultural celebration.",
+        poster: "/placeholder.svg",
+        start_date: "2025-01-15T18:00:00Z",
+        end_date: "2025-01-17T23:00:00Z",
+        location: "Jakarta International Expo, Kemayoran",
+        address: "Jl. Boulevard Raya, Kemayoran, Jakarta Pusat 10620",
+        is_published: true,
+        created_at: "2024-12-01T10:00:00Z",
+        updated_at: "2024-12-01T10:00:00Z",
+        category_id: 1,
+        tickets: [
+          { id: 1, name: "Early Bird 3-Day Pass", price: "300000", description: "Limited time offer - Save 50K! Full access to all stages", stock: "50" },
+          { id: 2, name: "Regular 3-Day Pass", price: "350000", description: "Full festival access with parking", stock: "200" },
+          { id: 3, name: "VIP Experience", price: "750000", description: "Premium viewing area, backstage access, VIP lounge", stock: "25" },
+          { id: 4, name: "Single Day Pass", price: "150000", description: "Access for one day only", stock: "100" }
+        ],
+        facilities: ["Parking", "Food Court", "First Aid", "Merchandise Store", "VIP Lounge", "Multiple Stages"]
+      },
+      2: {
+        id: 2,
+        name: "Tech Innovation Summit 2025",
+        description: "Join industry leaders and innovators for insightful talks about the future of technology and digital transformation. This comprehensive summit features keynote speeches from tech giants, startup pitch competitions, networking sessions, and hands-on workshops covering AI, blockchain, IoT, and emerging technologies.",
+        poster: "/placeholder.svg",
+        start_date: "2025-01-20T09:00:00Z",
+        end_date: "2025-01-20T17:00:00Z",
+        location: "Grand Ballroom, Hotel Indonesia Kempinski",
+        address: "Jl. M.H. Thamrin No.1, Jakarta Pusat 10310",
+        is_published: true,
+        created_at: "2024-12-01T10:00:00Z",
+        updated_at: "2024-12-01T10:00:00Z",
+        category_id: 5,
+        tickets: [
+          { id: 5, name: "Standard Ticket", price: "500000", description: "Full day access, lunch included", stock: "150" },
+          { id: 6, name: "Premium Ticket", price: "750000", description: "Priority seating, networking lunch, workshop access", stock: "75" },
+          { id: 7, name: "Student Discount", price: "250000", description: "Valid student ID required", stock: "50" }
+        ],
+        facilities: ["Wi-Fi", "Lunch", "Coffee Breaks", "Networking Area", "Workshop Rooms", "Parking"]
+      },
+      3: {
+        id: 3,
+        name: "Jakarta Food Festival",
+        description: "Discover the rich culinary heritage of Indonesia with over 100 food vendors, cooking demonstrations, and cultural performances. From traditional street food to modern fusion cuisine, explore the diverse flavors that make Indonesian food world-famous.",
+        poster: "/placeholder.svg",
+        start_date: "2025-01-25T10:00:00Z",
+        end_date: "2025-01-27T22:00:00Z",
+        location: "Gelora Bung Karno Sports Complex",
+        address: "Jl. Pintu Satu Senayan, Jakarta Selatan 10270",
+        is_published: true,
+        created_at: "2024-12-01T10:00:00Z",
+        updated_at: "2024-12-01T10:00:00Z",
+        category_id: 6,
+        tickets: [
+          { id: 8, name: "Free Entry", price: "0", description: "Free admission for all visitors", stock: "unlimited" }
+        ],
+        facilities: ["Free Parking", "Food Courts", "Cultural Stage", "Kids Play Area", "Prayer Room", "ATM Center"]
+      }
+    }
+    
+    // Default event for any other ID
+    const defaultEvent = {
+      id: eventId,
+      name: `Event #${eventId} Details`,
+      description: "This is a detailed view of the event with full information and ticket options. Experience an amazing event with great entertainment and memorable moments.",
+      poster: "/placeholder.svg",
+      start_date: "2025-02-15T18:00:00Z",
+      end_date: "2025-02-15T23:00:00Z",
+      location: "Sample Venue Jakarta",
+      address: "Sample Address, Jakarta Pusat",
+      is_published: true,
+      created_at: "2024-12-01T10:00:00Z",
+      updated_at: "2024-12-01T10:00:00Z",
+      category_id: 1,
+      tickets: [
+        { id: 9, name: "Early Bird", price: "100000", description: "Limited time offer", stock: "50" },
+        { id: 10, name: "Regular", price: "150000", description: "Standard admission", stock: "100" },
+        { id: 11, name: "VIP", price: "300000", description: "Premium experience", stock: "25" }
+      ],
+      facilities: ["Parking", "Food Court", "First Aid"]
+    }
+    
+    const mockEvent = mockEvents[eventId as keyof typeof mockEvents] || defaultEvent
+    
+    return {
+      success: true,
+      message: "Event details retrieved successfully",
+      data: mockEvent
+    } as unknown as T
+  }
+
+  // Public events list mock response - supports pagination and basic filtering
+  if (endpoint.startsWith("/events") && method === "GET") {
+    const mockEvents = [
+      {
+        id: 1,
+        name: "Indonesia Music Festival 2025",
+        description: "The biggest music festival in Southeast Asia featuring international and local artists. Experience three days of non-stop entertainment.",
+        poster: "/placeholder.svg",
+        start_date: "2025-01-15T18:00:00Z",
+        end_date: "2025-01-17T23:00:00Z",
+        location: "Jakarta International Expo, Kemayoran",
+        address: "Jl. Boulevard Raya, Kemayoran, Jakarta Pusat",
+        is_published: true,
+        created_at: "2024-12-01T10:00:00Z",
+        updated_at: "2024-12-01T10:00:00Z",
+        category_id: 1,
+        tickets: [{ id: 1, name: "General Admission", price: "350000", description: "3-day festival pass" }],
+        facilities: []
+      },
+      {
+        id: 2,
+        name: "Tech Innovation Summit 2025",
+        description: "Join industry leaders and innovators for insightful talks about the future of technology and digital transformation.",
+        poster: "/placeholder.svg",
+        start_date: "2025-01-20T09:00:00Z",
+        end_date: "2025-01-20T17:00:00Z",
+        location: "Grand Ballroom, Hotel Indonesia Kempinski",
+        address: "Jl. M.H. Thamrin No.1, Jakarta Pusat",
+        is_published: true,
+        created_at: "2024-12-01T10:00:00Z",
+        updated_at: "2024-12-01T10:00:00Z",
+        category_id: 5,
+        tickets: [{ id: 2, name: "Standard Ticket", price: "500000", description: "Full day access" }],
+        facilities: []
+      },
+      {
+        id: 3,
+        name: "Jakarta Food Festival",
+        description: "Discover the rich culinary heritage of Indonesia with over 100 food vendors, cooking demonstrations, and cultural performances.",
+        poster: "/placeholder.svg",
+        start_date: "2025-01-25T10:00:00Z",
+        end_date: "2025-01-27T22:00:00Z",
+        location: "Gelora Bung Karno Sports Complex",
+        address: "Jl. Pintu Satu Senayan, Jakarta Selatan",
+        is_published: true,
+        created_at: "2024-12-01T10:00:00Z",
+        updated_at: "2024-12-01T10:00:00Z",
+        category_id: 6,
+        tickets: [{ id: 3, name: "Entry Ticket", price: "0", description: "Free admission" }],
+        facilities: []
+      },
+      {
+        id: 4,
+        name: "Art & Culture Exhibition",
+        description: "A showcase of contemporary Indonesian art featuring paintings, sculptures, and digital installations from emerging artists.",
+        poster: "/placeholder.svg",
+        start_date: "2025-02-01T10:00:00Z",
+        end_date: "2025-02-28T18:00:00Z",
+        location: "National Gallery of Indonesia",
+        address: "Jl. Medan Merdeka Timur No.14, Jakarta Pusat",
+        is_published: true,
+        created_at: "2024-12-01T10:00:00Z",
+        updated_at: "2024-12-01T10:00:00Z",
+        category_id: 4,
+        tickets: [{ id: 4, name: "Exhibition Pass", price: "75000", description: "Month-long access" }],
+        facilities: []
+      },
+      {
+        id: 5,
+        name: "Marathon Jakarta 2025",
+        description: "Challenge yourself in Jakarta's premier running event. Multiple categories available from 5K fun run to full marathon.",
+        poster: "/placeholder.svg",
+        start_date: "2025-02-10T05:00:00Z",
+        end_date: "2025-02-10T12:00:00Z",
+        location: "Monas (National Monument) Area",
+        address: "Jl. Medan Merdeka, Jakarta Pusat",
+        is_published: true,
+        created_at: "2024-12-01T10:00:00Z",
+        updated_at: "2024-12-01T10:00:00Z",
+        category_id: 3,
+        tickets: [{ id: 5, name: "Full Marathon", price: "200000", description: "42.2 KM race" }],
+        facilities: []
+      },
+      {
+        id: 6,
+        name: "Business Networking Gala",
+        description: "An exclusive evening for business professionals to network, share insights, and build valuable connections.",
+        poster: "/placeholder.svg",
+        start_date: "2025-02-14T19:00:00Z",
+        end_date: "2025-02-14T23:00:00Z",
+        location: "Shangri-La Hotel Jakarta",
+        address: "Jl. Jend. Sudirman Kav. 1, Jakarta Selatan",
+        is_published: true,
+        created_at: "2024-12-01T10:00:00Z",
+        updated_at: "2024-12-01T10:00:00Z",
+        category_id: 2,
+        tickets: [{ id: 6, name: "VIP Access", price: "750000", description: "Includes dinner" }],
+        facilities: []
+      }
+    ]
+    
+    return {
+      success: true,
+      message: "Public events retrieved successfully",
+      data: {
+        data: mockEvents,
+        current_page: 1,
+        per_page: 20,
+        total: mockEvents.length,
+        last_page: 1,
+        from: 1,
+        to: mockEvents.length
+      }
     } as unknown as T
   }
 
