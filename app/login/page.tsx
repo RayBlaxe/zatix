@@ -2,7 +2,7 @@
 
 import type React from "react"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, Suspense } from "react"
 import Link from "next/link"
 import { useRouter, useSearchParams } from "next/navigation"
 import { Button } from "@/components/ui/button"
@@ -14,7 +14,7 @@ import { useAuth } from "@/hooks/use-auth"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Loader2, CheckCircle } from "lucide-react"
 
-export default function LoginPage() {
+function LoginForm() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const { login } = useAuth()
@@ -136,5 +136,17 @@ export default function LoginPage() {
         </div>
       </main>
     </div>
+  )
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    }>
+      <LoginForm />
+    </Suspense>
   )
 }

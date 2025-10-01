@@ -2,7 +2,7 @@
 
 import type React from "react"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, Suspense } from "react"
 import Link from "next/link"
 import { useRouter, useSearchParams } from "next/navigation"
 import { Button } from "@/components/ui/button"
@@ -14,7 +14,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Loader2, Mail, CheckCircle } from "lucide-react"
 import { useAuth } from "@/hooks/use-auth"
 
-export default function ForgotPasswordPage() {
+function ForgotPasswordForm() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const { forgotPassword } = useAuth()
@@ -129,5 +129,17 @@ export default function ForgotPasswordPage() {
         </div>
       </main>
     </div>
+  )
+}
+
+export default function ForgotPasswordPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    }>
+      <ForgotPasswordForm />
+    </Suspense>
   )
 }

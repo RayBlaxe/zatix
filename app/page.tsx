@@ -632,21 +632,19 @@ export default function HomePage() {
         console.log('Fetching time filtered events...')
         const timeEventsResponse = await eventApi.getEventsByTimePeriod(selectedTimePeriod, 6)
         console.log('Time events response:', timeEventsResponse)
-        if (timeEventsResponse.success) {
-          setTimeFilteredEvents(timeEventsResponse.data?.data || [])
-        } else {
-          setTimeFilteredEvents([])
+        if (timeEventsResponse.success && timeEventsResponse.data?.data?.length > 0) {
+          setTimeFilteredEvents(timeEventsResponse.data?.data)
         }
+        // Don't clear hardcoded data if API fails
         
         // Fetch location filtered events
         console.log('Fetching location filtered events...')
         const locationEventsResponse = await eventApi.getEventsByLocation(selectedLocation, 6)
         console.log('Location events response:', locationEventsResponse)
-        if (locationEventsResponse.success) {
-          setLocationFilteredEvents(locationEventsResponse.data?.data || [])
-        } else {
-          setLocationFilteredEvents([])
+        if (locationEventsResponse.success && locationEventsResponse.data?.data?.length > 0) {
+          setLocationFilteredEvents(locationEventsResponse.data?.data)
         }
+        // Don't clear hardcoded data if API fails
         
         // Fetch locations
         console.log('Fetching locations...')
