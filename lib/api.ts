@@ -148,6 +148,13 @@ export async function validateTokenWithAPI(token: string): Promise<{
 async function apiRequestFormData<T>(endpoint: string, method = "GET", formData?: FormData, token?: string): Promise<any> {
   const url = `${API_BASE_URL}${endpoint}`
 
+  // Check if mocks are explicitly enabled - FORCE MOCKS when true
+  const USE_MOCK_DATA = process.env.NEXT_PUBLIC_USE_MOCKS === "true"
+  if (USE_MOCK_DATA) {
+    console.log(`[MOCKS FORCED] ${method} ${endpoint} - Using mocks instead of real API`)
+    return handleMockResponse<T>(endpoint, method, formData)
+  }
+
   // Check stored token expiration before making request
   if (isTokenExpiredByStorage()) {
     console.warn("Token is expired based on stored expiration, removing from storage")
@@ -241,6 +248,24 @@ async function apiRequestFormData<T>(endpoint: string, method = "GET", formData?
 async function apiRequest<T>(endpoint: string, method = "GET", data?: any, token?: string): Promise<any> {
   const url = `${API_BASE_URL}${endpoint}`
   console.log(`[API REQUEST] ${method} ${url}`, { data, token: token ? 'present' : 'missing' })
+  
+  // FORCE MOCKS - Temporarily hardcode to always use mocks for homepage data
+  const FORCE_MOCKS_FOR_HOMEPAGE = [
+    '/events/top-selling',
+    '/events/workshops', 
+    '/events/favorite-eo-owners',
+    '/events/time-period',
+    '/events/location',
+    '/events/locations'
+  ]
+  
+  const shouldUseMock = FORCE_MOCKS_FOR_HOMEPAGE.some(path => endpoint.includes(path)) || 
+                        process.env.NEXT_PUBLIC_USE_MOCKS === "true"
+  
+  if (shouldUseMock) {
+    console.log(`[MOCKS FORCED] ${method} ${endpoint} - Using mocks instead of real API`)
+    return handleMockResponse<T>(endpoint, method, data)
+  }
 
   // Check stored token expiration before making request
   if (isTokenExpiredByStorage()) {
@@ -336,6 +361,17 @@ async function apiRequest<T>(endpoint: string, method = "GET", data?: any, token
 function handleMockResponse<T>(endpoint: string, method: string, data?: any): T {
   console.log(`[MOCKS API] ${method} ${endpoint}`, data)
   console.log("API Base URL:", API_BASE_URL)
+  
+  // Add specific endpoint logging
+  if (endpoint.includes("/events/top-selling")) {
+    console.log("🔥 TOP SELLING MOCK HIT!")
+  }
+  if (endpoint.includes("/events/workshops")) {
+    console.log("🎓 WORKSHOPS MOCK HIT!")
+  }
+  if (endpoint.includes("/events/favorite-eo-owners")) {
+    console.log("⭐ FAVORITE EO MOCK HIT!")
+  }
 
 
   // Login mock response
@@ -1951,6 +1987,531 @@ function handleMockResponse<T>(endpoint: string, method: string, data?: any): T 
     } as unknown as T
   }
 
+  // Top Selling Events mock response
+  if (endpoint.includes("/events/top-selling") && method === "GET") {
+    const topSellingEvents = [
+      {
+        id: 1,
+        name: "Indonesia Music Festival 2025",
+        description: "The biggest music festival in Southeast Asia featuring international and local artists.",
+        poster: "/placeholder.svg",
+        start_date: "2025-01-15T18:00:00Z",
+        end_date: "2025-01-17T23:00:00Z",
+        location: "Jakarta International Expo, Kemayoran",
+        tickets: [{ id: 1, name: "General Admission", price: "350000", description: "3-day festival pass" }],
+        facilities: [],
+        sold_count: 2847,
+        category_id: 1,
+        is_published: true,
+        created_at: "2024-12-01T10:00:00Z",
+        updated_at: "2024-12-01T10:00:00Z"
+      },
+      {
+        id: 2,
+        name: "Tech Innovation Summit 2025",
+        description: "Join industry leaders for insightful talks about the future of technology.",
+        poster: "/placeholder.svg",
+        start_date: "2025-01-20T09:00:00Z",
+        end_date: "2025-01-20T17:00:00Z",
+        location: "Grand Ballroom, Hotel Indonesia Kempinski",
+        tickets: [{ id: 2, name: "Standard Ticket", price: "500000", description: "Full day access" }],
+        facilities: [],
+        sold_count: 1923,
+        category_id: 5,
+        is_published: true,
+        created_at: "2024-12-01T10:00:00Z",
+        updated_at: "2024-12-01T10:00:00Z"
+      },
+      {
+        id: 6,
+        name: "Business Networking Gala",
+        description: "An exclusive evening for business professionals to network and build connections.",
+        poster: "/placeholder.svg",
+        start_date: "2025-02-14T19:00:00Z",
+        end_date: "2025-02-14T23:00:00Z",
+        location: "Shangri-La Hotel Jakarta",
+        tickets: [{ id: 6, name: "VIP Access", price: "750000", description: "Includes dinner" }],
+        facilities: [],
+        sold_count: 1456,
+        category_id: 2,
+        is_published: true,
+        created_at: "2024-12-01T10:00:00Z",
+        updated_at: "2024-12-01T10:00:00Z"
+      },
+      {
+        id: 5,
+        name: "Marathon Jakarta 2025",
+        description: "Challenge yourself in Jakarta's premier running event.",
+        poster: "/placeholder.svg",
+        start_date: "2025-02-10T05:00:00Z",
+        end_date: "2025-02-10T12:00:00Z",
+        location: "Monas (National Monument) Area",
+        tickets: [{ id: 5, name: "Full Marathon", price: "200000", description: "42.2 KM race" }],
+        facilities: [],
+        sold_count: 1089,
+        category_id: 3,
+        is_published: true,
+        created_at: "2024-12-01T10:00:00Z",
+        updated_at: "2024-12-01T10:00:00Z"
+      }
+    ]
+    
+    return {
+      success: true,
+      message: "Top selling events retrieved successfully",
+      data: {
+        data: topSellingEvents,
+        current_page: 1,
+        per_page: 4,
+        total: topSellingEvents.length,
+        last_page: 1,
+        from: 1,
+        to: topSellingEvents.length
+      }
+    } as unknown as T
+  }
+
+  // Workshop Events mock response
+  if (endpoint.includes("/events/workshops") && method === "GET") {
+    const workshopEvents = [
+      {
+        id: 7,
+        name: "Web Development Bootcamp",
+        description: "Intensive 3-day workshop covering modern web development with React, Node.js, and MongoDB.",
+        poster: "/placeholder.svg",
+        start_date: "2025-01-25T09:00:00Z",
+        end_date: "2025-01-27T17:00:00Z",
+        location: "Tech Hub Jakarta",
+        tickets: [{ id: 7, name: "Workshop Pass", price: "450000", description: "3-day intensive training" }],
+        facilities: [],
+        category_id: 5,
+        workshop_type: "Technology"
+      },
+      {
+        id: 8,
+        name: "Digital Marketing Masterclass",
+        description: "Learn the latest digital marketing strategies from industry experts.",
+        poster: "/placeholder.svg",
+        start_date: "2025-02-05T10:00:00Z",
+        end_date: "2025-02-05T16:00:00Z",
+        location: "Marketing Institute Jakarta",
+        tickets: [{ id: 8, name: "Masterclass Ticket", price: "300000", description: "Full day workshop" }],
+        facilities: [],
+        category_id: 2,
+        workshop_type: "Business"
+      },
+      {
+        id: 9,
+        name: "Photography Workshop",
+        description: "Master the art of photography with hands-on sessions and expert guidance.",
+        poster: "/placeholder.svg",
+        start_date: "2025-02-12T08:00:00Z",
+        end_date: "2025-02-12T15:00:00Z",
+        location: "Jakarta Photo Studio",
+        tickets: [{ id: 9, name: "Workshop Access", price: "250000", description: "Includes equipment usage" }],
+        facilities: [],
+        category_id: 4,
+        workshop_type: "Creative Arts"
+      },
+      {
+        id: 10,
+        name: "Entrepreneurship Bootcamp",
+        description: "Start your business journey with practical insights and networking opportunities.",
+        poster: "/placeholder.svg",
+        start_date: "2025-02-20T09:00:00Z",
+        end_date: "2025-02-22T17:00:00Z",
+        location: "Startup Incubator Jakarta",
+        tickets: [{ id: 10, name: "Bootcamp Pass", price: "500000", description: "3-day intensive program" }],
+        facilities: [],
+        category_id: 2,
+        workshop_type: "Business"
+      },
+      {
+        id: 11,
+        name: "Cooking Masterclass",
+        description: "Learn traditional Indonesian cooking techniques from renowned chefs.",
+        poster: "/placeholder.svg",
+        start_date: "2025-03-01T10:00:00Z",
+        end_date: "2025-03-01T16:00:00Z",
+        location: "Culinary Arts Center Jakarta",
+        tickets: [{ id: 11, name: "Cooking Class", price: "350000", description: "Includes ingredients and meal" }],
+        facilities: [],
+        category_id: 6,
+        workshop_type: "Culinary"
+      },
+      {
+        id: 12,
+        name: "Financial Planning Workshop",
+        description: "Master personal finance and investment strategies for your future.",
+        poster: "/placeholder.svg",
+        start_date: "2025-03-08T13:00:00Z",
+        end_date: "2025-03-08T17:00:00Z",
+        location: "Financial Center Jakarta",
+        tickets: [{ id: 12, name: "Planning Workshop", price: "200000", description: "Half-day intensive session" }],
+        facilities: [],
+        category_id: 2,
+        workshop_type: "Finance"
+      }
+    ]
+    
+    return {
+      success: true,
+      message: "Workshop events retrieved successfully",
+      data: {
+        data: workshopEvents,
+        current_page: 1,
+        per_page: 6,
+        total: workshopEvents.length,
+        last_page: 1,
+        from: 1,
+        to: workshopEvents.length
+      }
+    } as unknown as T
+  }
+
+  // Favorite EO Owners mock response
+  if (endpoint.includes("/events/favorite-eo-owners") && method === "GET") {
+    const favoriteEOs = [
+      {
+        id: 1,
+        name: "Jakarta Events Pro",
+        logo: "/placeholder.svg",
+        description: "Professional event organizer specializing in music festivals and corporate events",
+        total_events: 45,
+        average_rating: 4.8,
+        events_count: 12,
+        recent_events: [
+          { id: 1, name: "Indonesia Music Festival 2025", poster: "/placeholder.svg" },
+          { id: 2, name: "Corporate Summit 2024", poster: "/placeholder.svg" }
+        ]
+      },
+      {
+        id: 2,
+        name: "Tech Event Solutions",
+        logo: "/placeholder.svg",
+        description: "Leading organizer of technology conferences and innovation summits",
+        total_events: 32,
+        average_rating: 4.7,
+        events_count: 8,
+        recent_events: [
+          { id: 2, name: "Tech Innovation Summit 2025", poster: "/placeholder.svg" },
+          { id: 7, name: "AI Conference 2024", poster: "/placeholder.svg" }
+        ]
+      },
+      {
+        id: 3,
+        name: "Creative Arts Collective",
+        logo: "/placeholder.svg",
+        description: "Curating unique art exhibitions and cultural events across Jakarta",
+        total_events: 28,
+        average_rating: 4.9,
+        events_count: 15,
+        recent_events: [
+          { id: 4, name: "Art & Culture Exhibition", poster: "/placeholder.svg" },
+          { id: 9, name: "Photography Workshop", poster: "/placeholder.svg" }
+        ]
+      },
+      {
+        id: 4,
+        name: "Fitness & Sports Events",
+        logo: "/placeholder.svg",
+        description: "Organizing marathons, fitness challenges, and sports competitions",
+        total_events: 22,
+        average_rating: 4.6,
+        events_count: 6,
+        recent_events: [
+          { id: 5, name: "Marathon Jakarta 2025", poster: "/placeholder.svg" },
+          { id: 13, name: "Cycling Challenge 2024", poster: "/placeholder.svg" }
+        ]
+      },
+      {
+        id: 5,
+        name: "Culinary Experience Hub",
+        logo: "/placeholder.svg",
+        description: "Creating unforgettable food festivals and culinary workshops",
+        total_events: 19,
+        average_rating: 4.8,
+        events_count: 9,
+        recent_events: [
+          { id: 3, name: "Jakarta Food Festival", poster: "/placeholder.svg" },
+          { id: 11, name: "Cooking Masterclass", poster: "/placeholder.svg" }
+        ]
+      },
+      {
+        id: 6,
+        name: "Business Network Events",
+        logo: "/placeholder.svg",
+        description: "Premium business networking and professional development events",
+        total_events: 35,
+        average_rating: 4.7,
+        events_count: 7,
+        recent_events: [
+          { id: 6, name: "Business Networking Gala", poster: "/placeholder.svg" },
+          { id: 8, name: "Digital Marketing Masterclass", poster: "/placeholder.svg" }
+        ]
+      }
+    ]
+    
+    return {
+      success: true,
+      message: "Favorite EO owners retrieved successfully",
+      data: favoriteEOs
+    } as unknown as T
+  }
+
+  // Events by Time Period mock response
+  if (endpoint.includes("/events/time-period/") && method === "GET") {
+    const period = endpoint.split("/events/time-period/")[1].split("?")[0]
+    
+    const getEventsForPeriod = (period: string) => {
+      const now = new Date()
+      const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+      
+      switch (period) {
+        case 'today':
+          return [
+            {
+              id: 13,
+              name: "Evening Jazz Session",
+              description: "Relaxing jazz music tonight at Blue Note Cafe",
+              poster: "/placeholder.svg",
+              start_date: new Date(today.getTime() + 19 * 60 * 60 * 1000).toISOString(), // 7 PM today
+              end_date: new Date(today.getTime() + 23 * 60 * 60 * 1000).toISOString(), // 11 PM today
+              location: "Blue Note Cafe, Jakarta",
+              tickets: [{ id: 13, name: "Entry Ticket", price: "100000", description: "Includes 1 drink" }],
+              facilities: [],
+              category_id: 1
+            },
+            {
+              id: 14,
+              name: "Tech Meetup Tonight",
+              description: "Networking session for tech professionals",
+              poster: "/placeholder.svg",
+              start_date: new Date(today.getTime() + 18 * 60 * 60 * 1000).toISOString(),
+              end_date: new Date(today.getTime() + 21 * 60 * 60 * 1000).toISOString(),
+              location: "Jakarta Convention Center",
+              tickets: [{ id: 14, name: "Free Entry", price: "0", description: "Free networking" }],
+              facilities: [],
+              category_id: 5
+            }
+          ]
+        case 'week':
+          return [
+            {
+              id: 1,
+              name: "Indonesia Music Festival 2025",
+              description: "The biggest music festival in Southeast Asia",
+              poster: "/placeholder.svg",
+              start_date: "2025-01-15T18:00:00Z",
+              end_date: "2025-01-17T23:00:00Z",
+              location: "Jakarta International Expo, Kemayoran",
+              tickets: [{ id: 1, name: "General Admission", price: "350000", description: "3-day festival pass" }],
+              facilities: [],
+              category_id: 1
+            },
+            {
+              id: 2,
+              name: "Tech Innovation Summit 2025",
+              description: "Join industry leaders for insightful talks",
+              poster: "/placeholder.svg",
+              start_date: "2025-01-20T09:00:00Z",
+              end_date: "2025-01-20T17:00:00Z",
+              location: "Grand Ballroom, Hotel Indonesia Kempinski",
+              tickets: [{ id: 2, name: "Standard Ticket", price: "500000", description: "Full day access" }],
+              facilities: [],
+              category_id: 5
+            }
+          ]
+        case 'month':
+          return [
+            {
+              id: 3,
+              name: "Jakarta Food Festival",
+              description: "Discover the rich culinary heritage of Indonesia",
+              poster: "/placeholder.svg",
+              start_date: "2025-01-25T10:00:00Z",
+              end_date: "2025-01-27T22:00:00Z",
+              location: "Gelora Bung Karno Sports Complex",
+              tickets: [{ id: 3, name: "Entry Ticket", price: "0", description: "Free admission" }],
+              facilities: [],
+              category_id: 6
+            },
+            {
+              id: 5,
+              name: "Marathon Jakarta 2025",
+              description: "Challenge yourself in Jakarta's premier running event",
+              poster: "/placeholder.svg",
+              start_date: "2025-02-10T05:00:00Z",
+              end_date: "2025-02-10T12:00:00Z",
+              location: "Monas (National Monument) Area",
+              tickets: [{ id: 5, name: "Full Marathon", price: "200000", description: "42.2 KM race" }],
+              facilities: [],
+              category_id: 3
+            }
+          ]
+        default: // year
+          return [
+            {
+              id: 1,
+              name: "Indonesia Music Festival 2025",
+              description: "The biggest music festival in Southeast Asia",
+              poster: "/placeholder.svg",
+              start_date: "2025-01-15T18:00:00Z",
+              end_date: "2025-01-17T23:00:00Z",
+              location: "Jakarta International Expo, Kemayoran",
+              tickets: [{ id: 1, name: "General Admission", price: "350000", description: "3-day festival pass" }],
+              facilities: [],
+              category_id: 1
+            },
+            {
+              id: 6,
+              name: "Business Networking Gala",
+              description: "An exclusive evening for business professionals",
+              poster: "/placeholder.svg",
+              start_date: "2025-02-14T19:00:00Z",
+              end_date: "2025-02-14T23:00:00Z",
+              location: "Shangri-La Hotel Jakarta",
+              tickets: [{ id: 6, name: "VIP Access", price: "750000", description: "Includes dinner" }],
+              facilities: [],
+              category_id: 2
+            }
+          ]
+      }
+    }
+    
+    const events = getEventsForPeriod(period)
+    
+    return {
+      success: true,
+      message: `Events for ${period} retrieved successfully`,
+      data: {
+        data: events,
+        current_page: 1,
+        per_page: 6,
+        total: events.length,
+        last_page: 1,
+        from: 1,
+        to: events.length
+      }
+    } as unknown as T
+  }
+
+  // Events by Location mock response
+  if (endpoint.includes("/events/location/") && method === "GET") {
+    const location = decodeURIComponent(endpoint.split("/events/location/")[1].split("?")[0])
+    
+    const getEventsByLocation = (location: string) => {
+      const locationMap: { [key: string]: any[] } = {
+        'jakarta': [
+          {
+            id: 1,
+            name: "Indonesia Music Festival 2025",
+            description: "The biggest music festival in Southeast Asia",
+            poster: "/placeholder.svg",
+            start_date: "2025-01-15T18:00:00Z",
+            end_date: "2025-01-17T23:00:00Z",
+            location: "Jakarta International Expo, Kemayoran",
+            tickets: [{ id: 1, name: "General Admission", price: "350000", description: "3-day festival pass" }],
+            facilities: [],
+            category_id: 1
+          },
+          {
+            id: 2,
+            name: "Tech Innovation Summit 2025",
+            description: "Join industry leaders for insightful talks",
+            poster: "/placeholder.svg",
+            start_date: "2025-01-20T09:00:00Z",
+            end_date: "2025-01-20T17:00:00Z",
+            location: "Grand Ballroom, Hotel Indonesia Kempinski",
+            tickets: [{ id: 2, name: "Standard Ticket", price: "500000", description: "Full day access" }],
+            facilities: [],
+            category_id: 5
+          }
+        ],
+        'bandung': [
+          {
+            id: 15,
+            name: "Bandung Music Fest",
+            description: "Local music festival in the cool city of Bandung",
+            poster: "/placeholder.svg",
+            start_date: "2025-02-01T18:00:00Z",
+            end_date: "2025-02-02T23:00:00Z",
+            location: "Gedung Sate, Bandung",
+            tickets: [{ id: 15, name: "Festival Pass", price: "200000", description: "2-day access" }],
+            facilities: [],
+            category_id: 1
+          },
+          {
+            id: 16,
+            name: "Bandung Art Exhibition",
+            description: "Showcasing local artists and craftsmen",
+            poster: "/placeholder.svg",
+            start_date: "2025-02-15T10:00:00Z",
+            end_date: "2025-02-28T18:00:00Z",
+            location: "Bandung Creative Hub",
+            tickets: [{ id: 16, name: "Exhibition Ticket", price: "50000", description: "2-week access" }],
+            facilities: [],
+            category_id: 4
+          }
+        ],
+        'bekasi': [
+          {
+            id: 17,
+            name: "Bekasi Food Festival",
+            description: "Traditional culinary festival in Bekasi",
+            poster: "/placeholder.svg",
+            start_date: "2025-03-01T10:00:00Z",
+            end_date: "2025-03-03T22:00:00Z",
+            location: "Summarecon Mall Bekasi",
+            tickets: [{ id: 17, name: "Food Pass", price: "75000", description: "3-day food adventure" }],
+            facilities: [],
+            category_id: 6
+          }
+        ],
+        'surabaya': [
+          {
+            id: 18,
+            name: "Surabaya Tech Conference",
+            description: "Technology conference in East Java's largest city",
+            poster: "/placeholder.svg",
+            start_date: "2025-03-10T09:00:00Z",
+            end_date: "2025-03-10T17:00:00Z",
+            location: "Grand City Surabaya",
+            tickets: [{ id: 18, name: "Conference Ticket", price: "400000", description: "Full day conference" }],
+            facilities: [],
+            category_id: 5
+          }
+        ]
+      }
+      
+      return locationMap[location.toLowerCase()] || []
+    }
+    
+    const events = getEventsByLocation(location)
+    
+    return {
+      success: true,
+      message: `Events in ${location} retrieved successfully`,
+      data: {
+        data: events,
+        current_page: 1,
+        per_page: 6,
+        total: events.length,
+        last_page: 1,
+        from: 1,
+        to: events.length
+      }
+    } as unknown as T
+  }
+
+  // Available Locations mock response
+  if (endpoint === "/events/locations" && method === "GET") {
+    return {
+      success: true,
+      data: ["Jakarta", "Bandung", "Bekasi", "Surabaya", "Yogyakarta", "Medan", "Bali"]
+    } as unknown as T
+  }
+
   // Default mock response
   return {} as T
 }
@@ -2500,6 +3061,36 @@ export const eventApi = {
   // Public - Get specific public event details
   getPublicEvent: (id: number): Promise<EventResponse> => {
     return apiRequest<EventResponse>(`/events/${id}`, "GET")
+  },
+
+  // Public - Get top selling events
+  getTopSellingEvents: (limit: number = 4): Promise<EventListResponse> => {
+    return apiRequest<EventListResponse>(`/events/top-selling?limit=${limit}`, "GET")
+  },
+
+  // Public - Get workshop events
+  getWorkshopEvents: (limit: number = 6): Promise<EventListResponse> => {
+    return apiRequest<EventListResponse>(`/events/workshops?limit=${limit}`, "GET")
+  },
+
+  // Public - Get favorite EO owners
+  getFavoriteEOOwners: (limit: number = 6): Promise<any> => {
+    return apiRequest<any>(`/events/favorite-eo-owners?limit=${limit}`, "GET")
+  },
+
+  // Public - Get events by time period
+  getEventsByTimePeriod: (period: 'today' | 'week' | 'month' | 'year', limit: number = 6): Promise<EventListResponse> => {
+    return apiRequest<EventListResponse>(`/events/time-period/${period}?limit=${limit}`, "GET")
+  },
+
+  // Public - Get events by location
+  getEventsByLocation: (location: string, limit: number = 6): Promise<EventListResponse> => {
+    return apiRequest<EventListResponse>(`/events/location/${encodeURIComponent(location)}?limit=${limit}`, "GET")
+  },
+
+  // Public - Get available locations for filter
+  getEventLocations: (): Promise<{ success: boolean; data: string[] }> => {
+    return apiRequest<{ success: boolean; data: string[] }>("/events/locations", "GET")
   }
 }
 

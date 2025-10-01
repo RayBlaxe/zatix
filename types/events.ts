@@ -61,6 +61,7 @@ export interface Event {
   event_organizer?: EventOrganizer
   facilities: Facility[]
   tickets: Ticket[]
+  sold_count?: number // Add this for top selling events
 }
 
 // Request types for API calls
