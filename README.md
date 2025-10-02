@@ -2,82 +2,83 @@
 
 A modern event management and ticketing platform built with Next.js 15, React 19, and TypeScript.
 
-## Features
+## ✨ Features
 
-- 🎫 Event creation and management
-- 👤 User authentication with OTP verification
-- 📊 Event organizer dashboard
-- 🎨 Modern UI with Tailwind CSS and shadcn/ui
-- 📱 Responsive design
-- 🔒 Role-based access control
+- 🎫 **Event Management**: Create, manage, and publish events with comprehensive wizard
+- 👥 **Multi-Role System**: Super Admin, EO Owner, Event PIC, Crew, Finance, Cashier
+- 🔐 **Authentication**: Email-based auth with OTP verification
+- 📊 **Dashboards**: Role-specific dashboards with analytics
+- 💳 **Payment Integration**: Midtrans payment gateway with multiple methods
+- 👔 **Staff Management**: Invite and manage event staff with role assignment
+- 📄 **CMS**: Content management for homepage, articles, and pricing
+- 🎨 **Modern UI**: Tailwind CSS + 50+ shadcn/ui components
+- 📱 **Responsive**: Mobile-first design with optimized navigation
 
-## Getting Started
+## 🚀 Quick Start
 
-### Prerequisites
-
-- Node.js 18+ 
-- npm, pnpm, or bun
-
-### Installation
-
-1. Clone the repository:
 ```bash
-git clone <repository-url>
-cd zatix
-```
-
-2. Install dependencies:
-```bash
+# Install dependencies
 npm install
-# or
-pnpm install
-# or
-bun install
-```
 
-3. Set up environment variables:
-```bash
+# Copy environment variables
 cp .env.example .env.local
-```
 
-4. Start the development server:
-```bash
+# Configure .env.local with your credentials
+
+# Start development server
 npm run dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000) in your browser.
 
-## Available Scripts
+## 📦 Tech Stack
 
-- `npm run dev` - Start development server with Turbopack
-- `npm run build` - Build for production
-- `npm run start` - Start production server
-- `npm run lint` - Run ESLint
-- `npm run lint:fix` - Fix ESLint issues
-- `npm run format` - Format code with Prettier
-- `npm run test` - Run tests
-- `npm run test:watch` - Run tests in watch mode
-- `npm run type-check` - Check TypeScript types
+- **Framework**: Next.js 15.2.4 (App Router)
+- **UI**: React 19, TypeScript, Tailwind CSS
+- **Components**: shadcn/ui (Radix UI)
+- **Auth**: Bearer Token (Laravel Sanctum)
+- **Payment**: Midtrans
+- **Testing**: Jest + React Testing Library
 
-## Environment Variables
+## 🛠️ Available Scripts
 
-Create a `.env.local` file in the root directory:
-
-```env
-NEXT_PUBLIC_API_URL=https://zatix.zamanweb.com/api/
-NODE_ENV=development
+```bash
+npm run dev          # Development server with Turbopack
+npm run build        # Production build
+npm start            # Start production server
+npm run lint         # ESLint check
+npm test             # Run tests
+npm run type-check   # TypeScript validation
 ```
 
-## API Integration
+## 📚 Documentation
 
-The app connects to the backend API at `https://zatix.zamanweb.com/api/`. 
+For detailed documentation, see:
 
-### Authentication Flow
+- **[Complete Project Guide](docs/PROJECT_GUIDE.md)** - Architecture, features, and workflow
+- **[Iterations](docs/iterations/)** - Agile sprint tracking and feature completion
+- **[Bug Fixes](docs/bugfixes/)** - Resolved issues and diagnostics
+- **[Technical Guides](docs/technical/)** - Midtrans, mobile app, and setup guides
 
-1. **Registration**: User registers with email/password
-2. **OTP Verification**: Email verification via OTP
-3. **Login**: Bearer token authentication
-4. **Protected Routes**: Automatic token validation
+## 🔧 Configuration
+
+### Environment Variables
+
+```env
+# API Configuration
+NEXT_PUBLIC_API_URL=https://api.zatix.id/api
+NEXT_PUBLIC_USE_MOCKS=false
+
+# Midtrans Payment Gateway
+MIDTRANS_MERCHANT_ID=
+NEXT_PUBLIC_MIDTRANS_CLIENT_KEY=
+MIDTRANS_SERVER_KEY=
+MIDTRANS_IS_PRODUCTION=false
+MIDTRANS_IS_SANITIZED=true
+MIDTRANS_IS_3DS=true
+```
+
+See `.env.example` for complete configuration.
 
 ## Tech Stack
 

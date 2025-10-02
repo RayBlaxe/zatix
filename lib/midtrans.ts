@@ -1,12 +1,27 @@
 // Midtrans Core API integration utilities for custom payment forms
 import { CoreAPIChargeRequest, CoreAPIResponse, PaymentStatusResponse } from '@/types/payment'
 
-const MIDTRANS_BASE_URL = process.env.NODE_ENV === 'production' 
+// Environment variables for Midtrans configuration
+const MIDTRANS_MERCHANT_ID = process.env.MIDTRANS_MERCHANT_ID || ''
+const MIDTRANS_SERVER_KEY = process.env.MIDTRANS_SERVER_KEY || ''
+const MIDTRANS_CLIENT_KEY = process.env.NEXT_PUBLIC_MIDTRANS_CLIENT_KEY || ''
+const MIDTRANS_IS_PRODUCTION = process.env.MIDTRANS_IS_PRODUCTION === 'true'
+const MIDTRANS_IS_SANITIZED = process.env.MIDTRANS_IS_SANITIZED === 'true'
+const MIDTRANS_IS_3DS = process.env.MIDTRANS_IS_3DS === 'true'
+
+// Use MIDTRANS_IS_PRODUCTION flag to determine API base URL
+const MIDTRANS_BASE_URL = MIDTRANS_IS_PRODUCTION
   ? 'https://api.midtrans.com/v2' 
   : 'https://api.sandbox.midtrans.com/v2'
 
-const MIDTRANS_SERVER_KEY = process.env.MIDTRANS_SERVER_KEY || ''
-const MIDTRANS_CLIENT_KEY = process.env.NEXT_PUBLIC_MIDTRANS_CLIENT_KEY || ''
+// Export configuration for use in client-side components
+export const getMidtransConfig = () => ({
+  merchantId: MIDTRANS_MERCHANT_ID,
+  clientKey: MIDTRANS_CLIENT_KEY,
+  isProduction: MIDTRANS_IS_PRODUCTION,
+  isSanitized: MIDTRANS_IS_SANITIZED,
+  is3DS: MIDTRANS_IS_3DS
+})
 
 // Create authorization header for server-side calls
 const getAuthHeader = () => {

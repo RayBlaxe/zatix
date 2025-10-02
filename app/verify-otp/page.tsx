@@ -21,25 +21,47 @@ export default function VerifyOTPPage() {
   const [isLoading, setIsLoading] = useState(false)
   const [resendDisabled, setResendDisabled] = useState(false)
   const [countdown, setCountdown] = useState(0)
+  const [isInitialized, setIsInitialized] = useState(false)
 
-  // Redirect if no pending verification
+  // Wait for auth context to initialize before checking email
   useEffect(() => {
-    if (!pendingVerificationEmail) {
-      router.push("/")
+    // Give the auth context time to load from localStorage
+    const timer = setTimeout(() => {
+      setIsInitialized(true)
+    }, 100)
+    return () => clearTimeout(timer)
+  }, [])
+
+  // Redirect if no pending verification after initialization
+  useEffect(() => {
+    if (isInitialized && !pendingVerificationEmail) {
+      console.warn("No pending verification email found, redirecting to login")
+      router.push("/login")
     }
-  }, [pendingVerificationEmail, router])
+  }, [isInitialized, pendingVerificationEmail, router])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!pendingVerificationEmail) return
+    if (!pendingVerificationEmail) {
+      console.error('[VERIFY-OTP] No pending verification email found!')
+      setError("No email found. Please register again.")
+      return
+    }
+
+    console.log('[VERIFY-OTP] Submitting OTP verification...')
+    console.log('[VERIFY-OTP] Email:', pendingVerificationEmail)
+    console.log('[VERIFY-OTP] OTP Code:', otp_code)
 
     setError(null)
     setIsLoading(true)
 
     try {
       await verifyOtp(pendingVerificationEmail, otp_code)
+      console.log('[VERIFY-OTP] OTP verification successful!')
+      console.log('[VERIFY-OTP] Redirecting to homepage...')
       router.push("/")
     } catch (err) {
+      console.error('[VERIFY-OTP] OTP verification failed:', err)
       if (err instanceof Error) {
         setError(err.message)
       } else {
@@ -81,13 +103,18 @@ export default function VerifyOTPPage() {
     }
   }, [countdown])
 
-  // If no pending verification, show loading
-  if (!pendingVerificationEmail) {
+  // If still initializing or no pending verification, show loading
+  if (!isInitialized || !pendingVerificationEmail) {
     return (
       <div className="flex min-h-screen flex-col">
         <Header />
         <main className="flex-1 flex items-center justify-center">
-          <Loader2 className="size-8 animate-spin" />
+          <div className="text-center">
+            <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4" />
+            <p className="text-sm text-muted-foreground">
+              {!isInitialized ? 'Initializing...' : 'Redirecting...'}
+            </p>
+          </div>
         </main>
       </div>
     )
@@ -102,8 +129,14 @@ export default function VerifyOTPPage() {
             <CardHeader className="space-y-1">
               <CardTitle className="text-2xl font-bold">Verify Your Email</CardTitle>
               <CardDescription>
-                We've sent a verification code to {pendingVerificationEmail}. Please enter it below.
+                We've sent a verification code to <strong>{pendingVerificationEmail}</strong>. Please enter it below.
               </CardDescription>
+              {/* DEBUG INFO - Remove in production */}
+              <div className="mt-2 p-2 bg-yellow-50 border border-yellow-200 rounded text-xs">
+                <p className="font-semibold">Debug Info:</p>
+                <p>Email from context: {pendingVerificationEmail || 'N/A'}</p>
+                <p className="mt-1 text-yellow-700">⚠️ If OTP fails, check browser console (F12) for detailed error logs</p>
+              </div>
             </CardHeader>
             <form onSubmit={handleSubmit}>
               <CardContent className="space-y-4">

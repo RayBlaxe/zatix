@@ -2535,8 +2535,12 @@ export const authApi = {
     is_tnc_accepted: boolean
   ) => {
     return apiRequest<{
-      email: string;
-      otp_code: string;
+      user: {
+        name: string;
+        email: string;
+        roles: string[];
+      };
+      otp_code_for_testing?: string;
     }>("/register", "POST", {
       name,
       email,
@@ -2547,7 +2551,11 @@ export const authApi = {
   },
 
   verifyOtp: (email: string, otp_code: string) => {
-    return apiRequest<{ token: string; user: any }>("/verify-otp", "POST", { email, otp_code })
+    return apiRequest<{ 
+      access_token: string; 
+      token_type: string;
+      user: any 
+    }>("/verify-otp", "POST", { email, otp_code })
   },
 
   resendOtp: (email: string) => {

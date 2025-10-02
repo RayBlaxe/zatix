@@ -50,16 +50,20 @@ export default function RegisterPage() {
     setIsLoading(true)
 
     try {
+      console.log('[REGISTER PAGE] Starting registration...')
       await register(
         formData.name,
         formData.email,
         formData.password,
         formData.password_confirmation,
         acceptTerms // is_tnc_accepted as boolean
-        
       )
+      console.log('[REGISTER PAGE] Registration completed successfully!')
+      console.log('[REGISTER PAGE] Navigating to /verify-otp...')
       router.push("/verify-otp")
+      console.log('[REGISTER PAGE] router.push called')
     } catch (err) {
+      console.error('[REGISTER PAGE] Registration failed:', err)
       if (err instanceof Error) {
         setError(err.message)
       } else {

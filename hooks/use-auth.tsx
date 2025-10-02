@@ -212,23 +212,30 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       // Store token with expiration info from Laravel Sanctum response
       storeToken(data.access_token, data.expires_in);
 
-      // Map roles from string array to UserRole array
-      const userRoles = (data.user.roles as string[]).filter(role => 
+      // Map roles from string array to UserRole array with null-checking
+      const rawRoles = data.user.roles || [];
+      console.log('[AUTH] Login - User roles from API:', rawRoles);
+      
+      const userRoles = (Array.isArray(rawRoles) ? rawRoles : []).filter(role => 
         ["customer", "eo-owner", "super-admin", "event-pic", "crew", "finance", "cashier"].includes(role)
       ) as UserRole[];
 
+      // If no valid roles found, default to customer
+      const finalRoles = userRoles.length > 0 ? userRoles : ["customer"];
+      console.log('[AUTH] Login - Processed roles:', finalRoles);
+
       // Default to primary role if available, otherwise customer
-      const defaultRole: UserRole = userRoles.includes("event-pic") 
+      const defaultRole: UserRole = finalRoles.includes("event-pic") 
         ? "event-pic"
-        : userRoles.includes("eo-owner")
+        : finalRoles.includes("eo-owner")
         ? "eo-owner"
-        : userRoles.includes("super-admin")
+        : finalRoles.includes("super-admin")
         ? "super-admin"
-        : userRoles.includes("crew")
+        : finalRoles.includes("crew")
         ? "crew"
-        : userRoles.includes("finance")
+        : finalRoles.includes("finance")
         ? "finance"
-        : userRoles.includes("cashier")
+        : finalRoles.includes("cashier")
         ? "cashier"
         : "customer";
 
@@ -236,7 +243,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         id: data.user.id.toString(),
         name: data.user.name,
         email: data.user.email,
-        roles: userRoles.length > 0 ? userRoles : ["customer"],
+        roles: finalRoles,
         currentRole: defaultRole,
         email_verified_at: data.user.email_verified_at,
         created_at: data.user.created_at,
@@ -267,6 +274,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     setIsLoading(true);
     try {
+      console.log('[AUTH] Starting registration for:', email);
       const response: RegisterResponse = await authApi.register(
         name,
         email,
@@ -275,16 +283,34 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         is_tnc_accepted
       );
 
+      console.log('[AUTH] Registration response:', JSON.stringify(response, null, 2));
+      console.log('[AUTH] Response success field:', response.success);
+      console.log('[AUTH] Response data:', response.data);
+
       if (response.success === false) {
+        console.error('[AUTH] Registration failed - success is false');
         throw new Error(response.message ?? "Registration failed");
       }
 
-      // Store the email for OTP verification
-      setPendingVerificationEmail(response.data.email);
-      // Optionally, handle OTP code if you want to show it (for dev)
-      // const otpCode = response.data.otp_code;
+      if (!response.data || !response.data.user || !response.data.user.email) {
+        console.error('[AUTH] Registration response missing user or email:', response);
+        throw new Error("Invalid registration response - missing user email");
+      }
+
+      // Store the email for OTP verification - FIX: Use response.data.user.email
+      const userEmail = response.data.user.email;
+      console.log('[AUTH] Storing pending verification email:', userEmail);
+      setPendingVerificationEmail(userEmail);
+      console.log('[AUTH] Registration successful, ready for OTP verification');
+      console.log('[AUTH] Pending email set in localStorage:', localStorage.getItem('pendingVerificationEmail'));
+      
+      // Log OTP code for testing (if available)
+      if (response.data.otp_code_for_testing) {
+        console.log('[AUTH] OTP Code for testing:', response.data.otp_code_for_testing);
+      }
 
     } catch (error) {
+      console.error('[AUTH] Registration error:', error);
       throw error;
     } finally {
       setIsLoading(false);
@@ -295,28 +321,77 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const verifyOtp = async (email: string, otp_code: string) => {
     setIsLoading(true);
     try {
+      console.log('[VERIFY-OTP] ========== STARTING OTP VERIFICATION ==========');
+      console.log('[VERIFY-OTP] Email:', email);
+      console.log('[VERIFY-OTP] OTP code:', otp_code);
+      console.log('[VERIFY-OTP] Request payload:', { email, otp_code });
+      
       const response = await authApi.verifyOtp(email, otp_code);
-      const { token, user } = response.data;
-
+      console.log('[VERIFY-OTP] Raw API response:', response);
+      console.log('[VERIFY-OTP] Response success:', response?.success);
+      console.log('[VERIFY-OTP] Response message:', response?.message);
+      
+      if (!response || response.success === false) {
+        console.error('[VERIFY-OTP] ❌ OTP verification failed');
+        console.error('[VERIFY-OTP] Error message:', response?.message);
+        console.error('[VERIFY-OTP] Error details:', response?.errors);
+        throw new Error(response?.message ?? "OTP verification failed");
+      }
+      
+      const { data } = response;
+      console.log('[VERIFY-OTP] ✅ Verification successful!');
+      console.log('[VERIFY-OTP] Response data:', data);
+      console.log('[VERIFY-OTP] Token type:', data?.token_type);
+      console.log('[VERIFY-OTP] Has access_token:', !!data?.access_token);
+      console.log('[VERIFY-OTP] Has user:', !!data?.user);
+      if (data?.user) {
+        console.log('[VERIFY-OTP] User object:', data.user);
+        console.log('[VERIFY-OTP] User has roles?', !!data.user.roles);
+        console.log('[VERIFY-OTP] User roles value:', data.user.roles);
+      }
+      
+      // API returns access_token, not token
+      const token = data.access_token || data.token;
+      const user = data.user;
+      
+      if (!token || !user) {
+        console.error('[AUTH] Missing token or user in response:', { token: !!token, user: !!user });
+        throw new Error("Invalid response from server");
+      }
+      
+      console.log('[AUTH] Storing token and user...');
       storeToken(token);
 
-      // Map roles from string array to UserRole array
-      const userRoles = (user.roles as string[]).filter(role => 
-        ["customer", "eo-owner", "super-admin", "event-pic", "crew", "finance", "cashier"].includes(role)
-      ) as UserRole[];
+      // Map roles from string array to UserRole array with extensive null-checking
+      const rawRoles = user.roles;
+      console.log('[AUTH] User roles from API:', rawRoles);
+      console.log('[AUTH] User roles type:', typeof rawRoles);
+      console.log('[AUTH] User roles is array?', Array.isArray(rawRoles));
+      
+      // Ensure we have an array to work with
+      let userRoles: UserRole[] = [];
+      if (Array.isArray(rawRoles)) {
+        userRoles = rawRoles.filter((role: any) => 
+          role && ["customer", "eo-owner", "super-admin", "event-pic", "crew", "finance", "cashier"].includes(role)
+        ) as UserRole[];
+      }
+
+      // If no valid roles found, default to customer
+      const finalRoles = userRoles.length > 0 ? userRoles : ["customer"];
+      console.log('[AUTH] Processed roles:', finalRoles);
 
       // Default to primary role if available, otherwise customer
-      const defaultRole: UserRole = userRoles.includes("event-pic") 
+      const defaultRole: UserRole = finalRoles.includes("event-pic") 
         ? "event-pic"
-        : userRoles.includes("eo-owner")
+        : finalRoles.includes("eo-owner")
         ? "eo-owner"
-        : userRoles.includes("super-admin")
+        : finalRoles.includes("super-admin")
         ? "super-admin"
-        : userRoles.includes("crew")
+        : finalRoles.includes("crew")
         ? "crew"
-        : userRoles.includes("finance")
+        : finalRoles.includes("finance")
         ? "finance"
-        : userRoles.includes("cashier")
+        : finalRoles.includes("cashier")
         ? "cashier"
         : "customer";
 
@@ -324,7 +399,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         id: user.id?.toString() || Math.random().toString(36).substring(2, 9),
         name: user.name,
         email: user.email,
-        roles: userRoles.length > 0 ? userRoles : ["customer"],
+        roles: finalRoles,
         currentRole: defaultRole,
         email_verified_at: user.email_verified_at,
         created_at: user.created_at,
@@ -332,6 +407,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         eoDetails: user.eoDetails,
       };
 
+      console.log('[AUTH] Created user object:', newUser);
       setUser(newUser);
       localStorage.setItem("user", JSON.stringify(newUser));
       
@@ -341,6 +417,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       // Clear pending verification email after successful verification
       setPendingVerificationEmail(null);
+      
+      console.log('[VERIFY-OTP] ========== OTP VERIFICATION COMPLETE ==========');
+    } catch (error) {
+      console.error('[VERIFY-OTP] ========== OTP VERIFICATION ERROR ==========');
+      console.error('[VERIFY-OTP] Error type:', typeof error);
+      console.error('[VERIFY-OTP] Error:', error);
+      if (error instanceof Error) {
+        console.error('[VERIFY-OTP] Error message:', error.message);
+        console.error('[VERIFY-OTP] Error stack:', error.stack);
+      }
+      throw error;
     } finally {
       setIsLoading(false);
     }
